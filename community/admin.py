@@ -10,3 +10,12 @@ class MembershipAdmin(admin.ModelAdmin):
     list_display=['user','school','role','verified']
     list_filter=['school','role','verified']
     autocomplete_fields=['user']
+
+from .models import Event
+@admin.register(Event)
+class EventAuditAdmin(admin.ModelAdmin):
+    list_display=['title','school','listing_type','visibility','status','published_by']
+    readonly_fields=['title','school','listing_type','visibility','status','published_by','published_at']
+    fields=readonly_fields
+    def has_add_permission(self,request): return False
+    def has_delete_permission(self,request,obj=None): return False

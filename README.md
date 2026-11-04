@@ -92,3 +92,38 @@ This is a runnable development environment, not a published production deploymen
 - SQLite is appropriate for this single-instance school workflow. Use durable local storage and a supervised single deployment; horizontal scaling requires a reviewed database and storage configuration. Reinforce authentication rate limits at the trusted ingress when deployed behind a reverse proxy.
 
 No email, payment, production publishing, or outbound messaging has been performed by setup.
+
+## Public discovery and family features
+
+The homepage, Events, Activities, Activity Finder, and approved public details now open without login. **Existing listings stay school-only** after the additive migration. To make a listing public, verified school staff select Public and Published in the listing editor. Publication records the reviewing account and time. Drafts and organizer submissions are never public. Public images follow the same listing-visibility policy; school announcements stay private.
+
+Events are one-off occasions. Activities have individually scheduled sessions, each with separate capacity and requests. Staff create a listing, choose Activity, then add sessions from its edit page. Session cancellation also cancels its active family requests and creates private inbox notifications. Editing capacity cannot reduce it below already allocated places.
+
+Guests can browse by age, interest, language, area, date, price, and audience. Filters remain in the URL. Missing age/language information is not treated as a positive match. A recurring session is filtered by its actual local date, using the listing's IANA time zone. Numeric prices are in EUR; no payment is collected, and absent prices remain **Price on request**.
+
+Parents register through the Parent account action, explicitly declare they are an adult guardian, and create private child profiles with nickname, age band, interests, and language codes. This declaration is not identity verification. Existing school student accounts cannot promote themselves to parents; guardians need their own accounts. A parent may join a school using the private school code to see school-only listings.
+
+The family workflow is **Interested → Awaiting parent approval → Awaiting organizer confirmation → Confirmed**, with declined and cancelled states. Parent approval requires the parent's current password. Interest and parent approval do not reserve places. Verified staff confirm places in the existing approval center. Confirmations share transactional event capacity with legacy school tickets, and activity sessions have independent allocations. Legacy student tickets and their history are preserved rather than inventing parent-child relationships for old accounts.
+
+The Family workspace includes saved plans, a calendar agenda, private calendar export, child profile editing/deletion, participation history, and review actions. Adding a family plan never makes a booking. Named saved collections work for accounts without school membership too. Child profiles are not public; staff see only the nickname and age band needed to review requests.
+
+Trusted administrators can grant external submitters an **Organizer** membership through Django admin. Organizers can edit their own submissions, but every submission or edit is held for staff review; they cannot publish or claim identity verification. Staff alone record organizer identity checks, which are described separately from safety assurances.
+
+### Optional AI Activity Finder
+
+Set `AI_API_KEY` securely on the server/Vercel to enable OpenAI structured search interpretation. `AI_MODEL` defaults to `gpt-4.1-mini`. No new package or paid resource is provisioned by this change. A real provider key and its usage terms are prerequisites for live AI requests; none is bundled in the source.
+
+Only the visitor's explicitly submitted preference sentence is sent to `https://api.openai.com/v1/chat/completions`, after they confirm it contains no private information. Stored child profiles, account details, and listing descriptions are never sent. The model outputs validated search filters, not listings or booking actions. Database filters enforce visibility, ages, language, date, price, and remaining capacity. Recommendation explanations and missing-information notes are built from actual database fields and link to source listings. No listings or availability are generated. Provider errors fail to an explanatory standard-search fallback without exposing credentials or provider response bodies.
+
+Without a key, the app explicitly says AI is not configured and keeps all ordinary discovery filters working. No fake AI response or automatic participation action is used.
+
+### Feature validation
+
+```sh
+/workspace/tkzone-venv/bin/python manage.py test community.tests community.test_features community.test_migrations --noinput
+/workspace/tkzone-venv/bin/python manage.py test community.browser_tests --noinput
+```
+
+The backend tests run on SQLite and PostgreSQL; GitHub CI includes the new-feature suite. Browser tests cover both the retained student ticket workflow and the public-home → parent account → activity session → guardian approval → organizer confirmation workflow at mobile, tablet, and desktop widths. Test-only records never enter the live database.
+
+Pushes to the connected GitHub `main` branch trigger Vercel deployments. The existing production build applies the additive migration automatically. No required deployment variables have changed; the AI key is optional. Actual hosted deployment status must be checked separately from local build success. SMTP is still required for real password-reset delivery if the current deployment uses the dummy email backend.

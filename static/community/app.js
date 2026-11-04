@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const day=new URLSearchParams(location.search).get('day');
   if(day)document.querySelectorAll('.calendar-grid a').forEach(a=>{if(new URL(a.href).searchParams.get('day')===day){a.classList.add('selected');a.setAttribute('aria-current','date');}});
   const dialog=document.getElementById('confirmation');let pending=null,submitter=null;
-  const copy={request:['Make a little plan?','Your request will be sent to school staff. Admission is confirmed only after approval.'],cancel:['Release your spot?','This will cancel your request. You can request again if the event is still accepting requests.'],delete:['Delete this collection?','The collection will be deleted. Your saved events will stay in Saved moments.'],decision:['Save this decision?','The student will be notified. Capacity will be checked again before an approval is saved.']};
+  const copy={profile:['Delete this child profile?','This deletes the private child profile and its participation records. This cannot be undone.'],request:['Make a little plan?','Your request will be sent to school staff. Admission is confirmed only after approval.'],cancel:['Release your spot?','This will cancel your request. You can request again if the event is still accepting requests.'],delete:['Delete this collection?','The collection will be deleted. Your saved events will stay in Saved moments.'],decision:['Save this decision?','The requester will be notified. Capacity will be checked again before a place is confirmed.']};
   document.querySelectorAll('form[data-confirm]').forEach(form=>form.addEventListener('submit',e=>{
     if(form.dataset.confirmed==='true')return;
     e.preventDefault();pending=form;submitter=e.submitter;

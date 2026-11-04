@@ -48,17 +48,34 @@ class ImageValidationMixin:
 class EventForm(ImageValidationMixin,forms.ModelForm):
     class Meta:
         model=Event
-        fields=['title','category','image','start_at','end_at','venue','description','organizer','ticket_requests_enabled','capacity','price_text','requests_close_at','status']
+        fields=['title','listing_type','visibility','identity_verified','category','image','start_at','end_at','venue','description','organizer','min_age','max_age','languages','area','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','price_text','requests_close_at','status']
         widgets={k:forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}) for k in ['start_at','end_at','requests_close_at']}
-        labels={'capacity':'Capacity (leave empty for unlimited)','price_text':'Price information (optional)','status':'Publication status'}
+        labels={'identity_verified':'Organizer identity checked by staff (not a safety guarantee)','start_at':'Start at / first activity date','capacity':'Capacity (leave empty for unlimited)','price_text':'Price information (optional)','status':'Publication status'}
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        for name in ['listing_type','visibility','time_zone']:
+            if name in self.fields: self.fields[name].required=False
+        if 'status' in self.fields: self.fields['status'].choices=[('draft','Draft'),('published','Published')]
     def clean(self):
         data=super().clean()
+        for name,default in [('listing_type','event'),('visibility','school'),('time_zone','Europe/Lisbon')]:
+            if not data.get(name): data[name]=getattr(self.instance,name,None) or default
+        try: ZoneInfo(data['time_zone'])
+        except (ValueError,KeyError): self.add_error('time_zone','Enter a valid IANA time zone, such as Europe/Lisbon.')
+        if data.get('languages'):
+            try: data['languages']=normalize_languages(data['languages'])
+            except ValidationError as error: self.add_error('languages',error)
+        low,high=data.get('min_age'),data.get('max_age')
+        if (low is None)!=(high is None) or (low is not None and (low>high or high>17)):
+            self.add_error('max_age','Provide both age bounds, with minimum no higher than maximum, up to 17.')
+        if data.get('price_amount') is not None and data['price_amount']<0: self.add_error('price_amount','Price cannot be negative.')
         start,end=data.get('start_at'),data.get('end_at')
         if start and end and end<=start: self.add_error('end_at','End time must be after start time.')
         if data.get('requests_close_at') and start and data['requests_close_at']>start: self.add_error('requests_close_at','Requests must close by the event start.')
         capacity=data.get('capacity')
         if capacity==0: self.add_error('capacity','Capacity must be at least one, or left empty.')
-        if self.instance.pk and capacity is not None and capacity<self.instance.requests.filter(status='approved').count(): self.add_error('capacity','Capacity cannot be lower than the number of approved tickets.')
+        if self.instance.pk and capacity is not None and capacity<(self.instance.requests.filter(status='approved').count()+self.instance.participations.filter(status='confirmed',session__isnull=True).count()): self.add_error('capacity','Capacity cannot be lower than the number of approved tickets.')
+        if self.instance.pk and data.get('listing_type')!=self.instance.listing_type and (self.instance.requests.exists() or self.instance.participations.exists() or self.instance.sessions.exists()): self.add_error('listing_type','A listing with requests or sessions cannot change type.')
         if data.get('status')=='published' and start and start<=timezone.now(): self.add_error('start_at','Publish an event with a future start time.')
         return data
 class AnnouncementForm(ImageValidationMixin,forms.ModelForm):
@@ -79,3 +96,42 @@ class ProfileForm(forms.ModelForm):
         model=User
         fields=['first_name','last_name']
         labels={'first_name':'Display name'}
+
+from .models import ChildProfile, ActivitySession, FamilyPlan
+from .discovery import LANGUAGES
+
+class ParentSetupForm(forms.Form):
+    guardian_consent = forms.BooleanField(label='I am an adult parent or legal guardian and will manage these child profiles and participation decisions.')
+
+class ChildProfileForm(forms.ModelForm):
+    class Meta:
+        model=ChildProfile
+        fields=['nickname','age_band','interests','languages']
+        labels={'languages':'Preferred languages (codes, for example en, pt)'}
+    def clean_languages(self): return normalize_languages(self.cleaned_data.get('languages',''))
+
+class SessionForm(forms.ModelForm):
+    class Meta:
+        model=ActivitySession
+        fields=['start_at','end_at','capacity','venue','is_cancelled']
+        widgets={k:forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}) for k in ['start_at','end_at']}
+        labels={'is_cancelled':'Cancel this session and its active participation requests'}
+    def clean(self):
+        data=super().clean()
+        if data.get('start_at') and data.get('end_at') and data['end_at']<=data['start_at']: self.add_error('end_at','End time must follow the start.')
+        if data.get('capacity')==0: self.add_error('capacity','Use at least one place, or leave empty for unlimited.')
+        if self.instance.pk and data.get('capacity') is not None and data['capacity']<self.instance.participations.filter(status='confirmed').count(): self.add_error('capacity','Capacity cannot fall below confirmed places.')
+        return data
+
+def normalize_languages(value):
+    codes=[item.strip().lower() for item in value.split(',') if item.strip()]
+    if any(code not in dict(LANGUAGES) for code in codes): raise ValidationError('Use supported language codes: en, pt, fr, es, de, it, nl.')
+    return ','.join(dict.fromkeys(codes))
+
+class OrganizerSubmissionForm(EventForm):
+    class Meta(EventForm.Meta):
+        fields=[f for f in EventForm.Meta.fields if f not in ['status','visibility','identity_verified']]
+    def clean(self):
+        data=super().clean()
+        data.pop('status',None)
+        return data

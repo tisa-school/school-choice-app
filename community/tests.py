@@ -245,7 +245,7 @@ class UploadSecurityTests(TransactionTestCase):
         self.client.force_login(stranger)
         self.assertEqual(self.client.get(f'/media/announcement/{item.pk}/').status_code,404)
         self.client.logout()
-        self.assertEqual(self.client.get(f'/media/announcement/{item.pk}/').status_code,302)
+        self.assertEqual(self.client.get(f'/media/announcement/{item.pk}/').status_code,404)
     def test_html_upload_rejected(self):
         from django.core.files.uploadedfile import SimpleUploadedFile
         response=self.client.post('/staff/announcements/new/',{'title':'Bad file','body':'No','status':'draft','image':SimpleUploadedFile('attack.png',b'<script>alert(1)</script>',content_type='image/png')})

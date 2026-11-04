@@ -44,3 +44,73 @@ def cancel(user,member,ticket_id):
     old=ticket.status;ticket.status='cancelled';ticket.save()
     TicketHistory.objects.create(ticket=ticket,previous_status=old,new_status='cancelled',changed_by=user)
     staff_notify(member.school,'Ticket cancelled',f'A student cancelled their ticket for {ticket.event.title}.','/staff/requests/')
+
+from .models import ParentAccount, ChildProfile, ActivitySession, Participation, ParticipationHistory
+from .discovery import visible_events
+
+
+def participation_notice(item,title,message):
+    Notification.objects.create(user=item.child.parent.user,school=item.event.school,kind='family',title=title,message=message,link='/family/')
+
+def record_participation(item,previous,user):
+    ParticipationHistory.objects.create(participation=item,previous_status=previous,new_status=item.status,changed_by=user)
+
+@transaction.atomic
+def express_interest(user,event_id,child_id,session_id=None):
+    parent=ParentAccount.objects.get(user=user)
+    child=ChildProfile.objects.get(pk=child_id,parent=parent)
+    event=visible_events(user).select_for_update().get(pk=event_id)
+    session=None
+    if event.listing_type=='activity':
+        session=ActivitySession.objects.select_for_update().get(pk=session_id,activity=event,is_cancelled=False)
+        if session.start_at<=timezone.now() or session.remaining==0: raise ValueError('This session is no longer available.')
+    elif session_id: raise ValueError('Choose an event or a valid activity session.')
+    elif not event.eligible: raise ValueError('This event is not accepting requests.')
+    # Age bands must fit inside the organizer's declared bounds; uncertain suitability requires clarification.
+    low,high=map(int,child.age_band.split('-'))
+    if event.min_age is None or event.max_age is None or low<event.min_age or high>event.max_age:
+        raise ValueError('The child’s age band must fit the published age range. Ask the organizer to clarify suitability.')
+    if not event.ticket_requests_enabled: raise ValueError('This listing is not accepting requests.')
+    if Participation.objects.filter(child=child,event=event,session=session,status__in=['interested','parent_pending','organizer_pending','confirmed']).exists():
+        raise ValueError('There is already an active request for this child and session.')
+    item=Participation.objects.create(child=child,event=event,session=session)
+    record_participation(item,'',user)
+    participation_notice(item,'Interest saved ✦','Send this interest for parent review. It does not reserve a place.')
+    return item
+
+@transaction.atomic
+def parent_decision(user,pk,action,password=''):
+    parent=ParentAccount.objects.get(user=user)
+    item=Participation.objects.select_for_update().get(pk=pk,child__parent=parent)
+    previous=item.status
+    if action=='send' and item.status=='interested': item.status='parent_pending'
+    elif action in ('approve','decline') and item.status=='parent_pending':
+        if not user.check_password(password): raise ValueError('Confirm with your account password to make a parent decision.')
+        if not visible_events(user).filter(pk=item.event_id).exists(): raise ValueError('This listing is no longer available.')
+        item.status='organizer_pending' if action=='approve' else 'declined'
+        item.parent_reviewed_at=timezone.now()
+        if action=='approve': staff_notify(item.event.school,'Family participation request','A parent approved a participation request. Organizer confirmation is still required.','/staff/requests/')
+    elif action=='cancel' and item.status not in ('declined','cancelled'): item.status='cancelled'
+    else: raise ValueError('This action is not available for the current request status.')
+    item.save();record_participation(item,previous,user)
+    participation_notice(item,item.get_status_display(),'Parent approval and confirmed admission are separate steps.')
+    return item
+
+@transaction.atomic
+def confirm_participation(user,member,pk,status,note=''):
+    if member.role!='staff' or not member.verified: raise PermissionError()
+    # Lock event first, then session, then request: all confirmations share the same lock order.
+    event_id=Participation.objects.values_list('event_id',flat=True).get(pk=pk,event__school=member.school)
+    event=Event.objects.select_for_update().get(pk=event_id,school=member.school)
+    item=Participation.objects.select_for_update().select_related('child__parent').get(pk=pk,event=event)
+    if item.status!='organizer_pending' or status not in ('confirmed','declined'): raise ValueError('This request is not awaiting organizer confirmation.')
+    if status=='confirmed':
+        target=ActivitySession.objects.select_for_update().get(pk=item.session_id,activity=event,is_cancelled=False) if item.session_id else event
+        low,high=map(int,item.child.age_band.split('-'))
+        if event.min_age is None or event.max_age is None or low<event.min_age or high>event.max_age: raise ValueError('The child’s current age band does not fit this listing.')
+        if event.status!='published' or target.start_at<=timezone.now() or target.remaining==0: raise ValueError('This listing is full, unpublished, cancelled, or has already started.')
+        if not visible_events(item.child.parent.user).filter(pk=event.pk).exists(): raise ValueError('The family no longer has access to this listing.')
+    previous=item.status;item.status=status;item.reviewed_by=user;item.reviewed_at=timezone.now();item.decision_note=note[:500];item.save()
+    record_participation(item,previous,user)
+    participation_notice(item,item.get_status_display(),f'{event.title}: {item.get_status_display()}. '+note[:500])
+    return item
