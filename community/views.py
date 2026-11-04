@@ -19,6 +19,7 @@ from .forms import *
 from .services import request_ticket, decide, cancel, publish_due, notify_school
 from .discovery import discovery_view, visible_events, filter_listings, LANGUAGES, membership
 from .services import express_interest, parent_decision, confirm_participation
+from .persistence import saved_success
 
 def post_id(request,name):
     value=request.POST.get(name,'')
@@ -65,6 +66,7 @@ def join(request):
         school=form.cleaned_data['school']
         if school.valid_invite(form.cleaned_data['code']):
             Membership.objects.create(user=request.user,school=school,role='parent' if ParentAccount.objects.filter(user=request.user).exists() else 'student',verified=True)
+            saved_success(request,'School membership saved ✦')
             return redirect('home')
         form.add_error('code','The school and invite code could not be verified. Ask your school for a current code.')
     return render(request,'community/form.html',{'form':form,'title':'Find your people.','eyebrow':'YOUR SCHOOL','submit':'Join school ✦','help':'Choose your school and use the private invite code supplied by your school. Staff access is granted separately by a trusted administrator.','school_search':True})
@@ -97,7 +99,7 @@ def detail(request,pk):
 @require_POST
 def ticket_request(request,pk):
     get_object_or_404(public_events(request),pk=pk,school=request.member.school,listing_type='event')
-    try: request_ticket(request.user,request.member,pk);messages.success(request,'✦ Request sent. Your ticket is awaiting staff approval.')
+    try: request_ticket(request.user,request.member,pk);saved_success(request,'✦ Request sent. Your ticket is awaiting staff approval.')
     except ValueError as e: messages.error(request,str(e))
     return redirect('tickets')
 @scoped()
@@ -107,7 +109,7 @@ def tickets(request):
 @require_POST
 def cancel_ticket(request,pk):
     get_object_or_404(TicketRequest,pk=pk,student=request.user,event__school=request.member.school)
-    try: cancel(request.user,request.member,pk);messages.success(request,'Ticket cancelled. Your spot has been released.')
+    try: cancel(request.user,request.member,pk);saved_success(request,'Ticket cancelled. Your spot has been released.')
     except ValueError as e: messages.error(request,str(e))
     return redirect('tickets')
 @login_required
@@ -120,8 +122,8 @@ def save_event(request,pk):
         if saved:
             saved.delete()
             for collection in Collection.objects.filter(user=request.user): collection.events.remove(event)
-            messages.success(request,'Event removed from saved.')
-        else: SavedEvent.objects.create(user=request.user,event=event);messages.success(request,'✦ Saved for later.')
+            saved_success(request,'Event removed from saved.')
+        else: SavedEvent.objects.create(user=request.user,event=event);saved_success(request,'✦ Saved for later.')
     return redirect('detail',pk=pk)
 @login_required
 @discovery_view
@@ -137,19 +139,19 @@ def saved(request):
 def collection_edit(request,pk=None):
     collection=get_object_or_404(Collection,pk=pk,user=request.user) if pk else Collection(user=request.user)
     form=CollectionForm(request.POST or None,instance=collection)
-    if request.method=='POST' and form.is_valid(): form.save();messages.success(request,'Collection saved ✦');return redirect('saved')
+    if request.method=='POST' and form.is_valid(): form.save();saved_success(request,'Collection saved ✦');return redirect('saved')
     return render(request,'community/form.html',{'form':form,'title':'Your own little constellation.','submit':'Save collection ✦','eyebrow':'SAVED COLLECTIONS'})
 @login_required
 @discovery_view
 @require_POST
 def collection_action(request,pk):
     collection=get_object_or_404(Collection,pk=pk,user=request.user)
-    if request.POST.get('action')=='delete': collection.delete();messages.success(request,'Collection deleted. Your saved events are still here.')
+    if request.POST.get('action')=='delete': collection.delete();saved_success(request,'Collection deleted. Your saved events are still here.')
     else:
         event=get_object_or_404(public_events(request),pk=request.POST.get('event'))
         if not SavedEvent.objects.filter(user=request.user,event=event).exists(): messages.error(request,'Save the event before adding it to a collection.')
-        elif request.POST.get('action')=='remove': collection.events.remove(event);messages.success(request,'Removed from collection.')
-        else: collection.events.add(event);messages.success(request,'Added to collection ✦')
+        elif request.POST.get('action')=='remove': collection.events.remove(event);saved_success(request,'Removed from collection.')
+        else: collection.events.add(event);saved_success(request,'Added to collection ✦')
     return redirect('saved')
 @scoped()
 def announcements(request):
@@ -163,13 +165,13 @@ def notifications(request):
 @require_POST
 def read_notification(request,pk):
     item=get_object_or_404(Notification,pk=pk,user=request.user)
-    item.is_read=True;item.save(update_fields=['is_read'])
+    item.is_read=True;item.save(update_fields=['is_read']);saved_success(request,'Notification marked as read')
     return redirect(item.link if item.link.startswith(('/events/','/tickets/','/announcements/','/staff/requests/','/family/')) else 'notifications')
 @login_required
 @discovery_view
 def profile(request):
     form=ProfileForm(request.POST or None,instance=request.user)
-    if request.method=='POST' and form.is_valid(): form.save();messages.success(request,'Profile updated ✦');return redirect('profile')
+    if request.method=='POST' and form.is_valid(): form.save();saved_success(request,'Profile updated ✦');return redirect('profile')
     return render(request,'community/profile.html',{'form':form})
 @scoped(staff=True)
 def staff_home(request):
@@ -191,7 +193,7 @@ def event_edit(request,pk=None):
             if was_published:
                 users=User.objects.filter(Q(ticketrequest__event=event)|Q(savedevent__event=event)|Q(parentaccount__children__participations__event=event)).distinct()
                 Notification.objects.bulk_create([Notification(user=u,school=event.school,kind='event',title='Event updated',message='A listing you saved or requested has changed. Check its latest details if it is still available.',link=f'/events/{event.pk}/' if event.status=='published' else '/family/' if ParentAccount.objects.filter(user=u).exists() else '/tickets/') for u in users])
-            messages.success(request,'Event saved ✦');return redirect('staff')
+            saved_success(request,'Event saved ✦');return redirect('staff')
     return render(request,'community/event_form.html',{'form':form,'title':'Make something memorable.','eyebrow':'EVENT STUDIO','event':event})
 @scoped(staff=True)
 def approval_center(request):
@@ -205,7 +207,7 @@ def approval_center(request):
 @require_POST
 def decision(request,pk):
     get_object_or_404(TicketRequest,pk=pk,event__school=request.member.school)
-    try: decide(request.user,request.member,pk,request.POST.get('status'),request.POST.get('note',''));messages.success(request,'Decision saved and student notified ✦')
+    try: decide(request.user,request.member,pk,request.POST.get('status'),request.POST.get('note',''));saved_success(request,'Decision saved and student notified ✦')
     except ValueError as e: messages.error(request,str(e))
     return redirect('approvals')
 @scoped(staff=True)
@@ -222,7 +224,7 @@ def announcement_edit(request,pk=None):
             if item.status=='published' and old_status!='published': item.published_at=timezone.now()
             item.save()
             if item.status=='published' and old_status!='published': notify_school(item)
-            messages.success(request,'Announcement saved ✦');return redirect('studio')
+            saved_success(request,'Announcement saved ✦');return redirect('studio')
     return render(request,'community/announcement_form.html',{'form':form,'title':'A little news. A closer school.','eyebrow':'ANNOUNCEMENT STUDIO'})
 @discovery_view
 def media(request,kind,pk):
@@ -256,6 +258,7 @@ def parent_setup(request):
     form=ParentSetupForm(request.POST or None)
     if request.method=='POST' and form.is_valid():
         ParentAccount.objects.get_or_create(user=request.user)
+        saved_success(request,'Family workspace saved ✦')
         return redirect('family')
     return render(request,'community/form.html',{'form':form,'title':'A little more family time.','eyebrow':'PARENT ACCOUNT','submit':'Create my family workspace ✦','help':'An adult parent or legal guardian manages this private workspace. No child profiles are public. This declaration is not an identity-verification badge.'})
 
@@ -279,14 +282,14 @@ def family(request):
 def child_edit(request,pk=None):
     child=get_object_or_404(ChildProfile,pk=pk,parent=request.parent) if pk else ChildProfile(parent=request.parent)
     form=ChildProfileForm(request.POST or None,instance=child)
-    if request.method=='POST' and form.is_valid(): form.save();messages.success(request,'Private child profile saved ✦');return redirect('family')
+    if request.method=='POST' and form.is_valid(): form.save();saved_success(request,'Private child profile saved ✦');return redirect('family')
     return render(request,'community/form.html',{'form':form,'title':'Their own little interests.','eyebrow':'PRIVATE FAMILY PROFILE','submit':'Save child profile ✦','help':'Use a nickname and age band. No exact birth date, school class, public photo, or live location is collected.'})
 
 @parent_required
 @require_POST
 def child_delete(request,pk):
     get_object_or_404(ChildProfile,pk=pk,parent=request.parent).delete()
-    messages.success(request,'Child profile and its participation records deleted.')
+    saved_success(request,'Child profile and its participation records deleted.')
     return redirect('family')
 
 @parent_required
@@ -296,7 +299,7 @@ def interest(request,pk):
     child=get_object_or_404(ChildProfile,pk=post_id(request,'child'),parent=request.parent)
     session_id=post_id(request,'session') or None
     if event.listing_type=='activity': get_object_or_404(ActivitySession,pk=session_id or 0,activity=event,is_cancelled=False)
-    try: express_interest(request.user,pk,child.pk,session_id);messages.success(request,'Interest saved. Send it for parent review in your family workspace ✦')
+    try: express_interest(request.user,pk,child.pk,session_id);saved_success(request,'Interest saved. Send it for parent review in your family workspace ✦')
     except ValueError as e: messages.error(request,str(e))
     return redirect('family')
 
@@ -304,7 +307,7 @@ def interest(request,pk):
 @require_POST
 def parent_review(request,pk):
     get_object_or_404(Participation,pk=pk,child__parent=request.parent)
-    try: parent_decision(request.user,pk,request.POST.get('action'),request.POST.get('password',''));messages.success(request,'Family request updated ✦')
+    try: parent_decision(request.user,pk,request.POST.get('action'),request.POST.get('password',''));saved_success(request,'Family request updated ✦')
     except ValueError as e: messages.error(request,str(e))
     return redirect('family')
 
@@ -315,13 +318,14 @@ def plan_add(request,pk):
     session=None
     if event.listing_type=='activity': session=get_object_or_404(ActivitySession,pk=post_id(request,'session'),activity=event,is_cancelled=False)
     FamilyPlan.objects.get_or_create(parent=request.parent,event=event,session=session,defaults={'note':request.POST.get('note','')[:200]})
-    messages.success(request,'Added to your family plan. This does not reserve a place ✦')
+    saved_success(request,'Added to your family plan. This does not reserve a place ✦')
     return redirect('family')
 
 @parent_required
 @require_POST
 def plan_delete(request,pk):
     get_object_or_404(FamilyPlan,pk=pk,parent=request.parent).delete()
+    saved_success(request,'Family plan updated ✦')
     return redirect('family')
 
 @parent_required
@@ -341,7 +345,7 @@ def family_calendar(request):
 @require_POST
 def family_confirmation(request,pk):
     get_object_or_404(Participation,pk=pk,event__school=request.member.school)
-    try: confirm_participation(request.user,request.member,pk,request.POST.get('status'),request.POST.get('note',''));messages.success(request,'Organizer decision saved and family notified ✦')
+    try: confirm_participation(request.user,request.member,pk,request.POST.get('status'),request.POST.get('note',''));saved_success(request,'Organizer decision saved and family notified ✦')
     except ValueError as e: messages.error(request,str(e))
     return redirect('approvals')
 
@@ -361,7 +365,7 @@ def session_edit(request,event_id,pk=None):
             else:
                 from .services import participation_notice
                 for participation in item.participations.exclude(status__in=['cancelled','declined']): participation_notice(participation,'Activity session updated','Check your family workspace for the latest session details.')
-            messages.success(request,'Activity session saved ✦');return redirect('event_edit',pk=event.pk)
+            saved_success(request,'Activity session saved ✦');return redirect('event_edit',pk=event.pk)
     return render(request,'community/form.html',{'form':form,'title':'One session. One little adventure.','eyebrow':event.title,'submit':'Save session ✦','help':'Each session has its own capacity and participation requests. Times use '+event.time_zone+'.'})
 
 @login_required
@@ -374,7 +378,7 @@ def organizer_workspace(request,pk=None):
         item=form.save(False);item.status='submitted';item.published_by=None;item.identity_verified=False;item.save()
         from .services import staff_notify
         staff_notify(item.school,'Listing awaiting review','An organizer submitted a listing for publication review.','/staff/')
-        messages.success(request,'Submitted for staff review. Nothing was published automatically ✦');return redirect('organizer')
+        saved_success(request,'Submitted for staff review. Nothing was published automatically ✦');return redirect('organizer')
     return render(request,'community/organizer.html',{'form':form,'listings':Event.objects.filter(created_by=request.user,school=request.member.school).order_by('-updated_at')})
 
 @discovery_view

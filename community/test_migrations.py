@@ -27,4 +27,5 @@ class AdditiveMigrationTests(TransactionTestCase):
             self.assertEqual(current.get_model('community','SavedEvent').objects.get(pk=saved.pk).event_id,event.pk)
             self.assertEqual(current.get_model('community','School').objects.get(pk=school.pk).invite_code_hash,'unchanged-test-hash')
         finally:
-            MigrationExecutor(connection).migrate([target])
+            final_executor=MigrationExecutor(connection)
+            final_executor.migrate(final_executor.loader.graph.leaf_nodes('community'))

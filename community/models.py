@@ -176,3 +176,9 @@ class FamilyPlan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         constraints = [models.UniqueConstraint(fields=['parent','event'],condition=Q(session__isnull=True),name='unique_family_plan_event'),models.UniqueConstraint(fields=['parent','session'],condition=Q(session__isnull=False),name='unique_family_plan_session')]
+
+class SaveReceipt(models.Model):
+    """The user's most recent confirmed application write; never a client-side guess."""
+    user = models.OneToOneField(User, related_name='save_receipt', on_delete=models.CASCADE)
+    action = models.CharField(max_length=120)
+    saved_at = models.DateTimeField(auto_now=True)

@@ -44,3 +44,21 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('preview-note')?.addEventListener('click',()=>{document.getElementById('preview-title').textContent=document.getElementById('id_title').value||'Your headline goes here.';document.getElementById('preview-body').textContent=document.getElementById('id_body').value||'Your words, beautifully organized.';});
   document.querySelectorAll('form').forEach(form=>form.addEventListener('submit',()=>{if(form.dataset.confirm&&!form.dataset.confirmed)return;if(!form.checkValidity())return;const button=form.querySelector('button[type=submit]');if(button){button.setAttribute('aria-busy','true');}}));
 });
+
+// Save feedback is scoped to write forms. Only the server's receipt confirms persistence.
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('form').forEach(form=>{
+    if((form.getAttribute('method')||'get').toLowerCase()!=='post')return;
+    const path=new URL(form.getAttribute('action')||location.href,location.href).pathname;
+    if(path.startsWith('/accounts/')||path==='/finder/')return;
+    const state=document.createElement('p');state.className='form-save-status';state.setAttribute('role','status');state.setAttribute('aria-live','polite');state.hidden=true;form.append(state);
+    if(form.querySelector('.errorlist')){state.hidden=false;state.dataset.state='unsaved';state.textContent='Not saved · check the highlighted errors and submit again.';}
+    const dirty=()=>{state.hidden=false;state.dataset.state='unsaved';state.textContent='Unsaved changes · submit this form to save.';};
+    form.addEventListener('input',dirty);form.addEventListener('change',dirty);
+    form.addEventListener('submit',()=>{
+      if(!form.checkValidity()||(form.dataset.confirm&&form.dataset.confirmed!=='true'))return;
+      state.hidden=false;state.dataset.state='saving';state.textContent='Saving to database…';form.setAttribute('aria-busy','true');
+    });
+    window.addEventListener('pageshow',()=>{form.removeAttribute('aria-busy');if(state.dataset.state==='saving'){state.hidden=false;state.dataset.state='unknown';state.textContent='Save status not confirmed on this page. Check your saved data before trying again.';}});
+  });
+});

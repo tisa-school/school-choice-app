@@ -127,3 +127,11 @@ Without a key, the app explicitly says AI is not configured and keeps all ordina
 The backend tests run on SQLite and PostgreSQL; GitHub CI includes the new-feature suite. Browser tests cover both the retained student ticket workflow and the public-home → parent account → activity session → guardian approval → organizer confirmation workflow at mobile, tablet, and desktop widths. Test-only records never enter the live database.
 
 Pushes to the connected GitHub `main` branch trigger Vercel deployments. The existing production build applies the additive migration automatically. No required deployment variables have changed; the AI key is optional. Actual hosted deployment status must be checked separately from local build success. SMTP is still required for real password-reset delivery if the current deployment uses the dummy email backend.
+
+## Saved-data status
+
+Signed-in users see their last server-confirmed save and its timestamp in the expandable **Saved to database** banner. Each user's receipt is private and persists in PostgreSQL. The banner describes the last completed application save, not unsaved edits or device-only preferences.
+
+Write forms show **Unsaved changes** while editing and **Saving to database…** after valid submission. Server validation errors show **Not saved**; unsuccessful writes do not replace the previous receipt. Save receipts participate in the transaction when the underlying write is transactional. Returning to a stale page does not claim an unconfirmed submission succeeded. Authentication, AI searches, and device-only accessibility preferences are excluded from this database-save feedback.
+
+No Gmail integration or email delivery is needed for this feature. Existing email-backend settings are unchanged. The additive `0004_savereceipt` migration runs during the Vercel production build. `community.test_persistence` verifies successful writes, rejected forms, receipt privacy, persistent timestamps, and rollback behavior; browser tests check the visible save feedback.
