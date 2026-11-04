@@ -13,9 +13,11 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
+from django.test import override_settings
 from playwright.sync_api import sync_playwright
 from .models import School,Membership,Event,TicketRequest,Collection,Announcement,Notification
 
+@override_settings(STORAGES={'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'}, 'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'}})
 class BrowserWorkflows(StaticLiveServerTestCase):
     def test_student_staff_workflow_mobile_and_desktop(self):
         school=School.objects.create(name='Browser test school',invite_code_hash=make_password('Test-invite-only!'))
