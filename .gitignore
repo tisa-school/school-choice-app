@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+db.sqlite3*
+.local-secret
+local-mail/
+private-media/
+staticfiles/
+.env
+test-db.sqlite3*
+.vercel/
+.env.*
+!.env.example

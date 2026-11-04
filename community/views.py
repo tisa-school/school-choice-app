@@ -1,0 +1,225 @@
+import calendar
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+from pathlib import Path
+from functools import wraps
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.db import transaction, IntegrityError
+from django.db.models import Q, Count
+from django.http import Http404, FileResponse, HttpResponseForbidden
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+from .models import *
+from .forms import *
+from .services import request_ticket, decide, cancel, publish_due, notify_school
+
+def scoped(staff=False):
+    def decorator(view):
+        @login_required
+        @wraps(view)
+        def wrapped(request,*args,**kwargs):
+            member=Membership.objects.select_related('school').filter(user=request.user).first()
+            if not member: return redirect('join')
+            if staff and not(member.role=='staff' and member.verified): return HttpResponseForbidden('Verified school staff access is required.')
+            request.member=member
+            timezone.activate(ZoneInfo(member.school.time_zone))
+            publish_due(member.school)
+            return view(request,*args,**kwargs)
+        return wrapped
+    return decorator
+
+def welcome(request):
+    if request.user.is_authenticated: return redirect('home')
+    return render(request,'community/welcome.html')
+def signup(request):
+    if request.user.is_authenticated: return redirect('home')
+    form=SignupForm(request.POST or None)
+    if request.method=='POST' and form.is_valid():
+        email=form.cleaned_data['email'].lower()
+        if not User.objects.filter(username=email).exists():
+            try:
+                with transaction.atomic(): user=form.save()
+            except IntegrityError: user=None
+            if user:
+                login(request,user);return redirect('join')
+        # Deliberately avoid an account-existence oracle.
+        messages.info(request,'If registration can be completed, you can continue. Otherwise try logging in or recovering your password.')
+        return redirect('login')
+    return render(request,'community/form.html',{'form':form,'title':'Your school life, connected.','eyebrow':'JOIN TK-ZONE','submit':'Create account ✦','auth':True})
+@login_required
+def join(request):
+    if Membership.objects.filter(user=request.user).exists(): return redirect('home')
+    form=JoinForm(request.POST or None)
+    if request.method=='POST' and form.is_valid():
+        school=form.cleaned_data['school']
+        if school.valid_invite(form.cleaned_data['code']):
+            Membership.objects.create(user=request.user,school=school,role='student',verified=True)
+            return redirect('home')
+        form.add_error('code','The school and invite code could not be verified. Ask your school for a current code.')
+    return render(request,'community/form.html',{'form':form,'title':'Find your people.','eyebrow':'YOUR SCHOOL','submit':'Join school ✦','help':'Choose your school and use the private invite code supplied by your school. Staff access is granted separately by a trusted administrator.','school_search':True})
+
+def public_events(request):
+    return Event.objects.filter(school=request.member.school,status='published')
+@scoped()
+def home(request):
+    events=public_events(request).filter(start_at__gte=timezone.now()).order_by('start_at')
+    q=request.GET.get('q','').strip();category=request.GET.get('category','All')
+    if q: events=events.filter(Q(title__icontains=q)|Q(description__icontains=q)|Q(venue__icontains=q))
+    if category in dict(CATEGORIES): events=events.filter(category=category)
+    month=request.GET.get('month','')
+    try: current=datetime.strptime(month,'%Y-%m').date() if month else timezone.localdate().replace(day=1)
+    except ValueError: current=timezone.localdate().replace(day=1)
+    local_tz=ZoneInfo(request.member.school.time_zone)
+    month_start=timezone.make_aware(datetime(current.year,current.month,1),local_tz)
+    next_month=(current.replace(day=28)+timedelta(days=4)).replace(day=1)
+    month_end=timezone.make_aware(datetime(next_month.year,next_month.month,1),local_tz)
+    dates={timezone.localtime(e.start_at).day for e in public_events(request).filter(start_at__gte=month_start,start_at__lt=month_end)}
+    day=request.GET.get('day','')
+    if day:
+        try:
+            selected=datetime.strptime(day,'%Y-%m-%d').date()
+            beginning=timezone.make_aware(datetime.combine(selected,datetime.min.time()),local_tz)
+            events=events.filter(start_at__gte=beginning,start_at__lt=beginning+timedelta(days=1))
+        except ValueError: day=''
+    return render(request,'community/home.html',{'events':events,'categories':['All']+list(dict(CATEGORIES)),'q':q,'category':category,'saved_ids':set(SavedEvent.objects.filter(user=request.user).values_list('event_id',flat=True)),'announcements':Announcement.objects.filter(school=request.member.school,status='published').order_by('-is_pinned','-published_at')[:2],'explorer':request.path=='/events/','calendar_weeks':calendar.monthcalendar(current.year,current.month),'event_days':dates,'calendar_month':current,'prev_month':(current-timedelta(days=1)).strftime('%Y-%m'),'next_month':next_month.strftime('%Y-%m'),'day':day,'today':timezone.localdate()})
+@scoped()
+def detail(request,pk):
+    event=get_object_or_404(public_events(request),pk=pk)
+    return render(request,'community/detail.html',{'event':event,'saved':SavedEvent.objects.filter(user=request.user,event=event).exists(),'ticket':TicketRequest.objects.filter(student=request.user,event=event).order_by('-created_at').first(),'collections':Collection.objects.filter(user=request.user)})
+@scoped()
+@require_POST
+def ticket_request(request,pk):
+    get_object_or_404(public_events(request),pk=pk)
+    try: request_ticket(request.user,request.member,pk);messages.success(request,'✦ Request sent. Your ticket is awaiting staff approval.')
+    except ValueError as e: messages.error(request,str(e))
+    return redirect('tickets')
+@scoped()
+def tickets(request):
+    return render(request,'community/tickets.html',{'tickets':TicketRequest.objects.filter(student=request.user,event__school=request.member.school).select_related('event').order_by('-created_at')})
+@scoped()
+@require_POST
+def cancel_ticket(request,pk):
+    get_object_or_404(TicketRequest,pk=pk,student=request.user,event__school=request.member.school)
+    try: cancel(request.user,request.member,pk);messages.success(request,'Ticket cancelled. Your spot has been released.')
+    except ValueError as e: messages.error(request,str(e))
+    return redirect('tickets')
+@scoped()
+@require_POST
+def save_event(request,pk):
+    event=get_object_or_404(public_events(request),pk=pk)
+    with transaction.atomic():
+        saved=SavedEvent.objects.filter(user=request.user,event=event).first()
+        if saved:
+            saved.delete()
+            for collection in Collection.objects.filter(user=request.user): collection.events.remove(event)
+            messages.success(request,'Event removed from saved.')
+        else: SavedEvent.objects.create(user=request.user,event=event);messages.success(request,'✦ Saved for later.')
+    return redirect('detail',pk=pk)
+@scoped()
+def saved(request):
+    events=public_events(request).filter(savedevent__user=request.user).order_by('start_at')
+    collection=None
+    if request.GET.get('collection'):
+        collection=get_object_or_404(Collection,pk=request.GET['collection'],user=request.user)
+        events=events.filter(collection=collection)
+    return render(request,'community/saved.html',{'events':events,'collections':Collection.objects.filter(user=request.user),'collection':collection,'saved_ids':set(events.values_list('id',flat=True))})
+@scoped()
+def collection_edit(request,pk=None):
+    collection=get_object_or_404(Collection,pk=pk,user=request.user) if pk else Collection(user=request.user)
+    form=CollectionForm(request.POST or None,instance=collection)
+    if request.method=='POST' and form.is_valid(): form.save();messages.success(request,'Collection saved ✦');return redirect('saved')
+    return render(request,'community/form.html',{'form':form,'title':'Your own little constellation.','submit':'Save collection ✦','eyebrow':'SAVED COLLECTIONS'})
+@scoped()
+@require_POST
+def collection_action(request,pk):
+    collection=get_object_or_404(Collection,pk=pk,user=request.user)
+    if request.POST.get('action')=='delete': collection.delete();messages.success(request,'Collection deleted. Your saved events are still here.')
+    else:
+        event=get_object_or_404(public_events(request),pk=request.POST.get('event'))
+        if not SavedEvent.objects.filter(user=request.user,event=event).exists(): messages.error(request,'Save the event before adding it to a collection.')
+        elif request.POST.get('action')=='remove': collection.events.remove(event);messages.success(request,'Removed from collection.')
+        else: collection.events.add(event);messages.success(request,'Added to collection ✦')
+    return redirect('saved')
+@scoped()
+def announcements(request):
+    return render(request,'community/announcements.html',{'announcements':Announcement.objects.filter(school=request.member.school,status='published').order_by('-is_pinned','-published_at')})
+@scoped()
+def notifications(request):
+    return render(request,'community/notifications.html',{'notifications':Notification.objects.filter(user=request.user,school=request.member.school).order_by('-created_at')})
+@scoped()
+@require_POST
+def read_notification(request,pk):
+    item=get_object_or_404(Notification,pk=pk,user=request.user,school=request.member.school)
+    item.is_read=True;item.save(update_fields=['is_read'])
+    return redirect(item.link if item.link.startswith(('/events/','/tickets/','/announcements/','/staff/requests/')) else 'notifications')
+@scoped()
+def profile(request):
+    form=ProfileForm(request.POST or None,instance=request.user)
+    if request.method=='POST' and form.is_valid(): form.save();messages.success(request,'Profile updated ✦');return redirect('profile')
+    return render(request,'community/profile.html',{'form':form})
+@scoped(staff=True)
+def staff_home(request):
+    school=request.member.school
+    return render(request,'community/staff.html',{'events':Event.objects.filter(school=school).order_by('-created_at'),'event_count':Event.objects.filter(school=school,status='published').count(),'pending_count':TicketRequest.objects.filter(event__school=school,status__in=['requested','under_review']).count(),'approved_count':TicketRequest.objects.filter(event__school=school,status='approved').count(),'announcement_count':Announcement.objects.filter(school=school,status='published').count()})
+@scoped(staff=True)
+def event_edit(request,pk=None):
+    with transaction.atomic():
+        event=get_object_or_404(Event.objects.select_for_update(),pk=pk,school=request.member.school) if pk else Event(school=request.member.school,created_by=request.user)
+        was_published=event.status=='published'
+        form=EventForm(request.POST or None,request.FILES or None,instance=event)
+        if request.method=='POST' and form.is_valid():
+            event=form.save(False)
+            if event.status=='published' and not event.published_at: event.published_at=timezone.now()
+            event.save()
+            if was_published:
+                users=User.objects.filter(Q(ticketrequest__event=event)|Q(savedevent__event=event)).distinct()
+                Notification.objects.bulk_create([Notification(user=u,school=event.school,kind='event',title='Event updated',message=f'Details for {event.title} have changed. Check the latest information.',link=f'/events/{event.pk}/' if event.status=='published' else '/tickets/') for u in users])
+            messages.success(request,'Event saved ✦');return redirect('staff')
+    return render(request,'community/event_form.html',{'form':form,'title':'Make something memorable.','eyebrow':'EVENT STUDIO','event':event})
+@scoped(staff=True)
+def approval_center(request):
+    requests=TicketRequest.objects.filter(event__school=request.member.school).select_related('event','student').order_by('created_at')
+    status=request.GET.get('status','pending')
+    if status=='pending': requests=requests.filter(status__in=['requested','under_review'])
+    elif status in dict(TicketRequest.STATUSES): requests=requests.filter(status=status)
+    if request.GET.get('event','').isdigit(): requests=requests.filter(event_id=request.GET['event'])
+    return render(request,'community/approvals.html',{'requests':requests,'status':status,'statuses':TicketRequest.STATUSES,'events':Event.objects.filter(school=request.member.school),'selected_event':request.GET.get('event','')})
+@scoped(staff=True)
+@require_POST
+def decision(request,pk):
+    get_object_or_404(TicketRequest,pk=pk,event__school=request.member.school)
+    try: decide(request.user,request.member,pk,request.POST.get('status'),request.POST.get('note',''));messages.success(request,'Decision saved and student notified ✦')
+    except ValueError as e: messages.error(request,str(e))
+    return redirect('approvals')
+@scoped(staff=True)
+def studio(request):
+    return render(request,'community/studio.html',{'announcements':Announcement.objects.filter(school=request.member.school).order_by('-created_at')})
+@scoped(staff=True)
+def announcement_edit(request,pk=None):
+    with transaction.atomic():
+        item=get_object_or_404(Announcement.objects.select_for_update(),pk=pk,school=request.member.school) if pk else Announcement(school=request.member.school,author=request.user)
+        old_status=item.status
+        form=AnnouncementForm(request.POST or None,request.FILES or None,instance=item)
+        if request.method=='POST' and form.is_valid():
+            item=form.save(False)
+            if item.status=='published' and old_status!='published': item.published_at=timezone.now()
+            item.save()
+            if item.status=='published' and old_status!='published': notify_school(item)
+            messages.success(request,'Announcement saved ✦');return redirect('studio')
+    return render(request,'community/announcement_form.html',{'form':form,'title':'A little news. A closer school.','eyebrow':'ANNOUNCEMENT STUDIO'})
+@scoped()
+def media(request,kind,pk):
+    model=Event if kind=='event' else Announcement if kind=='announcement' else None
+    if model is None: raise Http404()
+    obj=get_object_or_404(model,pk=pk,school=request.member.school)
+    if obj.status!='published' and not(request.member.role=='staff' and request.member.verified): raise Http404()
+    if not obj.image: raise Http404()
+    response=FileResponse(obj.image.open('rb'))
+    response['Cache-Control']='private, no-store'
+    response['X-Content-Type-Options']='nosniff'
+    return response

@@ -1,0 +1,13 @@
+.git
+.venv
+.vercel
+db.sqlite3*
+test-db.sqlite3*
+.local-secret
+local-mail
+private-media
+.env
+.env.*
+__pycache__
+community/tests.py
+community/browser_tests.py
