@@ -14,7 +14,10 @@ def membership(user):
 def visible_events(user):
     member=membership(user)
     scope=Q(visibility='public',published_by__isnull=False)
-    if member: scope |= Q(school=member.school)
+    if member:
+        if member.role=='organizer':
+            if member.verified: scope |= Q(school=member.school,created_by=user)
+        else: scope |= Q(school=member.school)
     return Event.objects.filter(scope,status='published').select_related('school')
 
 def discovery_view(view):

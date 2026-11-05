@@ -215,3 +215,85 @@ class BrowserFamilyWorkflows(StaticLiveServerTestCase):
             mobile.screenshot(path='/tmp/tkzone-community-mobile.png',full_page=True)
             self.assertEqual(errors,[])
             browser.close()
+
+@override_settings(STORAGES={'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'}, 'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'}})
+class BrowserOrganizerWorkflows(StaticLiveServerTestCase):
+    def test_organizer_application_image_post_review_and_attendee_management(self):
+        import tempfile
+        from io import BytesIO
+        from PIL import Image
+        from .models import ParentAccount,ChildProfile,Participation
+        from .services import express_interest,parent_decision
+        media=tempfile.TemporaryDirectory();self.addCleanup(media.cleanup)
+        storage_override=override_settings(MEDIA_ROOT=media.name);storage_override.enable();self.addCleanup(storage_override.disable)
+        school=School.objects.create(name='Organizer browser test school',invite_code_hash=make_password('private-test-code'))
+        staff=User.objects.create_user('studio-staff@test.invalid',password='OrganizerBrowser!283')
+        Membership.objects.create(user=staff,school=school,role='staff',verified=True)
+        organizer=User.objects.create_user('studio-owner@test.invalid',password='OrganizerBrowser!283')
+        parent=User.objects.create_user('studio-parent@test.invalid',password='OrganizerBrowser!283')
+        account=ParentAccount.objects.create(user=parent);child=ChildProfile.objects.create(parent=account,nickname='Approved test nickname',age_band='9-11')
+        with sync_playwright() as p:
+            browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+            page=browser.new_page(viewport={'width':1440,'height':1000});page.set_default_timeout(10000)
+            staffpage=browser.new_page(viewport={'width':1440,'height':1000});staffpage.set_default_timeout(10000)
+            errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+            def login(target,username):
+                target.goto(self.live_server_url+'/accounts/login/');target.get_by_label('Email').fill(username);target.get_by_label('Password').fill('OrganizerBrowser!283');target.get_by_role('button',name='Log In ✦',exact=True).click()
+            login(page,organizer.username)
+            page.goto(self.live_server_url+'/organizer/apply/')
+            page.get_by_label('School reviewing').select_option(str(school.pk));page.get_by_label('Organization',exact=False).first.fill('Test art organization')
+            page.get_by_label('Contact name').fill('Test organizer');page.get_by_label('Business phone').fill('+351 210 123 456');page.get_by_label('Website').fill('https://example.org')
+            page.get_by_label('Tell us about').fill('Isolated test supervised activities.')
+            page.get_by_role('checkbox').check();page.get_by_role('button',name='Apply for posting access ✦').click()
+            login(staffpage,staff.username);staffpage.goto(self.live_server_url+'/staff/organizers/')
+            staffpage.get_by_role('button',name='Approve posting access ✦').click();staffpage.get_by_role('button',name='Confirm ✦',exact=True).click();staffpage.wait_for_url('**/staff/organizers/')
+            page.goto(self.live_server_url+'/organizer/')
+            page.get_by_role('link',name='Create event or activity +').click()
+            page.get_by_label('Title').fill('Organizer browser art event');page.get_by_label('Category').select_option('Arts')
+            page.locator('#id_start_at').fill((timezone.now()+timedelta(days=6)).strftime('%Y-%m-%dT15:00'))
+            page.get_by_role('button',name='Save draft',exact=True).click();page.wait_for_url('**/organizer/')
+            self.assertTrue(page.get_by_text('Draft',exact=True).is_visible())
+            event=db_read(lambda: Event.objects.get(title='Organizer browser art event'))
+            page.goto(self.live_server_url+f'/organizer/{event.pk}/')
+            page.locator('#id_end_at').fill((timezone.now()+timedelta(days=6)).strftime('%Y-%m-%dT17:00'))
+            image=BytesIO();Image.new('RGB',(100,100),'white').save(image,format='PNG')
+            page.locator('#id_image').set_input_files({'name':'art-test.png','mimeType':'image/png','buffer':image.getvalue()})
+            self.assertTrue(page.locator('#upload-preview').is_visible())
+            page.get_by_role('button',name='Continue →').click()
+            page.get_by_label('Venue',exact=False).fill('Test studio');page.get_by_label('Address',exact=False).fill('Test venue address, Lisbon')
+            page.get_by_label('Description',exact=False).fill('This is isolated browser test data.')
+            page.get_by_label('Contact name').fill('Test studio contact');page.get_by_label('Contact phone').fill('+351 210 123 456');page.get_by_label('Contact website').fill('https://example.org');page.get_by_label('Contact public').check()
+            page.get_by_role('button',name='Continue →').click()
+            page.get_by_label('Min age').fill('8');page.get_by_label('Max age').fill('14');page.get_by_label('Languages').fill('en');page.get_by_label('Capacity (leave empty for unlimited)').fill('1')
+            page.get_by_role('button',name='Continue →').click()
+            page.get_by_role('button',name='Submit for staff review ✦',exact=True).click();page.wait_for_url('**/organizer/')
+            page.goto(self.live_server_url+f'/organizer/events/{event.pk}/?preview=1')
+            self.assertTrue(page.get_by_text('PRIVATE PREVIEW ✦',exact=True).is_visible())
+            staffpage.goto(self.live_server_url+f'/staff/events/{event.pk}/')
+            staffpage.get_by_role('button',name='4 · Publish').click();staffpage.get_by_label('Publication status').select_option('published')
+            staffpage.get_by_role('button',name='Save event ✦').click();staffpage.wait_for_url('**/staff/')
+            page.goto(self.live_server_url+f'/events/{event.pk}/')
+            self.assertTrue(page.get_by_role('heading',name='Contact the organizer').is_visible())
+            self.assertTrue(page.get_by_role('link',name='Open venue location ↗').is_visible())
+            def request_participation():
+                from django.contrib.auth.models import User
+                from .models import ChildProfile
+                user=User.objects.get(pk=parent.pk);profile=ChildProfile.objects.get(pk=child.pk)
+                item=express_interest(user,event.pk,profile.pk);parent_decision(user,item.pk,'send');parent_decision(user,item.pk,'approve','OrganizerBrowser!283');return item.pk
+            item_id=db_read(request_participation)
+            page.goto(self.live_server_url+f'/organizer/events/{event.pk}/')
+            self.assertTrue(page.get_by_role('heading',name='Approved test nickname',exact=False).is_visible())
+            page.get_by_role('button',name='Confirm place ✦',exact=True).click();page.get_by_role('button',name='Confirm ✦',exact=True).click()
+            page.wait_for_url('**/organizer/events/*/')
+            self.assertEqual(db_read(lambda:Participation.objects.get(pk=item_id).status),'confirmed')
+            for width in [390,768,1440]:
+                page.set_viewport_size({'width':width,'height':1000})
+                for route in ['/organizer/','/organizer/new/',f'/organizer/events/{event.pk}/',f'/organizer/{event.pk}/']:
+                    response=page.goto(self.live_server_url+route);self.assertEqual(response.status,200)
+                    self.assertFalse(page.evaluate('document.documentElement.scrollWidth > innerWidth'),f'Overflow {width}: {route}')
+            page.goto(self.live_server_url+f'/organizer/events/{event.pk}/')
+            page.get_by_text('Cancel this listing',exact=True).click();page.get_by_label('Cancellation reason').fill('Test venue unavailable')
+            page.get_by_role('button',name='Cancel listing & notify participants').click();page.get_by_role('button',name='Confirm ✦',exact=True).click()
+            page.wait_for_url('**/organizer/events/*/')
+            self.assertEqual(db_read(lambda:Participation.objects.get(pk=item_id).status),'cancelled')
+            self.assertEqual(errors,[]);browser.close()

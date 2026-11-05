@@ -39,7 +39,7 @@ def validate_filters(data):
 
 def recommendations(user,filters):
     from zoneinfo import ZoneInfo
-    matches=filter_listings(visible_events(user),filters)
+    matches=filter_listings(visible_events(user).filter(is_cancelled=False),filters)
     results=[]
     for listing in matches.order_by('start_at'):
         targets=listing.sessions.filter(start_at__gt=timezone.now(),is_cancelled=False).order_by('start_at') if listing.listing_type=='activity' else [listing]

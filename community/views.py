@@ -53,7 +53,11 @@ def signup(request):
                 with transaction.atomic(): user=form.save()
             except IntegrityError: user=None
             if user:
-                login(request,user);return redirect('parent_setup' if request.GET.get('family')=='1' else 'join')
+                login(request,user)
+                from django.utils.http import url_has_allowed_host_and_scheme
+                destination=request.GET.get('next','')
+                if destination and url_has_allowed_host_and_scheme(destination,allowed_hosts={request.get_host()},require_https=request.is_secure()): return redirect(destination)
+                return redirect('parent_setup' if request.GET.get('family')=='1' else 'join')
         # Deliberately avoid an account-existence oracle.
         messages.info(request,'If registration can be completed, you can continue. Otherwise try logging in or recovering your password.')
         return redirect('login')
@@ -77,7 +81,7 @@ def public_events(request):
 @discovery_view
 def home(request):
     from .models import FamilyPlan
-    listings=public_events(request)
+    listings=public_events(request).filter(is_cancelled=False)
     events=listings.filter(listing_type='event',start_at__gte=timezone.now())
     activities=listings.filter(listing_type='activity').filter(Q(sessions__start_at__gte=timezone.now(),sessions__is_cancelled=False)|Q(sessions__isnull=True)).distinct()
     is_activities=request.path=='/activities/'
@@ -85,7 +89,7 @@ def home(request):
     queryset=activities if is_activities else events
     filtered=filter_listings(queryset,request.GET).order_by('start_at')
     saved_ids=set(SavedEvent.objects.filter(user=request.user).values_list('event_id',flat=True)) if request.user.is_authenticated else set()
-    notes=Announcement.objects.filter(school=request.member.school,status='published').order_by('-is_pinned','-published_at')[:2] if request.member else []
+    notes=Announcement.objects.filter(school=request.member.school,status='published').order_by('-is_pinned','-published_at')[:2] if request.member and request.member.role!='organizer' else []
     return render(request,'community/discover.html',{'events':filtered,'activities':filter_listings(activities,request.GET).order_by('start_at')[:6] if not explorer else [],'categories':['All']+list(dict(CATEGORIES)),'q':request.GET.get('q',''),'category':request.GET.get('category','All'),'filters':request.GET,'languages':LANGUAGES,'saved_ids':saved_ids,'announcements':notes,'explorer':explorer,'is_activities':is_activities,'family_plans':FamilyPlan.objects.filter(parent__user=request.user,event__in=public_events(request)).select_related('event','session')[:3] if request.user.is_authenticated else []})
 
 @discovery_view
@@ -155,6 +159,7 @@ def collection_action(request,pk):
     return redirect('saved')
 @scoped()
 def announcements(request):
+    if request.member.role=='organizer': return HttpResponseForbidden('School announcements are private to school families and staff.')
     return render(request,'community/announcements.html',{'announcements':Announcement.objects.filter(school=request.member.school,status='published').order_by('-is_pinned','-published_at')})
 @login_required
 @discovery_view
@@ -240,7 +245,7 @@ def media(request,kind,pk):
             elif owned: obj=query.filter(created_by=request.user).first()
         if obj is None: raise Http404()
     else:
-        if not request.member: raise Http404()
+        if not request.member or request.member.role=='organizer': raise Http404()
         obj=get_object_or_404(Announcement,pk=pk,school=request.member.school)
         if obj.status!='published' and not(request.member.role=='staff' and request.member.verified): raise Http404()
     if not obj.image: raise Http404()
@@ -335,7 +340,7 @@ def family_calendar(request):
     rows=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//TK-ZONE//Family Calendar//EN']
     for plan in FamilyPlan.objects.filter(parent=request.parent,event__in=public_events(request)).select_related('event','session'):
         target=plan.session or plan.event
-        if plan.session and plan.session.is_cancelled: continue
+        if plan.event.is_cancelled or (plan.session and plan.session.is_cancelled): continue
         rows+=['BEGIN:VEVENT','UID:plan-'+str(plan.pk)+'@tk-zone','DTSTAMP:'+timezone.now().strftime('%Y%m%dT%H%M%SZ'),'DTSTART:'+target.start_at.astimezone(ZoneInfo('UTC')).strftime('%Y%m%dT%H%M%SZ'),'SUMMARY:'+escape(plan.event.title+' (family plan — not a booking)'),'DESCRIPTION:'+escape(plan.note or 'A saved family plan; participation is not confirmed.'),'END:VEVENT']
     rows+=['END:VCALENDAR']
     response=HttpResponse('\r\n'.join(rows)+'\r\n',content_type='text/calendar; charset=utf-8');response['Content-Disposition']='attachment; filename="tkzone-family.ics"';response['Cache-Control']='private, no-store'
@@ -349,10 +354,14 @@ def family_confirmation(request,pk):
     except ValueError as e: messages.error(request,str(e))
     return redirect('approvals')
 
-@scoped(staff=True)
+@login_required
+@discovery_view
 def session_edit(request,event_id,pk=None):
     with transaction.atomic():
-        event=get_object_or_404(Event.objects.select_for_update(),pk=event_id,school=request.member.school,listing_type='activity')
+        event=get_object_or_404(Event.objects.select_for_update(),pk=event_id,listing_type='activity')
+        from .organizers import can_manage
+        if not can_manage(request.user,request.member,event): raise Http404()
+        if event.is_cancelled: return HttpResponseForbidden('Cancelled listings cannot add or edit sessions.')
         timezone.activate(ZoneInfo(event.time_zone))
         session=get_object_or_404(ActivitySession.objects.select_for_update(),pk=pk,activity=event) if pk else ActivitySession(activity=event)
         form=SessionForm(request.POST or None,instance=session)
@@ -365,21 +374,120 @@ def session_edit(request,event_id,pk=None):
             else:
                 from .services import participation_notice
                 for participation in item.participations.exclude(status__in=['cancelled','declined']): participation_notice(participation,'Activity session updated','Check your family workspace for the latest session details.')
-            saved_success(request,'Activity session saved ✦');return redirect('event_edit',pk=event.pk)
-    return render(request,'community/form.html',{'form':form,'title':'One session. One little adventure.','eyebrow':event.title,'submit':'Save session ✦','help':'Each session has its own capacity and participation requests. Times use '+event.time_zone+'.'})
+            if request.member.role=='organizer':
+                event.status='submitted';event.published_by=None;event.save(update_fields=['status','published_by','updated_at'])
+                from .services import staff_notify
+                staff_notify(event.school,'Activity sessions awaiting review','An organizer edited activity sessions. Review before publication.','/staff/')
+            saved_success(request,'Activity session saved ✦');return redirect('organizer_event' if request.member.role=='organizer' else 'event_edit',pk=event.pk)
+    return render(request,'community/form.html',{'form':form,'form_time_zone':event.time_zone,'title':'One session. One little adventure.','eyebrow':event.title,'submit':'Save session ✦','help':'Each session has its own capacity and participation requests. Times use '+event.time_zone+'.'})
 
 @login_required
 @discovery_view
 def organizer_workspace(request,pk=None):
-    if not request.member or request.member.role!='organizer' or not request.member.verified: return HttpResponseForbidden('A trusted administrator must grant organizer access first.')
-    event=get_object_or_404(Event,pk=pk,created_by=request.user,school=request.member.school) if pk else Event(school=request.member.school,created_by=request.user,visibility='public')
-    form=OrganizerSubmissionForm(request.POST or None,request.FILES or None,instance=event)
+    if not request.member or request.member.role!='organizer' or not request.member.verified:
+        return redirect('organizer_apply')
+    listings=Event.objects.filter(created_by=request.user,school=request.member.school).order_by('-updated_at')
+    editing=pk is not None or request.path.endswith('/new/') or request.method=='POST'
+    if not editing:
+        return render(request,'community/organizer.html',{'listings':listings,'published_count':listings.filter(status='published',is_cancelled=False).count(),'draft_count':listings.filter(status='draft').count(),'review_count':listings.filter(status='submitted').count(),'confirmed_count':Participation.objects.filter(event__in=listings,status='confirmed').count()+TicketRequest.objects.filter(event__in=listings,status='approved').count()})
+    with transaction.atomic():
+        event=get_object_or_404(Event.objects.select_for_update(),pk=pk,created_by=request.user,school=request.member.school) if pk else Event(school=request.member.school,created_by=request.user,visibility='public')
+        timezone.activate(ZoneInfo(event.time_zone))
+        if event.is_cancelled:
+            messages.info(request,'Cancelled listings remain closed. Create a new listing for another date.')
+            return redirect('organizer_event',pk=event.pk)
+        draft=request.POST.get('action')=='draft'
+        form=OrganizerSubmissionForm(request.POST or None,request.FILES or None,instance=event,draft=draft)
+        if request.method=='POST' and form.is_valid():
+            item=form.save(False);item.status='draft' if draft else 'submitted';item.published_by=None;item.identity_verified=False;item.save()
+            if not draft:
+                from .services import staff_notify
+                staff_notify(item.school,'Listing awaiting review','An organizer submitted a listing for publication review.','/staff/')
+            saved_success(request,'Draft saved ✦' if draft else 'Submitted for staff review. Nothing was published automatically ✦')
+            return redirect('organizer')
+    return render(request,'community/organizer_editor.html',{'form':form,'event':event})
+
+@login_required
+@discovery_view
+def organizer_apply(request):
+    if request.member and request.member.role=='organizer' and request.member.verified: return redirect('organizer')
+    if request.member and request.member.role in ['student','staff']: return HttpResponseForbidden('Use an adult organizer account. School staff can create listings in their existing workspace.')
+    application=OrganizerApplication.objects.filter(user=request.user).first()
+    if application:
+        return render(request,'community/organizer_application.html',{'application':application})
+    form=OrganizerApplicationForm(request.POST or None)
     if request.method=='POST' and form.is_valid():
-        item=form.save(False);item.status='submitted';item.published_by=None;item.identity_verified=False;item.save()
+        application=form.save(False);application.user=request.user;application.save()
         from .services import staff_notify
-        staff_notify(item.school,'Listing awaiting review','An organizer submitted a listing for publication review.','/staff/')
-        saved_success(request,'Submitted for staff review. Nothing was published automatically ✦');return redirect('organizer')
-    return render(request,'community/organizer.html',{'form':form,'listings':Event.objects.filter(created_by=request.user,school=request.member.school).order_by('-updated_at')})
+        staff_notify(application.school,'Organizer application','An adult organizer has requested posting access.','/staff/organizers/')
+        saved_success(request,'Organizer application saved for staff review ✦');return redirect('organizer_apply')
+    return render(request,'community/form.html',{'form':form,'title':'Bring your community together.','eyebrow':'APPLY AS AN ORGANIZER','submit':'Apply for posting access ✦','help':'A school team reviews your organization before granting posting access. This does not automatically verify your identity or background checks.'})
+
+@scoped(staff=True)
+def organizer_applications(request):
+    return render(request,'community/organizer_applications.html',{'applications':OrganizerApplication.objects.filter(school=request.member.school).select_related('user').order_by('status','created_at')})
+
+@scoped(staff=True)
+@require_POST
+def organizer_application_review(request,pk):
+    get_object_or_404(OrganizerApplication,pk=pk,school=request.member.school)
+    from .organizers import review_application
+    try: review_application(request.user,request.member,pk,request.POST.get('status'),request.POST.get('note',''));saved_success(request,'Organizer application reviewed ✦')
+    except ValueError as e: messages.error(request,str(e))
+    return redirect('organizer_applications')
+
+def managed_listing(request,pk):
+    from .organizers import can_manage
+    event=get_object_or_404(Event,pk=pk)
+    if not can_manage(request.user,request.member,event): raise Http404()
+    return event
+
+@login_required
+@discovery_view
+def organizer_event(request,pk):
+    event=managed_listing(request,pk)
+    timezone.activate(ZoneInfo(event.time_zone))
+    family=event.participations.select_related('child','session').all()
+    tickets=event.requests.select_related('student').all()
+    session=request.GET.get('session','')
+    if session:
+        family=family.filter(session_id=int(session)) if session.isdigit() and len(session)<12 else family.none()
+    status=request.GET.get('status','')
+    family_labels=dict(Participation.STATUSES)
+    if status in family_labels: family=family.filter(status=status)
+    ticket_statuses={'organizer_pending':['requested','under_review'],'confirmed':['approved'],'declined':['declined'],'cancelled':['cancelled'],'interested':[],'parent_pending':[]}
+    if status in ticket_statuses: tickets=tickets.filter(status__in=ticket_statuses[status])
+    # Interest is shown as an aggregate only. Child identities are shared after parent approval.
+    family=family.filter(Q(status__in=['organizer_pending','confirmed'])|Q(history__new_status='organizer_pending')).distinct()
+    preview=request.GET.get('preview')=='1'
+    return render(request,'community/organizer_event.html',{'event':event,'family_requests':family.order_by('-created_at'),'tickets':tickets.order_by('-created_at'),'interest_count':event.participations.filter(status__in=['interested','parent_pending']).count(),'pending_count':event.participations.filter(status='organizer_pending').count()+event.requests.filter(status__in=['requested','under_review']).count(),'confirmed_count':event.participations.filter(status='confirmed').count()+event.requests.filter(status='approved').count(),'statuses':Participation.STATUSES,'selected_status':status,'selected_session':session,'preview':preview})
+
+@login_required
+@discovery_view
+@require_POST
+def organizer_decision(request,pk,kind,request_id):
+    event=managed_listing(request,pk)
+    try:
+        if kind=='family':
+            get_object_or_404(Participation,pk=request_id,event=event,parent_reviewed_at__isnull=False)
+            confirm_participation(request.user,request.member,request_id,request.POST.get('status'),request.POST.get('note',''))
+        elif kind=='ticket':
+            get_object_or_404(TicketRequest,pk=request_id,event=event)
+            decide(request.user,request.member,request_id,request.POST.get('status'),request.POST.get('note',''))
+        else: raise Http404()
+        saved_success(request,'Participation decision saved ✦')
+    except ValueError as e: messages.error(request,str(e))
+    return redirect('organizer_event',pk=pk)
+
+@login_required
+@discovery_view
+@require_POST
+def organizer_cancel(request,pk):
+    managed_listing(request,pk)
+    from .organizers import cancel_listing
+    try: cancel_listing(request.user,request.member,pk,request.POST.get('note',''));saved_success(request,'Listing cancelled and affected participants notified in the app.')
+    except ValueError as e: messages.error(request,str(e))
+    return redirect('organizer_event',pk=pk)
 
 @discovery_view
 def finder(request):

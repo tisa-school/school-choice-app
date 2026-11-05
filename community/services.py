@@ -5,7 +5,7 @@ from .models import Event, TicketRequest, TicketHistory, Notification, Membershi
 def staff_notify(school,title,message,link):
     Notification.objects.bulk_create([Notification(user=m.user,school=school,kind='ticket',title=title,message=message,link=link) for m in Membership.objects.filter(school=school,role='staff',verified=True)])
 def notify_school(announcement):
-    Notification.objects.bulk_create([Notification(user=m.user,school=announcement.school,kind='announcement',title=announcement.title,message='A new school announcement is ready to read.',link='/announcements/') for m in Membership.objects.filter(school=announcement.school)])
+    Notification.objects.bulk_create([Notification(user=m.user,school=announcement.school,kind='announcement',title=announcement.title,message='A new school announcement is ready to read.',link='/announcements/') for m in Membership.objects.filter(school=announcement.school).exclude(role='organizer')])
 @transaction.atomic
 def publish_due(school=None):
     qs=Announcement.objects.select_for_update().filter(status='scheduled',scheduled_for__lte=timezone.now())
@@ -26,13 +26,15 @@ def request_ticket(user,member,event_id):
     return ticket
 @transaction.atomic
 def decide(user,member,ticket_id,status,note=''):
-    if member.role!='staff' or not member.verified: raise PermissionError()
+    if member.role not in ['staff','organizer'] or not member.verified: raise PermissionError()
     # SQLite IMMEDIATE transactions serialize all writers; event lock also supports row-locking backends.
-    ticket=TicketRequest.objects.select_for_update().select_related('event').get(pk=ticket_id,event__school=member.school)
-    event=Event.objects.select_for_update().get(pk=ticket.event_id)
+    event_id=TicketRequest.objects.values_list('event_id',flat=True).get(pk=ticket_id,event__school=member.school)
+    event=Event.objects.select_for_update().get(pk=event_id,school=member.school)
+    ticket=TicketRequest.objects.select_for_update().get(pk=ticket_id,event=event)
+    if member.role=='organizer' and event.created_by_id!=user.pk: raise PermissionError()
     if status not in ['under_review','approved','declined']: raise ValueError('Invalid decision.')
     if ticket.status not in ['requested','under_review']: raise ValueError('This request has already been decided.')
-    if status=='approved' and (event.remaining==0 or event.status!='published' or event.start_at<=timezone.now()): raise ValueError('Approval unavailable: the event is full or unpublished.')
+    if status=='approved' and (event.remaining==0 or event.status!='published' or event.is_cancelled or event.start_at<=timezone.now()): raise ValueError('Approval unavailable: the event is full or unpublished.')
     old=ticket.status
     ticket.status=status;ticket.reviewed_by=user;ticket.reviewed_at=timezone.now();ticket.decision_note=note[:500];ticket.save()
     TicketHistory.objects.create(ticket=ticket,previous_status=old,new_status=status,changed_by=user)
@@ -61,6 +63,7 @@ def express_interest(user,event_id,child_id,session_id=None):
     child=ChildProfile.objects.get(pk=child_id,parent=parent)
     event=visible_events(user).select_for_update().get(pk=event_id)
     session=None
+    if event.is_cancelled: raise ValueError('This listing has been cancelled.')
     if event.listing_type=='activity':
         session=ActivitySession.objects.select_for_update().get(pk=session_id,activity=event,is_cancelled=False)
         if session.start_at<=timezone.now() or session.remaining==0: raise ValueError('This session is no longer available.')
@@ -98,17 +101,18 @@ def parent_decision(user,pk,action,password=''):
 
 @transaction.atomic
 def confirm_participation(user,member,pk,status,note=''):
-    if member.role!='staff' or not member.verified: raise PermissionError()
+    if member.role not in ['staff','organizer'] or not member.verified: raise PermissionError()
     # Lock event first, then session, then request: all confirmations share the same lock order.
     event_id=Participation.objects.values_list('event_id',flat=True).get(pk=pk,event__school=member.school)
     event=Event.objects.select_for_update().get(pk=event_id,school=member.school)
+    if member.role=='organizer' and event.created_by_id!=user.pk: raise PermissionError()
     item=Participation.objects.select_for_update().select_related('child__parent').get(pk=pk,event=event)
     if item.status!='organizer_pending' or status not in ('confirmed','declined'): raise ValueError('This request is not awaiting organizer confirmation.')
     if status=='confirmed':
         target=ActivitySession.objects.select_for_update().get(pk=item.session_id,activity=event,is_cancelled=False) if item.session_id else event
         low,high=map(int,item.child.age_band.split('-'))
         if event.min_age is None or event.max_age is None or low<event.min_age or high>event.max_age: raise ValueError('The child’s current age band does not fit this listing.')
-        if event.status!='published' or target.start_at<=timezone.now() or target.remaining==0: raise ValueError('This listing is full, unpublished, cancelled, or has already started.')
+        if event.status!='published' or event.is_cancelled or target.start_at<=timezone.now() or target.remaining==0: raise ValueError('This listing is full, unpublished, cancelled, or has already started.')
         if not visible_events(item.child.parent.user).filter(pk=event.pk).exists(): raise ValueError('The family no longer has access to this listing.')
     previous=item.status;item.status=status;item.reviewed_by=user;item.reviewed_at=timezone.now();item.decision_note=note[:500];item.save()
     record_participation(item,previous,user)

@@ -40,6 +40,13 @@ class Event(models.Model):
     image = models.ImageField(upload_to='events/', blank=True)
     venue = models.CharField(max_length=160)
     organizer = models.CharField(max_length=160, blank=True)
+    address = models.CharField(max_length=240, blank=True)
+    contact_name = models.CharField(max_length=100, blank=True)
+    contact_phone = models.CharField(max_length=40, blank=True)
+    contact_website = models.URLField(max_length=500, blank=True)
+    contact_public = models.BooleanField(default=False)
+    is_cancelled = models.BooleanField(default=False)
+    cancellation_note = models.CharField(max_length=500, blank=True)
     start_at = models.DateTimeField(db_index=True)
     end_at = models.DateTimeField(null=True, blank=True)
     capacity = models.PositiveIntegerField(null=True, blank=True)
@@ -53,7 +60,14 @@ class Event(models.Model):
     @property
     def remaining(self): return None if self.capacity is None else max(0,self.capacity-self.requests.filter(status='approved').count()-self.participations.filter(status='confirmed',session__isnull=True).count())
     @property
-    def eligible(self): return self.listing_type=='event' and self.status=='published' and self.ticket_requests_enabled and self.start_at>timezone.now() and (not self.requests_close_at or self.requests_close_at>timezone.now()) and self.remaining != 0
+    def eligible(self): return not self.is_cancelled and self.listing_type=='event' and self.status=='published' and self.ticket_requests_enabled and self.start_at>timezone.now() and (not self.requests_close_at or self.requests_close_at>timezone.now()) and self.remaining != 0
+    @property
+    def map_url(self):
+        from urllib.parse import urlencode
+        return 'https://www.openstreetmap.org/search?'+urlencode({'query':self.address}) if self.address else ''
+    @property
+    def phone_link(self):
+        return 'tel:'+''.join(char for char in self.contact_phone if char.isdigit() or char=='+')
     def __str__(self): return self.title
 class TicketRequest(models.Model):
     STATUSES = [(s,s.replace('_',' ').title()) for s in ['requested','under_review','approved','declined','cancelled']]
@@ -182,3 +196,18 @@ class SaveReceipt(models.Model):
     user = models.OneToOneField(User, related_name='save_receipt', on_delete=models.CASCADE)
     action = models.CharField(max_length=120)
     saved_at = models.DateTimeField(auto_now=True)
+
+
+class OrganizerApplication(models.Model):
+    user = models.OneToOneField(User, related_name='organizer_application', on_delete=models.CASCADE)
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    organization = models.CharField(max_length=160)
+    contact_name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=40)
+    website = models.URLField(max_length=500, blank=True)
+    description = models.TextField()
+    status = models.CharField(max_length=12, choices=[('pending','Pending review'),('approved','Approved'),('declined','Declined')], default='pending')
+    reviewed_by = models.ForeignKey(User, null=True, blank=True, related_name='reviewed_organizers', on_delete=models.SET_NULL)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    decision_note = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
