@@ -80,6 +80,9 @@ def public_events(request):
 
 @discovery_view
 def home(request):
+    if request.path=='/' and not request.user.is_authenticated:
+        from .demo import presentation
+        return presentation(request)
     from .models import FamilyPlan
     listings=public_events(request).filter(is_cancelled=False)
     events=listings.filter(listing_type='event',start_at__gte=timezone.now())

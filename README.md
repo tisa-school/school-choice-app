@@ -149,3 +149,19 @@ Each listing's private manager provides a preview, individual activity sessions,
 Organizers may add or edit their activity sessions, but those changes send the activity back for staff review. Every session remains a distinct allocation. Cancellation requires a reason and confirmation, closes all sessions and active ticket/family requests transactionally, preserves request history, and creates in-app notices. Cancelled listings disappear from discovery but their approved public detail pages retain a cancellation notice. They cannot be reopened by ordinary edits; create a new listing for another date.
 
 The additive `0005_event_address_event_cancellation_note_and_more` migration preserves existing listings. No new environment variables, paid services, Gmail, or outbound email are introduced. `community.test_organizers` covers ownership, public/private contact data, drafts, access applications, parent consent boundaries, cancellation, and private-image editing. The organizer browser workflow covers application → staff access approval → draft → image upload → submission → staff publication → attendee confirmation → cancellation at mobile, tablet, and desktop sizes.
+
+## Tech Week: no-registration presentation
+
+Anonymous visitors to `/` now see the interactive presentation. `/demo/` is its permanent entry link, including for visitors who are already signed in. Parent and organizer demonstrations require **no email, password, signup, or access approval**.
+
+- Parent view: `/demo/family/` — fictional profiles, sample requests, simulated parent approval, and status tracking.
+- Organizer view: `/demo/organizer/` — post/edit a sample event, preview a local image, choose date/time/place/interests/contact details, and simulate attendee confirmation or cancellation.
+- Events, Activities, Saved, and Activity Finder are also available under `/demo/`. The finder is explicitly a simulated keyword-based demonstration, not a live AI service.
+- Changes persist only in that browser's localStorage under `tkzone-techweek-v1`. The visible save status says **saved in this browser**, never saved to the real database. If storage is unavailable or full, the app explains that persistence failed instead of claiming success.
+- **Reset demo** restores the fictional examples for the next visitor. It does not clear real account sessions, application records, or accessibility preferences.
+
+All sample content is marked Demo and does not advertise real events, venues, capacity, organizer verification, or confirmed bookings. Visitors are instructed to use invented names. No real accounts are provisioned, no emails are sent, and no server-side event or family records are created by the demonstration. Real account authorization, staff verification, and parent password checks remain intact on the live routes.
+
+`/community/` continues to expose the real public community listings; signed-in users retain their normal homepage at `/`. The presentation links are visible in the live UI too. No new environment variables or migrations are needed. Share `/demo/` at Tech Week for a consistent registration-free entry point on any device.
+
+`community.test_demo` and the presentation browser workflow test public access, separation from real private data, role switching, browser-only posting, approval simulation, persistence, reset, and isolation between visitors.
