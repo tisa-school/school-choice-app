@@ -12,10 +12,12 @@ def presentation(request, section='home', item=''):
         raise Http404()
     project=json.loads((settings.BASE_DIR/'content/project.json').read_text())
     from .team import prepare_team
-    prepare_team(request.user,project)
+    prepare_team(request.user,project,request)
     project['roles']={lang:{person['role']:catalog(lang).get(person['role'],person['role']) for person in project['contributors']} for lang in ACTIVE_LOCALES}
     response=render(request,'community/demo.html',{'demo_section':section,'demo_item':item,'project_credits':project})
     response['Content-Security-Policy']="default-src 'self'; connect-src 'self'; form-action 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"
+    if any(person.get('upload_html') for person in project['contributors']):
+        response['Content-Security-Policy']=response['Content-Security-Policy'].replace("form-action 'none'", "form-action 'self'")
     response['Cache-Control']='no-store'
     response['X-Robots-Tag']='noindex, nofollow'
     return response
