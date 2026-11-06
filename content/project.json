@@ -51,5 +51,9 @@
       "group": "leadership"
     }
   ],
-  "publication_note": "Names and roles supplied for the About Us page. No photographs or contact details."
+  "publication_note": "Team portraits use permission-controlled storage. Student displays use first names.",
+  "age_range": {
+    "min": 8,
+    "max": 16
+  }
 }
