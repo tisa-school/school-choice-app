@@ -46,3 +46,28 @@ class PortraitPublicationTests(TestCase):
         self.portrait();School.objects.create(name='Unicorn School',invite_code_hash='test')
         with self.assertRaises(RuntimeError):self.publish()
         self.assertFalse(TeamPhoto.objects.filter(visibility='public').exists())
+
+    def test_new_student_publication_only_changes_latest_three_students(self):
+        update=importlib.import_module('community.migrations.0010_publish_updated_student_portraits')
+        lead=self.portrait()
+        older=self.portrait(name='Sophia Gateneo',is_student=True)
+        students=[self.portrait(name=name,is_student=True) for name in update.NAMES]
+        with patch.dict('os.environ',{'VERCEL_ENV':'production'}):
+            update.publish_updated_student_portraits(apps,SimpleNamespace(connection=connection))
+            update.publish_updated_student_portraits(apps,SimpleNamespace(connection=connection))
+        for photo in students:
+            photo.refresh_from_db();self.assertEqual(photo.visibility,'public')
+            self.assertTrue(photo.sharing_permission and photo.guardian_consent)
+            url=f'/protected-photos/team/{photo.pk}/'
+            self.assertEqual(self.client.get(url).status_code,200)
+            self.assertContains(self.client.get('/about/'),url)
+        for photo in [lead,older]:
+            photo.refresh_from_db();self.assertEqual(photo.visibility,'private')
+    def test_updated_student_publication_requires_all_three_and_skips_preview(self):
+        update=importlib.import_module('community.migrations.0010_publish_updated_student_portraits')
+        photo=self.portrait(name='Sophia Gateneo',is_student=True)
+        with patch.dict('os.environ',{'VERCEL_ENV':'preview'}):
+            update.publish_updated_student_portraits(apps,SimpleNamespace(connection=connection))
+        with patch.dict('os.environ',{'VERCEL_ENV':'production'}):
+            with self.assertRaises(RuntimeError):update.publish_updated_student_portraits(apps,SimpleNamespace(connection=connection))
+        photo.refresh_from_db();self.assertEqual(photo.visibility,'private')
