@@ -41,4 +41,19 @@ jobs:
       - run: python manage.py collectstatic --noinput
       - run: python manage.py check
       - run: python manage.py makemigrations --check --dry-run
-      - run: python manage.py test community.tests community.test_features community.test_migrations community.test_persistence community.test_organizers community.test_demo community.test_release_a community.test_about_team community.test_expansion community.test_about_refresh community.test_photo_administrator_grant community.test_inline_portraits community.test_portrait_publication --noinput
+      - run: python manage.py test community.tests community.test_features community.test_migrations community.test_persistence community.test_organizers community.test_demo community.test_release_a community.test_about_team community.test_expansion community.test_about_refresh community.test_photo_administrator_grant community.test_inline_portraits community.test_portrait_publication community.test_launch --noinput
+
+  browser:
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SECRET_KEY: isolated-browser-ci-key-not-used-outside-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: python -m playwright install --with-deps chromium
+      - run: python manage.py collectstatic --noinput
+      - run: python manage.py test community.browser_tests community.browser_expansion community.browser_launch --noinput

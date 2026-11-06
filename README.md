@@ -1,6 +1,10 @@
 # TK-ZONE ✦
 
-A working, school-scoped events and community application. Django 5.2 LTS, Python 3.12+, SQLite, server-rendered semantic HTML, and progressive JavaScript. The six brand colors are shared CSS variables; Archivo Black and Inter are hosted locally under their included OFL licenses. No external frontend runtime, invented events, default accounts, invite codes, or statistics.
+A working, school-scoped events and community application. Django 5.2 LTS, Python 3.12+, PostgreSQL on Vercel and SQLite locally, server-rendered semantic HTML, and progressive JavaScript. The six brand colors are shared CSS variables; Archivo Black and Inter are hosted locally under their included OFL licenses. No external frontend runtime, invented events, default accounts, invite codes, or statistics.
+
+Production: https://school-choice-app-hrvb.vercel.app/
+
+The public homepage and navigation use persistent application records. Previously shared presentation URLs lead to the live pages. See [the release audit](docs/RELEASE_AUDIT.md) for checks and verification limits.
 
 ## Vercel + GitHub
 
@@ -32,7 +36,7 @@ The existing isolated checkout is the development workspace. Do not create anoth
 There is deliberately no sample content in the application database. Students can register immediately, but school content requires a school configured by a trusted operator. Email verification is currently disabled; private school codes gate membership. Registration never grants staff privileges.
 
 1. The school contact registers using **Create account**. Use their real name and email. No account is created automatically from an email supplied in a chat.
-2. A trusted environment operator creates the school:
+2. Existing verified staff can open **School access** in their staff navigation to set or rotate a private invitation code after confirming their password. To configure a new school initially, a trusted environment operator runs:
 
    ```sh
    /workspace/tkzone-venv/bin/python manage.py configure_school --name 'Your actual school' --timezone Europe/Lisbon --staff-email '<registered staff email>'
@@ -70,7 +74,7 @@ The suite includes separate connections racing for a one-seat event. It uses an 
 ```sh
 /workspace/tkzone-venv/bin/pip install -r requirements-dev.txt
 # Chromium is available at /usr/bin/chromium in this cloud environment.
-/workspace/tkzone-venv/bin/python manage.py test community.browser_tests --noinput
+/workspace/tkzone-venv/bin/python manage.py test community.browser_tests community.browser_expansion community.browser_launch --noinput
 ```
 
 The browser test covers staff event creation, student registration and membership, mobile search, save, ticket request dialog, staff approval, student wallet, collections, announcement preview/publication, inbox, preferences, and three viewport sizes. Screenshots are written to `/tmp/tkzone-mobile.png` and `/tmp/tkzone-desktop.png` using isolated test content.
@@ -83,7 +87,7 @@ Recovery email defaults to a private file backend in `local-mail/`, so local dev
 
 ## Deployment boundary
 
-This is a runnable development environment, not a published production deployment. Before production:
+The production application is deployed through GitHub to Vercel. For a new environment:
 
 - Set `DJANGO_DEBUG=0`, a securely generated `DJANGO_SECRET_KEY`, the actual `DJANGO_ALLOWED_HOSTS` (comma separated), and `DJANGO_CSRF_TRUSTED_ORIGINS` (comma-separated HTTPS origins). Production refuses to start without the secret. Secure cookies, SSL redirect, and HSTS are enabled in production mode.
 - Serve HTTPS with a proper WSGI server; do not deploy Django's development server. Explicitly configure any trusted reverse proxy; do not blindly trust forwarded headers.
@@ -91,7 +95,7 @@ This is a runnable development environment, not a published production deploymen
 - Run the scheduled publication worker, configure SMTP for real password recovery, and run `manage.py check --deploy` with the production settings.
 - SQLite is appropriate for this single-instance school workflow. Use durable local storage and a supervised single deployment; horizontal scaling requires a reviewed database and storage configuration. Reinforce authentication rate limits at the trusted ingress when deployed behind a reverse proxy.
 
-No email, payment, production publishing, or outbound messaging has been performed by setup.
+Automated checks use isolated records and test email backends. They do not send live recovery emails or create live bookings.
 
 ## Public discovery and family features
 
@@ -121,7 +125,7 @@ Without a key, the app explicitly says AI is not configured and keeps all ordina
 
 ```sh
 /workspace/tkzone-venv/bin/python manage.py test community.tests community.test_features community.test_migrations --noinput
-/workspace/tkzone-venv/bin/python manage.py test community.browser_tests --noinput
+/workspace/tkzone-venv/bin/python manage.py test community.browser_tests community.browser_expansion community.browser_launch --noinput
 ```
 
 The backend tests run on SQLite and PostgreSQL; GitHub CI includes the new-feature suite. Browser tests cover both the retained student ticket workflow and the public-home → parent account → activity session → guardian approval → organizer confirmation workflow at mobile, tablet, and desktop widths. Test-only records never enter the live database.

@@ -42,13 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const error=wizard.querySelector('.errorlist');if(error?.closest('[data-stage]'))show(Number(error.closest('[data-stage]').dataset.stage));
   }
   document.getElementById('preview-note')?.addEventListener('click',()=>{document.getElementById('preview-title').textContent=document.getElementById('id_title').value||'Your headline goes here.';document.getElementById('preview-body').textContent=document.getElementById('id_body').value||'Your words, beautifully organized.';});
-  document.querySelectorAll('form').forEach(form=>form.addEventListener('submit',event=>{if(form.dataset.confirm&&!form.dataset.confirmed)return;if(!event.submitter?.formNoValidate&&!form.checkValidity())return;const button=form.querySelector('button[type=submit]');if(button){button.setAttribute('aria-busy','true');}}));
+  document.querySelectorAll('form').forEach(form=>form.addEventListener('submit',event=>{if(form.matches('[data-team-upload]'))return;if(form.dataset.confirm&&!form.dataset.confirmed)return;if(!event.submitter?.formNoValidate&&!form.checkValidity())return;const button=form.querySelector('button[type=submit]');if(button){button.setAttribute('aria-busy','true');}}));
 });
 
 // Save feedback is scoped to write forms. Only the server's receipt confirms persistence.
 document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('form').forEach(form=>{
-    if((form.getAttribute('method')||'get').toLowerCase()!=='post')return;
+    if(form.matches('[data-team-upload]')||(form.getAttribute('method')||'get').toLowerCase()!=='post')return;
     const path=new URL(form.getAttribute('action')||location.href,location.href).pathname;
     if(path.startsWith('/accounts/')||path==='/finder/')return;
     const state=document.createElement('p');state.className='form-save-status';state.setAttribute('role','status');state.setAttribute('aria-live','polite');state.hidden=true;form.append(state);

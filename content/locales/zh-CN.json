@@ -1498,5 +1498,14 @@
   "Individual profiles": "个人资料",
   "Photo gallery categories": "照片库类别",
   "Student photos": "学生照片",
-  "Explore without registration": "无需注册即可探索"
+  "Explore without registration": "无需注册即可探索",
+  "Publish photo": "发布照片",
+  "Make private": "设为私密",
+  "School access": "学校访问权限",
+  "School invite code updated.": "学校邀请码已更新。",
+  "Enter a valid password.": "请输入有效密码。",
+  "Save changes ✦": "保存更改 ✦",
+  "Choose a private invite code of at least 12 characters. Enter your password to confirm, then share the code with school members privately.": "请选择至少包含12个字符的私人邀请码。输入密码进行确认，然后私下将邀请码分享给学校成员。",
+  "Search approved activities by interest, age, language, area and date.": "按兴趣、年龄、语言、地区和日期搜索已审核的活动。",
+  "Please refresh the page and try again.": "请刷新页面后重试。"
 }

@@ -1,23 +1,23 @@
-"""Registration-free school project presentation. No accounts or application records are created."""
-import json
-from django.conf import settings
-from .localization import catalog, ACTIVE_LOCALES
+"""Compatibility for previously shared URLs; all actions use the live application."""
 from django.http import Http404
-from django.shortcuts import render
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.views.decorators.http import require_safe
 
 @require_safe
 def presentation(request, section='home', item=''):
-    if section not in {'home','events','activities','detail','family','organizer','creator','saved','finder','calendar','child','crews','admin','safety','about','onboarding'}:
-        raise Http404()
-    project=json.loads((settings.BASE_DIR/'content/project.json').read_text())
-    from .team import prepare_team
-    prepare_team(request.user,project,request)
-    project['roles']={lang:{person['role']:catalog(lang).get(person['role'],person['role']) for person in project['contributors']} for lang in ACTIVE_LOCALES}
-    response=render(request,'community/demo.html',{'demo_section':section,'demo_item':item,'project_credits':project})
-    response['Content-Security-Policy']="default-src 'self'; connect-src 'self'; form-action 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"
-    if any(person.get('upload_html') for person in project['contributors']):
-        response['Content-Security-Policy']=response['Content-Security-Policy'].replace("form-action 'none'", "form-action 'self'")
+    targets={'home':'home','events':'events','activities':'activities','family':'family',
+             'organizer':'organizer','creator':'organizer_new','saved':'saved',
+             'finder':'finder','calendar':'calendar','child':'family','crews':'family',
+             'admin':'staff','safety':'about','about':'about','onboarding':'parent_setup'}
+    if section=='about':
+        from .project_pages import about
+        return about(request)
+    if section=='detail':
+        destination=reverse('detail',args=[int(item)]) if item.isdigit() else reverse('events')
+    elif section in targets:destination=reverse(targets[section])
+    else:raise Http404()
+    query=request.GET.urlencode()
+    response=redirect(destination+('?' + query if query else ''))
     response['Cache-Control']='no-store'
-    response['X-Robots-Tag']='noindex, nofollow'
     return response

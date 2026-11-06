@@ -1,57 +1,41 @@
-from django.test import TestCase, Client
+"""Previously shared URLs lead to the persistent application, with real authorization."""
+import re
+from django.test import TestCase
 from django.contrib.auth.models import User
-from .models import Event,School,Membership,ParentAccount,ChildProfile,Participation,SaveReceipt
-from django.utils import timezone
+from .models import Event,Membership,ParentAccount,ChildProfile,Participation
 
-class PresentationModeTests(TestCase):
-    def test_home_opens_presentation_without_registration(self):
+class LegacyRouteTests(TestCase):
+    def test_public_home_is_the_live_search_not_sample_content(self):
         response=self.client.get('/')
         self.assertEqual(response.status_code,200)
-        self.assertContains(response,'Presentation mode')
-        self.assertContains(response,'No registration')
-        self.assertNotContains(response,'type="password"')
-        self.assertNotContains(response,'type="email"')
-    def test_all_demo_pages_available_without_login(self):
-        for route in ['/demo/','/demo/events/','/demo/activities/','/demo/family/','/demo/organizer/','/demo/organizer/new/','/demo/saved/','/demo/finder/','/demo/events/art-afternoon/']:
+        self.assertContains(response,'Discover. Connect. Belong.')
+        body=re.sub(r'<script.*?</script>','',response.content.decode(),flags=re.S)
+        self.assertNotRegex(body,r'(?i)demo|simulated|fictional|presentation mode')
+        self.assertNotIn('/demo/',body)
+        self.assertContains(response,'/accounts/login/')
+    def test_old_links_preserve_search_and_lead_to_real_pages(self):
+        targets={'':'/','events':'/events/','activities':'/activities/','family':'/family/','organizer':'/organizer/','creator':'/organizer/new/','saved':'/saved/','finder':'/finder/','calendar':'/calendar/','admin':'/staff/','child':'/family/','crews':'/family/','safety':'/about/','onboarding':'/family/setup/'}
+        for section,target in targets.items():
+            route='/demo/'+(section+'/' if section else '')
             with self.subTest(route=route):
-                response=self.client.get(route)
-                self.assertEqual(response.status_code,200)
-                self.assertContains(response,'fictional sample content')
-                self.assertEqual(response['Cache-Control'],'no-store')
-    def test_visiting_demo_creates_no_accounts_or_business_records(self):
-        models=[User,Membership,Event,ParentAccount,ChildProfile,Participation,SaveReceipt]
-        before=[model.objects.count() for model in models]
-        for route in ['/','/demo/family/','/demo/organizer/','/demo/organizer/new/']: self.client.get(route)
-        self.assertEqual(before,[model.objects.count() for model in models])
-    def test_demo_post_cannot_modify_real_data(self):
-        response=self.client.post('/demo/organizer/new/',{'title':'Not a real listing','role':'staff'})
-        self.assertEqual(response.status_code,405)
-        self.assertFalse(Event.objects.filter(title='Not a real listing').exists())
-        self.assertFalse(User.objects.exists())
+                response=self.client.get(route+'?lang=fr&q=art')
+                self.assertEqual(response.status_code,302)
+                self.assertEqual(response.url,target+'?lang=fr&q=art')
+                self.assertEqual(self.client.post(route,{}).status_code,405)
+        self.assertRedirects(self.client.get('/demo/events/art-afternoon/'),'/events/')
+        self.assertEqual(self.client.get('/demo/about/').status_code,200)
+    def test_legacy_routes_cannot_grant_simulated_roles(self):
+        for route in ['/demo/family/','/demo/organizer/','/demo/admin/']:
+            response=self.client.get(route+'?role=admin',follow=True)
+            self.assertIn('/accounts/login/',response.redirect_chain[-1][0])
+            self.assertFalse(Membership.objects.exists())
+    def test_browsing_creates_no_accounts_or_business_records(self):
+        for route in ['/','/demo/family/','/demo/organizer/','/demo/organizer/new/']:
+            self.client.get(route)
+        for model in [User,Membership,Event,ParentAccount,ChildProfile,Participation]:self.assertFalse(model.objects.exists())
     def test_real_parent_and_organizer_permissions_remain_protected(self):
         for route in ['/family/','/organizer/','/organizer/new/','/staff/']:
             response=self.client.get(route)
-            self.assertEqual(response.status_code,302)
-            self.assertIn('/accounts/login/',response.url)
-    def test_authenticated_visitors_do_not_leak_private_profile_into_demo(self):
-        user=User.objects.create_user('private-user',first_name='Private real name')
-        parent=ParentAccount.objects.create(user=user)
-        ChildProfile.objects.create(parent=parent,nickname='Private real child',age_band='9-11')
-        self.client.force_login(user)
-        response=self.client.get('/demo/family/')
-        self.assertNotContains(response,'Private real name')
-        self.assertNotContains(response,'Private real child')
-    def test_live_community_remains_publicly_accessible(self):
-        response=self.client.get('/community/')
-        self.assertEqual(response.status_code,200)
-        self.assertNotContains(response,'id="demo-catalog"')
-    def test_nonexistent_demo_routes_return_404(self):
+            self.assertEqual(response.status_code,302);self.assertIn('/accounts/login/',response.url)
+    def test_unknown_route_stays_not_found(self):
         self.assertEqual(self.client.get('/demo/unknown/').status_code,404)
-
-    def test_final_demo_routes_and_network_boundaries(self):
-        for section in ['child','crews','admin','safety','about','onboarding','creator']:
-            response=self.client.get('/demo/'+section+'/')
-            self.assertEqual(response.status_code,200)
-            self.assertIn("connect-src 'self'",response['Content-Security-Policy'])
-            self.assertIn("form-action 'none'",response['Content-Security-Policy'])
-            self.assertEqual(self.client.post('/demo/'+section+'/',{}).status_code,405)
