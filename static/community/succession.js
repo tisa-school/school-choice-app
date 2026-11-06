@@ -4,6 +4,7 @@
   const running = new Map();
   const preference = matchMedia('(prefers-reduced-motion: reduce)');
   let observer;
+  let currentVisit;
   const reduced = () => {
     let local = false;
     try { local = localStorage.getItem('reduce-motion') === 'true'; } catch (_) {}
@@ -16,6 +17,8 @@
   }
   function scan(root = document, key = location.pathname) {
     clear();
+    // A new route visit may reveal again; state-only renders never call scan.
+    if (currentVisit !== key) { seen.clear(); currentVisit = key; }
     if (reduced() || !('IntersectionObserver' in window)) return;
     const scope = root === document ? document.querySelector('main') : root;
     if (!scope) return;
