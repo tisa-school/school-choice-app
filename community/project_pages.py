@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Q
 from django.http import Http404,HttpResponseForbidden
 from django.shortcuts import render,redirect,get_object_or_404
 from django.utils import timezone
@@ -36,7 +37,12 @@ def feedback(request):
     if request.method=='POST' and form.is_valid():
         item=form.save(False)
         item.submitted_by=request.user if request.user.is_authenticated else None
-        item.school=item.listing.school if item.listing else None
+        if item.listing:item.school=item.listing.school
+        else:
+            from .models import School
+            official=json.loads((settings.BASE_DIR/'content/project.json').read_text())['school']
+            schools=list(School.objects.filter(name__iexact=official)[:2])
+            item.school=schools[0] if len(schools)==1 else None
         item.save()
         return redirect('feedback_received')
     return render(request,'community/feedback.html',{'form':form,'listing':listing})
@@ -44,12 +50,20 @@ def feedback(request):
 @discovery_view
 def feedback_received(request): return render(request,'community/feedback_received.html')
 
+def feedback_scope(member):
+    scope=Q(school=member.school)
+    official=json.loads((settings.BASE_DIR/'content/project.json').read_text())['school']
+    from .models import School
+    if member.school.name.casefold()==official.casefold() and School.objects.filter(name__iexact=official).count()==1:
+        scope|=Q(school__isnull=True,listing__isnull=True)
+    return scope
+
 @login_required
 @discovery_view
 def feedback_inbox(request):
     member=request.member
     if not member or member.role!='staff' or not member.verified: return HttpResponseForbidden('Verified school staff access is required.')
-    rows=Feedback.objects.filter(school=member.school).select_related('listing').order_by('status','-created_at')
+    rows=Feedback.objects.filter(feedback_scope(member)).select_related('listing').order_by('status','-created_at')
     return render(request,'community/feedback_inbox.html',{'feedback_items':rows})
 
 @login_required
@@ -58,7 +72,7 @@ def feedback_inbox(request):
 def feedback_review(request,pk):
     member=request.member
     if not member or member.role!='staff' or not member.verified: return HttpResponseForbidden('Verified school staff access is required.')
-    item=get_object_or_404(Feedback,pk=pk,school=member.school)
+    item=get_object_or_404(Feedback.objects.filter(feedback_scope(member)),pk=pk)
     status=request.POST.get('status')
     if status not in ['reviewed','resolved']: return HttpResponseForbidden('Invalid review status.')
     item.status=status;item.review_note=request.POST.get('note','')[:500];item.reviewed_by=request.user;item.reviewed_at=timezone.now();item.save()

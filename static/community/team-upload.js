@@ -4,11 +4,13 @@ document.addEventListener('submit',async event=>{
  const form=event.target.closest('[data-team-upload]');if(!form)return;
  event.preventDefault();if(form.dataset.busy)return;
  const buttons=[...form.querySelectorAll('button')],status=form.querySelector('[data-upload-status]');
+ const fallback=window.TKZoneI18n?.text('Please refresh the page and try again.')||'Please refresh the page and try again.';
  form.dataset.busy='true';buttons.forEach(button=>button.disabled=true);form.setAttribute('aria-busy','true');status.textContent='…';
  try{
-  const data=new FormData(form);if(event.submitter?.value==='delete'){data.set('action','delete');data.delete('image');}
+  const data=new FormData(form);if(event.submitter?.name==='action'){data.set('action',event.submitter.value);data.delete('image');}
   const response=await fetch(form.getAttribute('action'),{method:'POST',body:data,headers:{'X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'});
   if(response.redirected){window.location.assign(response.url);return;}
+  if(!response.headers.get('content-type')?.includes('application/json'))throw new Error(fallback);
   const result=await response.json();if(!response.ok)throw new Error(result.error||response.statusText);
   const container=form.closest('article')||form.closest('.lead-panel');
   let image=container.querySelector('.team-portrait');
@@ -21,8 +23,12 @@ document.addEventListener('submit',async event=>{
   image.src=result.url+'?v='+Date.now();image.alt=result.description;
   photo={url:result.url,description:result.description};form.querySelector('[data-delete-portrait]').hidden=false;
   }
+  const publicPhoto=result.visibility==='public';
+  form.querySelector('[data-publish-controls]').hidden=result.deleted||publicPhoto;
+  form.querySelector('[data-private-portrait]').hidden=result.deleted||!publicPhoto;
+  form.querySelector('[data-photo-visibility]').textContent=result.deleted?'':result.visibility_label;
   status.textContent=result.message;form.reset();
   document.dispatchEvent(new CustomEvent('team-portrait-updated',{detail:{id:form.dataset.person,photo}}));
- }catch(error){status.textContent=error.message;}
+ }catch(error){status.textContent=error instanceof TypeError?fallback:error.message;}
  finally{delete form.dataset.busy;buttons.forEach(button=>button.disabled=false);form.removeAttribute('aria-busy');}
 });})();

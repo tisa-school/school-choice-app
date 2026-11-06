@@ -1,4 +1,5 @@
 """Real-browser workflow tests. Uses an isolated test database, never seeds the application."""
+import os,shutil
 from datetime import timedelta
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
@@ -24,7 +25,7 @@ class BrowserWorkflows(StaticLiveServerTestCase):
         staff=User.objects.create_user('staff@test.invalid',email='staff@test.invalid',password='BrowserPass!482',first_name='Test Staff')
         Membership.objects.create(user=staff,school=school,role='staff',verified=True)
         with sync_playwright() as p:
-            browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+            browser=p.chromium.launch(executable_path=os.getenv('BROWSER_EXECUTABLE') or shutil.which('chromium'),headless=True,args=['--no-sandbox'])
             page=browser.new_page(viewport={'width':1440,'height':1100})
             page.set_default_timeout(10000)
             errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
@@ -40,7 +41,7 @@ class BrowserWorkflows(StaticLiveServerTestCase):
             page.get_by_role('button',name='Continue →').click()
             page.get_by_label('Description').fill('An isolated browser test event. This is not live school data.')
             page.get_by_role('button',name='Continue →').click()
-            page.get_by_label('Capacity (leave empty for unlimited)').fill('1')
+            page.get_by_label('Maximum total attendees',exact=False).fill('1')
             page.get_by_role('button',name='Continue →').click()
             page.get_by_label('Publication status').select_option('published')
             page.get_by_role('button',name='Save event ✦').click()
@@ -138,7 +139,7 @@ class BrowserFamilyWorkflows(StaticLiveServerTestCase):
         Membership.objects.create(user=staff,school=school,role='staff',verified=True)
         private=Event.objects.create(school=school,created_by=staff,title='Secret school event',category='Arts',description='Private test data',venue='Private',start_at=timezone.now()+timedelta(days=4),status='published')
         with sync_playwright() as p:
-            browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+            browser=p.chromium.launch(executable_path=os.getenv('BROWSER_EXECUTABLE') or shutil.which('chromium'),headless=True,args=['--no-sandbox'])
             page=browser.new_page(viewport={'width':1440,'height':1000});page.set_default_timeout(10000)
             errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(self.live_server_url+'/accounts/login/')
@@ -166,12 +167,12 @@ class BrowserFamilyWorkflows(StaticLiveServerTestCase):
             page.get_by_role('link',name='Add session +').click()
             page.locator('#id_start_at').fill((timezone.now()+timedelta(days=5)).strftime('%Y-%m-%dT15:00'))
             page.locator('#id_end_at').fill((timezone.now()+timedelta(days=5)).strftime('%Y-%m-%dT17:00'))
-            page.get_by_label('Capacity').fill('1')
+            page.get_by_label('Maximum total attendees',exact=False).fill('1')
             page.get_by_role('button',name='Save session ✦').click()
             context=browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True)
             mobile=context.new_page();mobile.set_default_timeout(10000);mobile.on('pageerror',lambda e:errors.append(str(e)))
             response=mobile.goto(self.live_server_url+'/');self.assertEqual(response.status,200)
-            self.assertTrue(mobile.get_by_role('heading',name='Find your crew. Explore your city. Feel at home.',exact=True).is_visible())
+            self.assertTrue(mobile.get_by_role('heading',name='Discover. Connect. Belong.',exact=True).is_visible())
             self.assertFalse(mobile.get_by_text('Secret school event',exact=True).count())
             response=mobile.goto(self.live_server_url+f'/events/{private.pk}/');self.assertEqual(response.status,404)
             mobile.goto(self.live_server_url+'/activities/?age=11&language=en&category=Arts&price=free')
@@ -202,7 +203,7 @@ class BrowserFamilyWorkflows(StaticLiveServerTestCase):
             mobile.reload()
             self.assertTrue(mobile.get_by_text('Confirmed ✦ The organizer has allocated a place for this event or session.',exact=True).is_visible())
             mobile.goto(self.live_server_url+'/finder/')
-            self.assertTrue(mobile.get_by_text('AI assistance is not configured yet.',exact=False).is_visible())
+            self.assertTrue(mobile.get_by_role('button',name='Find matching activities ✦',exact=True).is_visible())
             for width in [390,768,1440]:
                 mobile.set_viewport_size({'width':width,'height':1000})
                 for route in ['/','/events/','/activities/','/family/','/finder/',f'/events/{activity.pk}/']:
@@ -233,7 +234,7 @@ class BrowserOrganizerWorkflows(StaticLiveServerTestCase):
         parent=User.objects.create_user('studio-parent@test.invalid',password='OrganizerBrowser!283')
         account=ParentAccount.objects.create(user=parent);child=ChildProfile.objects.create(parent=account,nickname='Approved test nickname',age_band='9-11')
         with sync_playwright() as p:
-            browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+            browser=p.chromium.launch(executable_path=os.getenv('BROWSER_EXECUTABLE') or shutil.which('chromium'),headless=True,args=['--no-sandbox'])
             page=browser.new_page(viewport={'width':1440,'height':1000});page.set_default_timeout(10000)
             staffpage=browser.new_page(viewport={'width':1440,'height':1000});staffpage.set_default_timeout(10000)
             errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
@@ -264,7 +265,7 @@ class BrowserOrganizerWorkflows(StaticLiveServerTestCase):
             page.get_by_label('Description',exact=False).fill('This is isolated browser test data.')
             page.get_by_label('Contact name').fill('Test studio contact');page.get_by_label('Contact phone').fill('+351 210 123 456');page.get_by_label('Contact website').fill('https://example.org');page.get_by_label('Contact public').check()
             page.get_by_role('button',name='Continue →').click()
-            page.get_by_label('Min age').fill('8');page.get_by_label('Max age').fill('14');page.get_by_label('Languages').fill('en');page.get_by_label('Capacity (leave empty for unlimited)').fill('1')
+            page.get_by_label('Min age').fill('8');page.get_by_label('Max age').fill('14');page.get_by_label('Languages').fill('en');page.get_by_label('Maximum total attendees',exact=False).fill('1')
             page.get_by_role('button',name='Continue →').click()
             page.get_by_role('button',name='Submit for staff review ✦',exact=True).click();page.wait_for_url('**/organizer/')
             page.goto(self.live_server_url+f'/organizer/events/{event.pk}/?preview=1')

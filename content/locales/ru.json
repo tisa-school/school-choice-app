@@ -1498,5 +1498,14 @@
   "Individual profiles": "Индивидуальные профили",
   "Photo gallery categories": "Категории фотогалереи",
   "Student photos": "Студенческие фотографии",
-  "Explore without registration": "Просматривайте без регистрации"
+  "Explore without registration": "Просматривайте без регистрации",
+  "Publish photo": "Опубликовать фото",
+  "Make private": "Сделать приватным",
+  "School access": "Доступ к школе",
+  "School invite code updated.": "Код приглашения школы обновлён.",
+  "Enter a valid password.": "Введите действительный пароль.",
+  "Save changes ✦": "Сохранить изменения ✦",
+  "Choose a private invite code of at least 12 characters. Enter your password to confirm, then share the code with school members privately.": "Выберите закрытый код приглашения длиной не менее 12 символов. Введите пароль для подтверждения, затем передайте код участникам школы лично.",
+  "Search approved activities by interest, age, language, area and date.": "Ищите одобренные занятия по интересам, возрасту, языку, району и дате.",
+  "Please refresh the page and try again.": "Обновите страницу и попробуйте снова."
 }

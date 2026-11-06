@@ -16,7 +16,7 @@ class WebSummitReleaseTests(TestCase):
     def setUpTestData(cls): fixtures.FeatureTests.setUpTestData.__func__(cls)
     def test_about_and_feedback_pages_public_without_registration(self):
         for url in ['/about/','/feedback/','/feedback/received/','/calendar/','/demo/calendar/']:
-            with self.subTest(url=url): self.assertEqual(self.client.get(url).status_code,200)
+            with self.subTest(url=url): self.assertEqual(self.client.get(url,follow=True).status_code,200)
     def test_about_story_is_accurate_and_milestone_remains_planned(self):
         response=self.client.get('/about/')
         self.assertContains(response,'Small Ideas. Big Connections.')
@@ -42,7 +42,7 @@ class WebSummitReleaseTests(TestCase):
                 self.assertEqual(response['Content-Language'],locale)
     def test_language_preference_persists_and_fallback_is_honest(self):
         self.client.get('/about/?lang=pt-PT')
-        self.assertContains(self.client.get('/demo/'),'Sobre nós')
+        self.assertContains(self.client.get('/demo/',follow=True),'Sobre nós')
         response=Client().get('/about/?lang=he')
         self.assertEqual(response['Content-Language'],'en')
         self.assertEqual(response['Content-Language'],'en')

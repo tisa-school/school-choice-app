@@ -1498,5 +1498,14 @@
   "Individual profiles": "व्यक्तिगत प्रोफ़ाइल",
   "Photo gallery categories": "फोटो गैलरी श्रेणियां",
   "Student photos": "छात्र तस्वीरें",
-  "Explore without registration": "पंजीकरण के बिना देखें"
+  "Explore without registration": "पंजीकरण के बिना देखें",
+  "Publish photo": "फ़ोटो प्रकाशित करें",
+  "Make private": "निजी करें",
+  "School access": "स्कूल में प्रवेश",
+  "School invite code updated.": "स्कूल का आमंत्रण कोड अपडेट हो गया।",
+  "Enter a valid password.": "मान्य पासवर्ड दर्ज करें।",
+  "Save changes ✦": "बदलाव सहेजें ✦",
+  "Choose a private invite code of at least 12 characters. Enter your password to confirm, then share the code with school members privately.": "कम से कम 12 अक्षरों वाला निजी आमंत्रण कोड चुनें। पुष्टि के लिए अपना पासवर्ड दर्ज करें, फिर स्कूल के सदस्यों के साथ कोड निजी रूप से साझा करें।",
+  "Search approved activities by interest, age, language, area and date.": "रुचि, आयु, भाषा, क्षेत्र और तिथि के अनुसार स्वीकृत गतिविधियाँ खोजें।",
+  "Please refresh the page and try again.": "कृपया पेज रीफ़्रेश करके फिर से प्रयास करें।"
 }

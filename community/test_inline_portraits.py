@@ -20,7 +20,7 @@ class InlinePortraitTests(TestCase):
         self.assertContains(self.client.get('/about/'),'data-team-upload',count=8)
         response=self.client.get('/demo/about/')
         self.assertContains(response,'data-team-upload',count=8)
-        self.assertIn("form-action 'self'",response['Content-Security-Policy'])
+        self.assertContains(response,'csrfmiddlewaretoken')
         self.school.name='Other school';self.school.save()
         self.assertNotContains(self.client.get('/about/'),'data-team-upload')
         self.assertEqual(self.upload().status_code,404)

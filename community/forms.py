@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from zoneinfo import ZoneInfo
-from .models import Event, Announcement, Collection
+from .models import Event, Announcement, Collection, CATEGORIES
 from .localization import text
 
 class LocalizedFieldsMixin:
@@ -210,3 +210,24 @@ class FamilyBookingForm(LocalizedFieldsMixin,forms.Form):
         data=super().clean()
         if data.get('adults',0)+data.get('children',0)==0: raise ValidationError(text('Enter at least one adult or child.'))
         return data
+
+
+class FinderFiltersForm(LocalizedFieldsMixin,forms.Form):
+    q=forms.CharField(required=False,max_length=100,label='Search')
+    category=forms.ChoiceField(required=False,choices=[('','Any')]+list(CATEGORIES),label='Category')
+    age=forms.IntegerField(required=False,min_value=0,max_value=17,label='Age')
+    language=forms.ChoiceField(required=False,choices=[('','Any language')]+LANGUAGES,label='Language')
+    area=forms.CharField(required=False,max_length=100,label='Area')
+    day=forms.DateField(required=False,label='Date',widget=forms.DateInput(attrs={'type':'date'}))
+    price=forms.ChoiceField(required=False,choices=[('','Any price'),('free','Free'),('paid','Paid'),('unknown','Price unknown')],label='Price')
+
+class SchoolAccessForm(LocalizedFieldsMixin,forms.Form):
+    code=forms.CharField(min_length=12,max_length=128,label='School invite code',widget=forms.PasswordInput)
+    password=forms.CharField(label='Password',widget=forms.PasswordInput)
+    def __init__(self,*args,user,**kwargs):
+        self.user=user
+        super().__init__(*args,**kwargs)
+    def clean_password(self):
+        password=self.cleaned_data['password']
+        if not self.user.check_password(password):raise ValidationError(text('Enter a valid password.'))
+        return password

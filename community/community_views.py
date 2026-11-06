@@ -230,6 +230,28 @@ def team_inline_upload(request,person_id):
         school=School.objects.filter(name__iexact=project['school']).order_by('pk').first()
     if school is None:raise Http404()
     ajax=request.headers.get('X-Requested-With')=='XMLHttpRequest'
+    if request.POST.get('action') in ['publish','private']:
+        public=request.POST['action']=='publish'
+        if public and request.POST.get('publish_consent')!='on':
+            error=text('Confirm permission before sharing photos.')
+            if ajax:return JsonResponse({'error':error},status=400)
+            messages.error(request,error)
+            return redirect('/about/#our-team')
+        with transaction.atomic():
+            School.objects.select_for_update().get(pk=school.pk)
+            photo=TeamPhoto.objects.filter(school=school,name=person['public_name'],is_group=False).order_by('-created_at','-pk').first()
+            if not photo:raise Http404()
+            photo.is_student=photo.is_student or person['group']=='students'
+            photo.visibility='public' if public else 'private'
+            photo.sharing_permission=public
+            photo.guardian_consent=public and (photo.is_student or photo.includes_children)
+            photo.save(update_fields=['is_student','visibility','sharing_permission','guardian_consent'])
+        message=text('Team photo saved.')
+        if ajax:
+            from django.urls import reverse
+            return JsonResponse({'message':message,'url':reverse('protected_photo',args=['team',photo.pk]),'description':photo.description,'visibility':photo.visibility,'visibility_label':text('Public' if public else 'Administrators only')})
+        messages.success(request,message)
+        return redirect('/about/#our-team')
     if request.POST.get('action')=='delete':
         with transaction.atomic():
             School.objects.select_for_update().get(pk=school.pk)
@@ -260,6 +282,6 @@ def team_inline_upload(request,person_id):
     message=text('Team photo saved.')
     if ajax:
         from django.urls import reverse
-        return JsonResponse({'message':message,'url':reverse('protected_photo',args=['team',photo.pk]),'description':photo.description})
+        return JsonResponse({'message':message,'url':reverse('protected_photo',args=['team',photo.pk]),'description':photo.description,'visibility':photo.visibility,'visibility_label':text('Administrators only')})
     messages.success(request,message)
     return redirect('/about/#our-team')

@@ -20,6 +20,7 @@ from .services import request_ticket, decide, cancel, publish_due, notify_school
 from .discovery import discovery_view, visible_events, filter_listings, LANGUAGES, membership
 from .services import express_interest, parent_decision, confirm_participation
 from .persistence import saved_success
+from .localization import text
 from .attendance import confirmed_total
 
 def post_id(request,name):
@@ -81,9 +82,6 @@ def public_events(request):
 
 @discovery_view
 def home(request):
-    if request.path=='/' and not request.user.is_authenticated:
-        from .demo import presentation
-        return presentation(request)
     from .models import FamilyPlan
     listings=public_events(request).filter(is_cancelled=False)
     events=listings.filter(listing_type='event',start_at__gte=timezone.now())
@@ -501,6 +499,7 @@ def organizer_cancel(request,pk):
 @discovery_view
 def finder(request):
     from .finder import interpret,recommendations,FinderUnavailable
+    form=FinderFiltersForm(request.GET or None)
     results=[];error='';preferences=request.POST.get('preferences','')[:500] if request.method=='POST' else '';accepted=request.POST.get('consent')=='on'
     if request.method=='POST':
         if not accepted: error='Confirm that your search contains preferences only, with no names or private information.'
@@ -508,4 +507,18 @@ def finder(request):
         else:
             try: results=recommendations(request.user,interpret(preferences))
             except FinderUnavailable as e: error=str(e)
-    return render(request,'community/finder.html',{'results':results,'error':error,'preferences':preferences,'searched':request.method=='POST' and not error,'ai_configured':bool(settings.AI_API_KEY)})
+    searched=request.method=='POST' and not error
+    if request.method=='GET' and request.GET.get('search')=='1' and form.is_valid():
+        filters={key:(str(value) if value is not None else '') for key,value in form.cleaned_data.items()}
+        results=recommendations(request.user,filters);searched=True
+    return render(request,'community/finder.html',{'form':form,'results':results,'error':error,'preferences':preferences,'searched':searched,'ai_configured':bool(settings.AI_API_KEY)})
+
+@scoped(staff=True)
+def school_access(request):
+    form=SchoolAccessForm(request.POST or None,user=request.user)
+    if request.method=='POST' and form.is_valid():
+        from django.contrib.auth.hashers import make_password
+        School.objects.filter(pk=request.member.school_id).update(invite_code_hash=make_password(form.cleaned_data['code']))
+        saved_success(request,text('School invite code updated.'))
+        return redirect('school_access')
+    return render(request,'community/form.html',{'form':form,'title':'School access','submit':'Save changes ✦','help':text('Choose a private invite code of at least 12 characters. Enter your password to confirm, then share the code with school members privately.')})

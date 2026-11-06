@@ -161,7 +161,7 @@ class FeatureTests(TestCase):
     def test_ai_unavailable_does_not_break_discovery(self):
         with self.assertRaises(FinderUnavailable): interpret('art')
         response=self.client.get('/finder/')
-        self.assertContains(response,'AI assistance is not configured')
+        self.assertContains(response,'name="search"');self.assertContains(response,'Find matching activities')
         self.assertEqual(self.client.get('/activities/').status_code,200)
     def test_ai_never_selects_private_full_or_age_ineligible_listings(self):
         results=recommendations(self.parent,{'age':'11','language':'en','category':'Arts'})

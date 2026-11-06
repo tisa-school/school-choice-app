@@ -1498,5 +1498,14 @@
   "Individual profiles": "Bireysel profiller",
   "Photo gallery categories": "Fotoğraf galerisi kategorileri",
   "Student photos": "Öğrenci fotoğrafları",
-  "Explore without registration": "Kayıt olmadan keşfedin"
+  "Explore without registration": "Kayıt olmadan keşfedin",
+  "Publish photo": "Fotoğrafı yayımla",
+  "Make private": "Gizli yap",
+  "School access": "Okula erişim",
+  "School invite code updated.": "Okul davet kodu güncellendi.",
+  "Enter a valid password.": "Geçerli bir parola girin.",
+  "Save changes ✦": "Değişiklikleri kaydet ✦",
+  "Choose a private invite code of at least 12 characters. Enter your password to confirm, then share the code with school members privately.": "En az 12 karakterli özel bir davet kodu seçin. Onaylamak için parolanızı girin, ardından kodu okul üyeleriyle özel olarak paylaşın.",
+  "Search approved activities by interest, age, language, area and date.": "Onaylanmış etkinlikleri ilgi alanı, yaş, dil, bölge ve tarihe göre arayın.",
+  "Please refresh the page and try again.": "Lütfen sayfayı yenileyip tekrar deneyin."
 }

@@ -1498,5 +1498,14 @@
   "Individual profiles": "الملفات الشخصية الفردية",
   "Photo gallery categories": "فئات معرض الصور",
   "Student photos": "صور الطلاب",
-  "Explore without registration": "استكشف دون تسجيل"
+  "Explore without registration": "استكشف دون تسجيل",
+  "Publish photo": "نشر الصورة",
+  "Make private": "جعلها خاصة",
+  "School access": "الوصول إلى المدرسة",
+  "School invite code updated.": "تم تحديث رمز دعوة المدرسة.",
+  "Enter a valid password.": "أدخل كلمة مرور صالحة.",
+  "Save changes ✦": "حفظ التغييرات ✦",
+  "Choose a private invite code of at least 12 characters. Enter your password to confirm, then share the code with school members privately.": "اختر رمز دعوة خاصًا لا يقل عن 12 حرفًا. أدخل كلمة مرورك للتأكيد، ثم شارك الرمز بشكل خاص مع أعضاء المدرسة.",
+  "Search approved activities by interest, age, language, area and date.": "ابحث عن الأنشطة المعتمدة حسب الاهتمام والعمر واللغة والمنطقة والتاريخ.",
+  "Please refresh the page and try again.": "يرجى تحديث الصفحة والمحاولة مرة أخرى."
 }

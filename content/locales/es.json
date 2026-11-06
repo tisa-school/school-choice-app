@@ -1498,5 +1498,14 @@
   "Individual profiles": "Perfiles individuales",
   "Photo gallery categories": "Categorías de la galería de fotos.",
   "Student photos": "Fotos de estudiantes",
-  "Explore without registration": "Explora sin registrarte"
+  "Explore without registration": "Explora sin registrarte",
+  "Publish photo": "Publicar foto",
+  "Make private": "Hacer privada",
+  "School access": "Acceso a la escuela",
+  "School invite code updated.": "Código de invitación de la escuela actualizado.",
+  "Enter a valid password.": "Introduce una contraseña válida.",
+  "Save changes ✦": "Guardar cambios ✦",
+  "Choose a private invite code of at least 12 characters. Enter your password to confirm, then share the code with school members privately.": "Elige un código de invitación privado de al menos 12 caracteres. Introduce tu contraseña para confirmar y comparte el código en privado con los miembros de la escuela.",
+  "Search approved activities by interest, age, language, area and date.": "Busca actividades aprobadas por interés, edad, idioma, zona y fecha.",
+  "Please refresh the page and try again.": "Actualiza la página e inténtalo de nuevo."
 }
