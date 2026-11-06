@@ -25,7 +25,7 @@ Included journeys:
 - In-memory English/European Portuguese switching across all essential demo content. Existing production English/Portuguese/Turkish catalogs remain available separately.
 - Presenter guide, quick roles, repeatable seeds and confirmed reset.
 
-The demo uses new scoped CSS with the requested violet/dark-violet/light-violet/orange/peach/ink palette. Existing bundled Archivo Black and Inter fonts are reused to avoid external font dependencies and preserve brand familiarity. Serif and monospace fallbacks provide editorial details. Real production pages retain their established visual system.
+The demo uses new scoped CSS with the requested violet/dark-violet/light-violet/orange/peach/ink palette. Archivo, DM Mono, and Source Serif 4 are hosted locally with their OFL licenses. Shared production tokens and typography follow the prospectus palette while preserving existing layouts and functionality. Orange is limited to small decoration; peach provides text on violet surfaces.
 
 ## Succession animation
 
@@ -123,3 +123,7 @@ Once the feature branch is pushed, open a PR through the repository's compare pa
 - `templates/community/studio.html`
 
 Screenshot files are listed above.
+
+## Prospectus and deployment follow-up
+
+The owner subsequently requested deployment to Vercel and confirmed the exact prospectus palette and Archivo / DM Mono / Source Serif 4 fonts. All three fonts are now bundled with their OFL licenses; shared site tokens and presentation typography have been updated. All eight Chromium production/demo workflows passed after this change, including the bilingual viewport matrix. The real Vercel preview build script passed locally again. The owner's follow-up authorizes advancing main for the connected GitHub-to-Vercel pipeline; hosted deployment readiness remains subject to verification in Vercel.
