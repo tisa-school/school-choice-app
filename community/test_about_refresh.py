@@ -28,10 +28,13 @@ class AboutRefreshTests(TestCase):
         self.assertContains(self.client.get('/demo/about/'),url,count=1)
         self.assertEqual(self.client.get(url).status_code,200)
         self.client.logout();self.assertEqual(self.client.get(url).status_code,404)
-    def test_permitted_student_portrait_uses_first_name(self):
+    def test_about_student_names_include_requested_surnames(self):
         photo=self.portrait(name='Sophia Gateneo',is_student=True,visibility='public',sharing_permission=True,guardian_consent=True,description='Student portrait')
         response=self.client.get('/about/');self.assertContains(response,f'/protected-photos/team/{photo.pk}/',count=1)
-        self.assertContains(response,'Sophia');self.assertNotContains(response,'Sophia Gateneo')
+
+        for name in ['Sophia Gateneo','Rosie Markovska','Daniel Vinnikov']:
+            self.assertContains(response,name)
+            self.assertContains(self.client.get('/demo/about/'),name)
     def test_portrait_from_unrelated_school_is_not_attached(self):
         school=School.objects.create(name='Other school',invite_code_hash='test-hash')
         photo=self.portrait(school=school,visibility='public',sharing_permission=True)

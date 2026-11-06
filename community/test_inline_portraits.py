@@ -32,7 +32,7 @@ class InlinePortraitTests(TestCase):
         self.assertEqual(photo.name,'Sophia Gateneo');self.assertTrue(photo.is_student)
         self.assertEqual(photo.visibility,'private');self.assertFalse(photo.sharing_permission)
         body=self.client.get('/about/').content.decode()
-        self.assertLess(body.index(response.json()['url']),body.index('<h3>Sophia</h3>'))
+        self.assertLess(body.index(response.json()['url']),body.index('<h3>Sophia Gateneo</h3>'))
         self.client.logout();self.assertEqual(self.client.get(response.json()['url']).status_code,404)
     def test_replacement_reuses_profile_and_revokes_old_sharing(self):
         photo=self.portrait(visibility='public',sharing_permission=True)
