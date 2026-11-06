@@ -5,7 +5,7 @@
   "A little more about it.": "Saiba um pouco mais.",
   "A little space for something good.": "Um espaço para algo bom.",
   "A new city. A place to belong.": "Uma nova cidade. Um lugar para pertencer.",
-  "A student-led project at TISA Lisbon, helping international families discover activities and feel part of their community.": "Um projeto de alunos da TISA em Lisboa, que ajuda famílias internacionais a descobrir atividades e a sentir-se parte da comunidade.",
+  "A student-led project at TISA Lisbon, helping international families discover activities and feel part of their community.": "Um projeto de alunos da Unicorn School em Lisboa, que ajuda famílias internacionais a descobrir atividades e a sentir-se parte da comunidade.",
   "About Our Team": "Sobre a nossa equipa",
   "About Us": "Sobre nós",
   "Accessibility": "Acessibilidade",
@@ -266,7 +266,7 @@
   "Switch to organizer view": "Mudar para vista de organizador",
   "TECH WEEK · EXPERIENCE THE IDEA": "TECH WEEK · EXPERIMENTE A IDEIA",
   "TECH WEEK · TRY IT YOURSELF": "TECH WEEK · EXPERIMENTE",
-  "TISA Student Development Team": "Equipa de desenvolvimento de alunos da TISA",
+  "TISA Student Development Team": "Equipa de desenvolvimento de alunos da Unicorn School",
   "TRY A DEMO REQUEST": "EXPERIMENTE UM PEDIDO",
   "TRY TK-ZONE": "EXPERIMENTE O TK-ZONE",
   "Tech Week presentation · sample data only": "Apresentação da Tech Week · apenas dados de exemplo",
@@ -305,5 +305,10 @@
   "Your school. Your city. Your community.": "A sua escola. A sua cidade. A sua comunidade.",
   "Your search results": "Resultados da pesquisa",
   "activity": "atividade",
-  "event": "evento"
+  "event": "evento",
+  "Student developer": "Aluno programador",
+  "Project Lead & STEAM Mentor": "Líder do projeto e mentora STEAM",
+  "Project Coordination": "Coordenação do projeto",
+  "School Leadership": "Direção da escola",
+  "Unicorn School Student Development Team": "Equipa de alunos da Unicorn School"
 }

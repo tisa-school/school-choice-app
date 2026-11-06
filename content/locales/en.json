@@ -5,7 +5,7 @@
   "A little more about it.": "A little more about it.",
   "A little space for something good.": "A little space for something good.",
   "A new city. A place to belong.": "A new city. A place to belong.",
-  "A student-led project at TISA Lisbon, helping international families discover activities and feel part of their community.": "A student-led project at TISA Lisbon, helping international families discover activities and feel part of their community.",
+  "A student-led project at TISA Lisbon, helping international families discover activities and feel part of their community.": "A student-led project at Unicorn School, helping international families discover activities and feel part of their community.",
   "About Our Team": "About Our Team",
   "About Us": "About Us",
   "Accessibility": "Accessibility",
@@ -266,7 +266,7 @@
   "Switch to organizer view": "Switch to organizer view",
   "TECH WEEK · EXPERIENCE THE IDEA": "TECH WEEK · EXPERIENCE THE IDEA",
   "TECH WEEK · TRY IT YOURSELF": "TECH WEEK · TRY IT YOURSELF",
-  "TISA Student Development Team": "TISA Student Development Team",
+  "TISA Student Development Team": "Unicorn School Student Development Team",
   "TRY A DEMO REQUEST": "TRY A DEMO REQUEST",
   "TRY TK-ZONE": "TRY TK-ZONE",
   "Tech Week presentation · sample data only": "Tech Week presentation · sample data only",
@@ -305,5 +305,10 @@
   "Your school. Your city. Your community.": "Your school. Your city. Your community.",
   "Your search results": "Your search results",
   "activity": "activity",
-  "event": "event"
+  "event": "event",
+  "Student developer": "Student developer",
+  "Project Lead & STEAM Mentor": "Project Lead & STEAM Mentor",
+  "Project Coordination": "Project Coordination",
+  "School Leadership": "School Leadership",
+  "Unicorn School Student Development Team": "Unicorn School Student Development Team"
 }

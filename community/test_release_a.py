@@ -24,7 +24,7 @@ class WebSummitReleaseTests(TestCase):
         self.assertContains(response,'12 November 2026')
         self.assertContains(response,'Planned milestone')
         self.assertContains(response,'without claiming a commercial partnership')
-        self.assertContains(response,'Theodore International Start-Up Academy')
+        self.assertContains(response,'Unicorn School')
     def test_public_contributor_cards_follow_approved_content_config(self):
         response=self.client.get('/about/')
         data=json.loads((settings.BASE_DIR/'content/project.json').read_text())

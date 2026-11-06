@@ -8,6 +8,13 @@ from community.forms import EmailLoginForm
 urlpatterns=[
 path('about/',project.about,name='about'),path('feedback/',project.feedback,name='feedback'),path('feedback/received/',project.feedback_received,name='feedback_received'),path('calendar/',project.event_calendar,name='calendar'),path('staff/feedback/',project.feedback_inbox,name='feedback_inbox'),path('staff/feedback/<int:pk>/',project.feedback_review,name='feedback_review'),
 path('demo/',presentation,name='demo_home'),
+path('demo/creator/',presentation,{'section':'creator'}),
+path('demo/child/',presentation,{'section':'child'}),
+path('demo/crews/',presentation,{'section':'crews'}),
+path('demo/admin/',presentation,{'section':'admin'}),
+path('demo/safety/',presentation,{'section':'safety'}),
+path('demo/about/',presentation,{'section':'about'}),
+path('demo/onboarding/',presentation,{'section':'onboarding'}),
 path('demo/events/',presentation,{'section':'events'},name='demo_events'),
 path('demo/activities/',presentation,{'section':'activities'},name='demo_activities'),
 path('demo/events/<slug:item>/',presentation,{'section':'detail'},name='demo_detail'),

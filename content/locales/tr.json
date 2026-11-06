@@ -5,7 +5,7 @@
   "A little more about it.": "Biraz daha yakından tanıyın.",
   "A little space for something good.": "Güzel şeyler için biraz alan.",
   "A new city. A place to belong.": "Yeni bir şehir. Ait olunacak bir yer.",
-  "A student-led project at TISA Lisbon, helping international families discover activities and feel part of their community.": "Uluslararası ailelerin aktiviteleri keşfetmesine ve topluluğa ait hissetmesine yardımcı olan, TISA Lizbon öğrencilerinin projesi.",
+  "A student-led project at TISA Lisbon, helping international families discover activities and feel part of their community.": "Uluslararası ailelerin aktiviteleri keşfetmesine ve topluluğa ait hissetmesine yardımcı olan, Unicorn School öğrencilerinin projesi.",
   "About Our Team": "Ekibimiz hakkında",
   "About Us": "Hakkımızda",
   "Accessibility": "Erişilebilirlik",
@@ -266,7 +266,7 @@
   "Switch to organizer view": "Düzenleyici görünümüne geç",
   "TECH WEEK · EXPERIENCE THE IDEA": "TECH WEEK · FİKRİ DENEYİMLEYİN",
   "TECH WEEK · TRY IT YOURSELF": "TECH WEEK · KENDİNİZ DENEYİN",
-  "TISA Student Development Team": "TISA öğrenci geliştirme ekibi",
+  "TISA Student Development Team": "Unicorn School öğrenci geliştirme ekibi",
   "TRY A DEMO REQUEST": "BİR DEMO TALEBİ DENEYİN",
   "TRY TK-ZONE": "TK-ZONE’U DENEYİN",
   "Tech Week presentation · sample data only": "Tech Week sunumu · yalnızca örnek veriler",
@@ -305,5 +305,10 @@
   "Your school. Your city. Your community.": "Okulunuz. Şehriniz. Topluluğunuz.",
   "Your search results": "Arama sonuçlarınız",
   "activity": "aktivite",
-  "event": "etkinlik"
+  "event": "etkinlik",
+  "Student developer": "Öğrenci geliştirici",
+  "Project Lead & STEAM Mentor": "Proje Lideri ve STEAM Mentoru",
+  "Project Coordination": "Proje Koordinasyonu",
+  "School Leadership": "Okul Yönetimi",
+  "Unicorn School Student Development Team": "Unicorn School Öğrenci Geliştirme Ekibi"
 }

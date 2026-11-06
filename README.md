@@ -157,11 +157,11 @@ Anonymous visitors to `/` now see the interactive presentation. `/demo/` is its 
 - Parent view: `/demo/family/` — fictional profiles, sample requests, simulated parent approval, and status tracking.
 - Organizer view: `/demo/organizer/` — post/edit a sample event, preview a local image, choose date/time/place/interests/contact details, and simulate attendee confirmation or cancellation.
 - Events, Activities, Saved, and Activity Finder are also available under `/demo/`. The finder is explicitly a simulated keyword-based demonstration, not a live AI service.
-- Changes persist only in that browser's localStorage under `tkzone-techweek-v1`. The visible save status says **saved in this browser**, never saved to the real database. If storage is unavailable or full, the app explains that persistence failed instead of claiming success.
+- Presentation changes now remain in memory only: no localStorage, cookies, API requests, email, or database writes. Reloading or Reset Demo clears the session. See [Final presentation release](docs/TECH_WEEK_FINAL.md) for the updated flow and checks.
 - **Reset demo** restores the fictional examples for the next visitor. It does not clear real account sessions, application records, or accessibility preferences.
 
 All sample content is marked Demo and does not advertise real events, venues, capacity, organizer verification, or confirmed bookings. Visitors are instructed to use invented names. No real accounts are provisioned, no emails are sent, and no server-side event or family records are created by the demonstration. Real account authorization, staff verification, and parent password checks remain intact on the live routes.
 
 `/community/` continues to expose the real public community listings; signed-in users retain their normal homepage at `/`. The presentation links are visible in the live UI too. No new environment variables or migrations are needed. Share `/demo/` at Tech Week for a consistent registration-free entry point on any device.
 
-`community.test_demo` and the presentation browser workflow test public access, separation from real private data, role switching, browser-only posting, approval simulation, persistence, reset, and isolation between visitors.
+`community.test_demo` and the presentation browser workflow test public access, separation from real private data, role switching, browser-only posting, approval simulation, reset, and isolation between visitors. The final demo browser suite is `community.browser_demo_final`.

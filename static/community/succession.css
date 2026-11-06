@@ -1,0 +1,4 @@
+/* Visible by default: only the JS-ready class enables an entrance. */
+@keyframes succession-enter{from{opacity:0;transform:scale(.96);filter:blur(3px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+.succession-enter{animation:succession-enter var(--reveal-duration,560ms) cubic-bezier(.22,1,.36,1) both;animation-delay:var(--reveal-delay,0ms)}
+@media(prefers-reduced-motion:reduce){.succession-enter{animation:none!important;opacity:1!important;transform:none!important;filter:none!important}}
