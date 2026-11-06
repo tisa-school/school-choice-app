@@ -1,5 +1,7 @@
 # Web Summit Release A
 
+Historical release notes. The later [Tech Week final presentation release](TECH_WEEK_FINAL.md) supersedes the demo storage model and team-credit defaults described below.
+
 This release extends the existing Django application and preserves its PostgreSQL, organizer moderation, family, ticketing, saved-data status, and registration-free Tech Week demo workflows. No Gmail integration or new email registration requirement was added.
 
 ## Included
