@@ -307,8 +307,11 @@
   "activity": "atividade",
   "event": "evento",
   "Student developer": "Aluno programador",
-  "Project Lead & STEAM Mentor": "Líder do projeto e mentora STEAM",
+  "Project Lead & STEAM Mentor": "Liderança do projeto e mentoria STEAM",
   "Project Coordination": "Coordenação do projeto",
   "School Leadership": "Direção da escola",
-  "Unicorn School Student Development Team": "Equipa de alunos da Unicorn School"
+  "Unicorn School Student Development Team": "Equipa de alunos da Unicorn School",
+  "Student Contributors": "Contributos dos alunos",
+  "Project Lead": "Liderança do projeto",
+  "STEAM Mentor": "Mentoria STEAM"
 }

@@ -5,59 +5,51 @@
     {
       "id": "student-1",
       "public_name": "Sophia Gateneo",
-      "role": "Student developer",
-      "placeholder": "Sophia Gateneo",
+      "role": "Student Contributors",
       "group": "students"
     },
     {
       "id": "student-2",
       "public_name": "Rosie Markovska",
-      "role": "Student developer",
-      "placeholder": "Rosie Markovska",
+      "role": "Student Contributors",
       "group": "students"
     },
     {
       "id": "student-3",
       "public_name": "Daniel Vinnikov",
-      "role": "Student developer",
-      "placeholder": "Daniel Vinnikov",
+      "role": "Student Contributors",
       "group": "students"
     },
     {
       "id": "lead",
       "public_name": "Zehra Yilmaz",
       "role": "Project Lead & STEAM Mentor",
-      "group": "lead",
-      "placeholder": "Zehra Yilmaz"
+      "group": "lead"
     },
     {
       "id": "coordination",
       "public_name": "Lucas Alves",
       "role": "Project Coordination",
-      "group": "support",
-      "placeholder": "Lucas Alves"
+      "group": "coordination"
     },
     {
       "id": "leadership-1",
       "public_name": "Artem Tolmachev",
       "role": "School Leadership",
-      "group": "support",
-      "placeholder": "Artem Tolmachev"
+      "group": "leadership"
     },
     {
       "id": "leadership-2",
       "public_name": "Karina Medvedeva",
       "role": "School Leadership",
-      "group": "support",
-      "placeholder": "Karina Medvedeva"
+      "group": "leadership"
     },
     {
       "id": "leadership-3",
       "public_name": "Anna Kupavtseva",
       "role": "School Leadership",
-      "group": "support",
-      "placeholder": "Anna Kupavtseva"
+      "group": "leadership"
     }
   ],
-  "publication_note": "Exact project credits supplied by the project owner. No personal biographies or student photographs."
+  "publication_note": "Names and roles supplied for the About Us page. No photographs or contact details."
 }
