@@ -38,7 +38,7 @@ class FeatureTests(TestCase):
     def test_guest_opens_home_events_and_activities_without_login(self):
         for route in ['/','/events/','/activities/','/finder/',f'/events/{self.event.pk}/']:
             with self.subTest(route=route): self.assertEqual(self.client.get(route).status_code,200)
-        self.assertContains(self.client.get('/'),'Your next')
+        self.assertContains(self.client.get('/'),'Discover')
     def test_private_listings_hidden_in_html_direct_urls_and_ai(self):
         self.assertNotContains(self.client.get('/'),'Private school test event')
         self.assertEqual(self.client.get(f'/events/{self.private.pk}/').status_code,404)

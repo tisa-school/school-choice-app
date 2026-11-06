@@ -1,0 +1,14 @@
+{
+  "school": "Theodore International Start-Up Academy (TISA), Lisbon",
+  "presentation_date": "2026-11-12",
+  "contributors": [
+    {"id":"student-1","public_name":"","role":"Student Creator","placeholder":"Student contributor 1","group":"students"},
+    {"id":"student-2","public_name":"","role":"Student Creator","placeholder":"Student contributor 2","group":"students"},
+    {"id":"student-3","public_name":"","role":"Student Creator","placeholder":"Student contributor 3","group":"students"},
+    {"id":"lead","public_name":"","role":"Project Lead & Educator","placeholder":"Our project lead","group":"lead"},
+    {"id":"stem","public_name":"","role":"STEM Supervisor & Technical Mentor","placeholder":"Our STEM mentor","group":"support"},
+    {"id":"coordination","public_name":"","role":"Project Support & Coordination","placeholder":"Project coordination","group":"support"},
+    {"id":"leadership","public_name":"","role":"School Leadership & Project Support","placeholder":"School leadership","group":"support"}
+  ],
+  "publication_note":"Display names remain blank until school and parental publication permissions are confirmed. No student photos, surnames, ages, or contact details are stored here."
+}

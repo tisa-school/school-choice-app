@@ -44,6 +44,15 @@ def filter_listings(queryset, values):
     if language in dict(LANGUAGES): queryset=queryset.filter(languages__regex=rf'(^|,){language}(,|$)')
     area=values.get('area','').strip()[:100]
     if area: queryset=queryset.filter(area__icontains=area)
+    environment=values.get('environment','')
+    if environment in ['indoor','outdoor','mixed']: queryset=queryset.filter(activity_environment=environment)
+    if values.get('available')=='1':
+        ids=[]
+        for event in queryset:
+            if event.listing_type=='event' and event.eligible: ids.append(event.pk)
+            elif event.listing_type=='activity' and not event.is_cancelled and event.ticket_requests_enabled and (not event.requests_close_at or event.requests_close_at>timezone.now()):
+                if any(session.remaining!=0 for session in event.sessions.filter(is_cancelled=False,start_at__gt=timezone.now())): ids.append(event.pk)
+        queryset=queryset.filter(pk__in=ids)
     price=values.get('price','')
     if price=='free': queryset=queryset.filter(price_amount=0)
     elif price=='paid': queryset=queryset.filter(price_amount__gt=0)

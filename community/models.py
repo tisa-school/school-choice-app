@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
 from django.utils import timezone
 
-CATEGORIES = [('Sports','Sports'),('Music','Music'),('Arts','Arts'),('School Life','School Life'),('Science','Science'),('Nature','Nature'),('Coding','Coding'),('Games','Games')]
+CATEGORIES = [('Sports','Sports'),('Music','Music'),('Arts','Arts'),('School Life','School Life'),('Science','Science'),('Nature','Nature'),('Coding','Coding'),('Games','Games'),('Gaming','Gaming'),('Shopping','Shopping'),('Theater & Drama','Theater & Drama')]
 class School(models.Model):
     name = models.CharField(max_length=160)
     invite_code_hash = models.CharField(max_length=256)
@@ -27,6 +27,7 @@ class Event(models.Model):
     max_age = models.PositiveSmallIntegerField(null=True, blank=True)
     languages = models.CharField(max_length=120, blank=True, help_text='Comma-separated language codes: en, pt, fr, es, de, it, nl')
     area = models.CharField(max_length=100, blank=True)
+    activity_environment = models.CharField(max_length=12, choices=[('unspecified','Not supplied'),('indoor','Indoor'),('outdoor','Outdoor'),('mixed','Indoor and outdoor')], default='unspecified')
     price_amount = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     supervision = models.TextField(blank=True)
     accessibility = models.TextField(blank=True)
@@ -211,3 +212,15 @@ class OrganizerApplication(models.Model):
     reviewed_at = models.DateTimeField(null=True, blank=True)
     decision_note = models.CharField(max_length=500, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class Feedback(models.Model):
+    kind = models.CharField(max_length=12, choices=[('feedback','General feedback'),('suggestion','Suggest an activity'),('report','Report a listing')])
+    message = models.TextField(max_length=2000)
+    listing = models.ForeignKey(Event, null=True, blank=True, on_delete=models.SET_NULL)
+    school = models.ForeignKey(School, null=True, blank=True, on_delete=models.SET_NULL)
+    submitted_by = models.ForeignKey(User, null=True, blank=True, related_name='submitted_feedback', on_delete=models.SET_NULL)
+    status = models.CharField(max_length=12, choices=[('new','New'),('reviewed','Reviewed'),('resolved','Resolved')], default='new')
+    reviewed_by = models.ForeignKey(User, null=True, blank=True, related_name='reviewed_feedback', on_delete=models.SET_NULL)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_note = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True,db_index=True)

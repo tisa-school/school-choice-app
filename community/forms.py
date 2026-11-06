@@ -6,8 +6,18 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from zoneinfo import ZoneInfo
 from .models import Event, Announcement, Collection
+from .localization import text
 
-class SignupForm(UserCreationForm):
+class LocalizedFieldsMixin:
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        for field in self.fields.values():
+            if field.label: field.label=text(field.label)
+            if field.help_text: field.help_text=text(field.help_text)
+            if isinstance(field,forms.ChoiceField) and not isinstance(field,forms.ModelChoiceField): field.choices=[(value,text(label)) for value,label in field.choices]
+
+
+class SignupForm(LocalizedFieldsMixin,UserCreationForm):
     name=forms.CharField(max_length=100,label='Your name')
     email=forms.EmailField(max_length=150)
     class Meta:
@@ -20,17 +30,17 @@ class SignupForm(UserCreationForm):
         user.first_name=self.cleaned_data['name']
         if commit: user.save()
         return user
-class EmailLoginForm(AuthenticationForm):
+class EmailLoginForm(LocalizedFieldsMixin,AuthenticationForm):
     username=forms.EmailField(label='Email')
     def clean_username(self): return self.cleaned_data['username'].strip().lower()
-class JoinForm(forms.Form):
+class JoinForm(LocalizedFieldsMixin,forms.Form):
     school=forms.ModelChoiceField(queryset=None,empty_label='Choose your school')
     code=forms.CharField(label='School invite code',widget=forms.PasswordInput)
     def __init__(self,*args,**kwargs):
         from .models import School
         super().__init__(*args,**kwargs)
         self.fields['school'].queryset=School.objects.order_by('name')
-class ImageValidationMixin:
+class ImageValidationMixin(LocalizedFieldsMixin):
     def clean_image(self):
         image=self.cleaned_data.get('image')
         if image and hasattr(image,'content_type'):
@@ -48,7 +58,7 @@ class ImageValidationMixin:
 class EventForm(ImageValidationMixin,forms.ModelForm):
     class Meta:
         model=Event
-        fields=['title','listing_type','visibility','identity_verified','category','image','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','price_text','requests_close_at','status']
+        fields=['title','listing_type','visibility','identity_verified','category','image','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','activity_environment','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','price_text','requests_close_at','status']
         widgets={**{k:forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}) for k in ['start_at','end_at','requests_close_at']},'image':forms.FileInput(attrs={'accept':'image/jpeg,image/png,image/webp'})}
         labels={'identity_verified':'Organizer identity checked by staff (not a safety guarantee)','start_at':'Start at / first activity date','capacity':'Capacity (leave empty for unlimited)','price_text':'Price information (optional)','status':'Publication status'}
     def __init__(self,*args,**kwargs):
@@ -57,12 +67,12 @@ class EventForm(ImageValidationMixin,forms.ModelForm):
         if zone:
             try: timezone.activate(ZoneInfo(zone))
             except (ValueError,KeyError): pass
-        for name in ['listing_type','visibility','time_zone']:
+        for name in ['listing_type','visibility','time_zone','activity_environment']:
             if name in self.fields: self.fields[name].required=False
-        if 'status' in self.fields: self.fields['status'].choices=[('draft','Draft'),('published','Published')]
+        if 'status' in self.fields: self.fields['status'].choices=[('draft',text('Draft')),('published',text('Published'))]
     def clean(self):
         data=super().clean()
-        for name,default in [('listing_type','event'),('visibility','school'),('time_zone','Europe/Lisbon')]:
+        for name,default in [('listing_type','event'),('visibility','school'),('time_zone','Europe/Lisbon'),('activity_environment','unspecified')]:
             if not data.get(name): data[name]=getattr(self.instance,name,None) or default
         try: ZoneInfo(data['time_zone'])
         except (ValueError,KeyError): self.add_error('time_zone','Enter a valid IANA time zone, such as Europe/Lisbon.')
@@ -97,11 +107,11 @@ class AnnouncementForm(ImageValidationMixin,forms.ModelForm):
         data=super().clean()
         if data.get('status')=='scheduled' and (not data.get('scheduled_for') or data['scheduled_for']<=timezone.now()): self.add_error('scheduled_for','Choose a future publication date in your school time zone.')
         return data
-class CollectionForm(forms.ModelForm):
+class CollectionForm(LocalizedFieldsMixin,forms.ModelForm):
     class Meta:
         model=Collection
         fields=['name','cover_style']
-class ProfileForm(forms.ModelForm):
+class ProfileForm(LocalizedFieldsMixin,forms.ModelForm):
     class Meta:
         model=User
         fields=['first_name','last_name']
@@ -110,17 +120,17 @@ class ProfileForm(forms.ModelForm):
 from .models import ChildProfile, ActivitySession, FamilyPlan
 from .discovery import LANGUAGES
 
-class ParentSetupForm(forms.Form):
+class ParentSetupForm(LocalizedFieldsMixin,forms.Form):
     guardian_consent = forms.BooleanField(label='I am an adult parent or legal guardian and will manage these child profiles and participation decisions.')
 
-class ChildProfileForm(forms.ModelForm):
+class ChildProfileForm(LocalizedFieldsMixin,forms.ModelForm):
     class Meta:
         model=ChildProfile
         fields=['nickname','age_band','interests','languages']
         labels={'languages':'Preferred languages (codes, for example en, pt)'}
     def clean_languages(self): return normalize_languages(self.cleaned_data.get('languages',''))
 
-class SessionForm(forms.ModelForm):
+class SessionForm(LocalizedFieldsMixin,forms.ModelForm):
     class Meta:
         model=ActivitySession
         fields=['start_at','end_at','capacity','venue','is_cancelled']
@@ -152,7 +162,7 @@ class OrganizerSubmissionForm(EventForm):
         return data
 
 from .models import OrganizerApplication
-class OrganizerApplicationForm(forms.ModelForm):
+class OrganizerApplicationForm(LocalizedFieldsMixin,forms.ModelForm):
     adult_consent=forms.BooleanField(label='I am an adult authorized to represent this organization. I understand that staff must review my application before I can submit listings.')
     class Meta:
         model=OrganizerApplication
@@ -167,3 +177,23 @@ class OrganizerApplicationForm(forms.ModelForm):
         phone=self.cleaned_data['phone']
         if not re.fullmatch(r'[+0-9 ()\-x.]{6,40}',phone): raise ValidationError('Use a valid business phone number.')
         return phone
+
+from .models import Feedback
+class FeedbackForm(LocalizedFieldsMixin,forms.ModelForm):
+    consent=forms.BooleanField(label='I understand this message will be stored for project review. I have not included names, contact details, or private information about children.')
+    website=forms.CharField(required=False,widget=forms.HiddenInput)
+    class Meta:
+        model=Feedback
+        fields=['kind','listing','message']
+        widgets={'listing':forms.HiddenInput,'message':forms.Textarea(attrs={'rows':6,'maxlength':2000})}
+        labels={'kind':'What would you like to share?','message':'Your message'}
+    def __init__(self,*args,user=None,**kwargs):
+        super().__init__(*args,**kwargs)
+        from .discovery import visible_events
+        from django.contrib.auth.models import AnonymousUser
+        self.fields['listing'].queryset=visible_events(user or AnonymousUser())
+    def clean(self):
+        data=super().clean()
+        if data.get('website'): raise ValidationError(text('Please try again without the extra field.'))
+        if data.get('kind')=='report' and not data.get('listing'): self.add_error('listing',text('Choose a visible listing to report.'))
+        return data

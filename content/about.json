@@ -1,0 +1,236 @@
+{
+  "en": {
+    "eyebrow": "STUDENT-LED · TISA LISBON · WEB SUMMIT 2026",
+    "title": "Small Ideas. Big Connections.",
+    "intro": "Meet the students and educators building TK-Zone — helping international children and families discover activities, connect with their community, and feel at home in Lisbon.",
+    "mission_title": "Every child deserves a place to belong.",
+    "mission": "We believe every child deserves the opportunity to feel welcome, make meaningful connections, and discover exciting experiences, wherever they live. TK-Zone helps international families explore Lisbon through activities that encourage inclusion, curiosity, and community.",
+    "story_title": "A real question became a shared project.",
+    "question": "How can we help international children moving to Lisbon make friends, discover activities, and feel part of a new community?",
+    "story": [
+      [
+        "The challenge",
+        "Moving country can make it harder to find friends, understand local opportunities, and feel welcome."
+      ],
+      [
+        "The research",
+        "Students explored the problem, prepared surveys, and interviewed a relocation expert from Moviinn on 16 October 2026. We do not present uncollected survey results as findings."
+      ],
+      [
+        "The idea",
+        "Build an easy-to-use platform connecting families with activities and community opportunities."
+      ],
+      [
+        "The development",
+        "Students began designing, coding, and testing a working web application with educators and technical mentors."
+      ],
+      [
+        "The presentation",
+        "The team is preparing to present the project at Web Summit on 12 November 2026. This milestone is planned, not claimed as completed."
+      ]
+    ],
+    "students_title": "Meet our student innovators.",
+    "students_intro": "Three equal contributors. One shared mission.",
+    "student_bio": "The student team shares the work of research, surveys, brainstorming, design, coding, testing, and preparing the presentation. No individual specialist achievement is claimed.",
+    "lead_title": "Guidance that makes room for young ideas.",
+    "lead_bio": "An educator and project lead at Theodore International Start-Up Academy in Lisbon guides the student team in combining entrepreneurship, technology, creativity, and collaborative problem-solving to address a challenge faced by international families.",
+    "credits_note": "Contributor display names are configurable. Until publication permissions are confirmed, public cards use role-based labels and abstract avatars, without identifiable student information.",
+    "mentors_title": "Supported by a community of educators.",
+    "research_title": "Research contribution: Moviinn",
+    "research_bio": "The team interviewed an expert from the Lisbon relocation organization Moviinn on 16 October 2026. We acknowledge this research contribution without claiming a commercial partnership, sponsorship, or endorsement.",
+    "journey_title": "From a question to a working idea.",
+    "milestones": [
+      [
+        "October 2026",
+        "Research, planning, and survey development"
+      ],
+      [
+        "16 October 2026",
+        "Interview with a Moviinn relocation expert"
+      ],
+      [
+        "October 2026",
+        "Initial application design and development"
+      ],
+      [
+        "Early November 2026",
+        "GitHub and Vercel development workflow"
+      ],
+      [
+        "12 November 2026",
+        "Planned Web Summit presentation"
+      ]
+    ],
+    "learning_title": "Learning through innovation.",
+    "learning": "Students are developing skills in coding, research, entrepreneurship, teamwork, creative problem-solving, planning, and public communication. Their learning is part of the product story.",
+    "vision_title": "A little further, together.",
+    "vision": [
+      "Broader Lisbon activity coverage",
+      "More family-friendly events",
+      "Improved personalized discovery",
+      "Community collaborations",
+      "Multilingual accessibility",
+      "A possible mobile application",
+      "Possible expansion beyond Lisbon"
+    ],
+    "vision_note": "These are future goals, not claims of delivered functionality.",
+    "cta": "Discover Lisbon. Find Your Community.",
+    "tagline": "Created by young minds. Built for meaningful connections."
+  },
+  "pt-PT": {
+    "eyebrow": "PROJETO DE ALUNOS · TISA LISBOA · WEB SUMMIT 2026",
+    "title": "Pequenas Ideias. Grandes Ligações.",
+    "intro": "Conheça os alunos e educadores que estão a criar o TK-Zone — para ajudar crianças e famílias internacionais a descobrir atividades, conhecer a comunidade e sentir-se em casa em Lisboa.",
+    "mission_title": "Todas as crianças merecem sentir que pertencem.",
+    "mission": "Acreditamos que todas as crianças merecem sentir-se bem-vindas, criar ligações e descobrir novas experiências, onde quer que vivam. O TK-Zone ajuda famílias internacionais a explorar Lisboa através de atividades que promovem a inclusão, a curiosidade e a comunidade.",
+    "story_title": "Uma pergunta real tornou-se um projeto partilhado.",
+    "question": "Como podemos ajudar as crianças internacionais que chegam a Lisboa a fazer amigos, descobrir atividades e sentir-se parte de uma nova comunidade?",
+    "story": [
+      [
+        "O desafio",
+        "Mudar de país pode tornar mais difícil fazer amigos, conhecer as oportunidades locais e sentir-se bem-vindo."
+      ],
+      [
+        "A investigação",
+        "Os alunos exploraram o problema, prepararam inquéritos e entrevistaram uma especialista em relocalização da Moviinn em 16 de outubro de 2026. Não apresentamos como resultados respostas que ainda não foram recolhidas."
+      ],
+      [
+        "A ideia",
+        "Criar uma plataforma simples que ligue as famílias a atividades e oportunidades na comunidade."
+      ],
+      [
+        "O desenvolvimento",
+        "Os alunos começaram a desenhar, programar e testar uma aplicação Web funcional, com o apoio de educadores e mentores técnicos."
+      ],
+      [
+        "A apresentação",
+        "A equipa está a preparar a apresentação do projeto no Web Summit, em 12 de novembro de 2026. É uma etapa planeada, não apresentada como concluída."
+      ]
+    ],
+    "students_title": "Conheça os nossos jovens inovadores.",
+    "students_intro": "Três contributos de igual valor. Uma missão comum.",
+    "student_bio": "A equipa de alunos partilha a investigação, os inquéritos, as ideias, o desenho, a programação, os testes e a preparação da apresentação. Não são atribuídos feitos especializados individuais.",
+    "lead_title": "Orientação que dá espaço às ideias dos alunos.",
+    "lead_bio": "Uma educadora e responsável pelo projeto na Theodore International Start-Up Academy, em Lisboa, orienta a equipa de alunos na combinação de empreendedorismo, tecnologia, criatividade e resolução colaborativa de problemas para responder a um desafio das famílias internacionais.",
+    "credits_note": "Os nomes públicos dos participantes são configuráveis. Até serem confirmadas as autorizações de publicação, os cartões usam funções e avatares abstratos, sem identificar os alunos.",
+    "mentors_title": "Com o apoio de uma comunidade de educadores.",
+    "research_title": "Contributo para a investigação: Moviinn",
+    "research_bio": "A equipa entrevistou uma especialista da organização de relocalização Moviinn, em Lisboa, em 16 de outubro de 2026. Reconhecemos este contributo para a investigação, sem afirmar uma parceria comercial, patrocínio ou recomendação oficial.",
+    "journey_title": "De uma pergunta a uma ideia em funcionamento.",
+    "milestones": [
+      [
+        "Outubro de 2026",
+        "Investigação, planeamento e preparação de inquéritos"
+      ],
+      [
+        "16 de outubro de 2026",
+        "Entrevista com uma especialista em relocalização da Moviinn"
+      ],
+      [
+        "Outubro de 2026",
+        "Desenho e desenvolvimento inicial da aplicação"
+      ],
+      [
+        "Início de novembro de 2026",
+        "Fluxo de desenvolvimento com GitHub e Vercel"
+      ],
+      [
+        "12 de novembro de 2026",
+        "Apresentação planeada no Web Summit"
+      ]
+    ],
+    "learning_title": "Aprender através da inovação.",
+    "learning": "Os alunos estão a desenvolver competências de programação, investigação, empreendedorismo, trabalho em equipa, resolução criativa de problemas, planeamento e comunicação em público. A aprendizagem faz parte da história do produto.",
+    "vision_title": "Um pouco mais longe, em conjunto.",
+    "vision": [
+      "Maior cobertura de atividades em Lisboa",
+      "Mais eventos para famílias",
+      "Melhor descoberta personalizada",
+      "Colaborações com a comunidade",
+      "Acessibilidade multilingue",
+      "Uma possível aplicação móvel",
+      "Possível expansão para além de Lisboa"
+    ],
+    "vision_note": "São objetivos para o futuro, não funcionalidades apresentadas como concluídas.",
+    "cta": "Descubra Lisboa. Encontre a Sua Comunidade.",
+    "tagline": "Criado por jovens mentes. Construído para ligações com significado."
+  },
+  "tr": {
+    "eyebrow": "ÖĞRENCİLERİN PROJESİ · TISA LİZBON · WEB SUMMIT 2026",
+    "title": "Küçük Fikirler. Büyük Bağlar.",
+    "intro": "Uluslararası çocukların ve ailelerin etkinlikleri keşfetmesine, topluluklarıyla bağ kurmasına ve Lizbon’da kendilerini evlerinde hissetmesine yardımcı olan TK-Zone’u geliştiren öğrenciler ve eğitimcilerle tanışın.",
+    "mission_title": "Her çocuk kendini ait hissetmeyi hak eder.",
+    "mission": "Her çocuğun, nerede yaşarsa yaşasın, hoş karşılanmayı, anlamlı bağlar kurmayı ve yeni deneyimler keşfetmeyi hak ettiğine inanıyoruz. TK-Zone, kapsayıcılığı, merakı ve topluluk duygusunu destekleyen etkinliklerle uluslararası ailelerin Lizbon’u keşfetmesine yardımcı olur.",
+    "story_title": "Gerçek bir soru ortak bir projeye dönüştü.",
+    "question": "Lizbon’a taşınan uluslararası çocukların arkadaş edinmesine, etkinlikler keşfetmesine ve yeni topluluklarına ait hissetmesine nasıl yardımcı olabiliriz?",
+    "story": [
+      [
+        "Sorun",
+        "Başka bir ülkeye taşınmak arkadaş edinmeyi, yerel fırsatları tanımayı ve kendini hoş karşılanmış hissetmeyi zorlaştırabilir."
+      ],
+      [
+        "Araştırma",
+        "Öğrenciler sorunu araştırdı, anketler hazırladı ve 16 Ekim 2026’da Moviinn’den bir taşınma uzmanıyla görüştü. Henüz toplanmamış anket yanıtlarını sonuç olarak sunmuyoruz."
+      ],
+      [
+        "Fikir",
+        "Aileleri etkinliklerle ve topluluk fırsatlarıyla buluşturan, kullanımı kolay bir platform oluşturmak."
+      ],
+      [
+        "Geliştirme",
+        "Öğrenciler, eğitimciler ve teknik danışmanlarla birlikte çalışan bir web uygulaması tasarlamaya, kodlamaya ve test etmeye başladı."
+      ],
+      [
+        "Sunum",
+        "Ekip projeyi 12 Kasım 2026’da Web Summit’te sunmaya hazırlanıyor. Bu aşama planlanmıştır; tamamlanmış olarak gösterilmez."
+      ]
+    ],
+    "students_title": "Genç yenilikçilerimizle tanışın.",
+    "students_intro": "Eşit katkı sunan üç öğrenci. Ortak bir amaç.",
+    "student_bio": "Öğrenci ekibi araştırma, anketler, fikir geliştirme, tasarım, kodlama, test ve sunum hazırlığını birlikte yürütür. Bireysel uzmanlık başarıları iddia edilmez.",
+    "lead_title": "Genç fikirlere alan açan rehberlik.",
+    "lead_bio": "Lizbon’daki Theodore International Start-Up Academy’de görev yapan bir eğitimci ve proje lideri, uluslararası ailelerin yaşadığı bir soruna çözüm üretmek için öğrencilerin girişimcilik, teknoloji, yaratıcılık ve ortak problem çözmeyi bir araya getirmesine rehberlik eder.",
+    "credits_note": "Katılımcıların gösterilecek adları yapılandırılabilir. Yayın izinleri doğrulanana kadar herkese açık kartlarda öğrencileri tanımlayan bilgiler yerine görev adları ve soyut avatarlar kullanılır.",
+    "mentors_title": "Bir eğitimci topluluğunun desteğiyle.",
+    "research_title": "Araştırmaya katkı: Moviinn",
+    "research_bio": "Ekip, 16 Ekim 2026’da Lizbon’daki taşınma kuruluşu Moviinn’den bir uzmanla görüştü. Bu araştırma katkısını takdir ediyoruz; ticari ortaklık, sponsorluk veya resmî destek iddiasında bulunmuyoruz.",
+    "journey_title": "Bir sorudan çalışan bir fikre.",
+    "milestones": [
+      [
+        "Ekim 2026",
+        "Araştırma, planlama ve anket geliştirme"
+      ],
+      [
+        "16 Ekim 2026",
+        "Moviinn’den bir taşınma uzmanıyla görüşme"
+      ],
+      [
+        "Ekim 2026",
+        "Uygulamanın ilk tasarımı ve geliştirilmesi"
+      ],
+      [
+        "Kasım 2026 başı",
+        "GitHub ve Vercel ile geliştirme iş akışı"
+      ],
+      [
+        "12 Kasım 2026",
+        "Planlanan Web Summit sunumu"
+      ]
+    ],
+    "learning_title": "Yenilik yoluyla öğrenmek.",
+    "learning": "Öğrenciler kodlama, araştırma, girişimcilik, ekip çalışması, yaratıcı problem çözme, planlama ve topluluk önünde iletişim becerileri geliştiriyor. Öğrenme, ürünün hikâyesinin bir parçasıdır.",
+    "vision_title": "Birlikte biraz daha ileri.",
+    "vision": [
+      "Lizbon’da daha fazla etkinlik kapsamı",
+      "Ailelere uygun daha fazla etkinlik",
+      "Daha iyi kişiselleştirilmiş keşif",
+      "Topluluk iş birlikleri",
+      "Çok dilli erişilebilirlik",
+      "Olası bir mobil uygulama",
+      "Lizbon dışına olası genişleme"
+    ],
+    "vision_note": "Bunlar geleceğe yönelik hedeflerdir; tamamlanmış özellikler olarak sunulmaz.",
+    "cta": "Lizbon’u Keşfedin. Topluluğunuzu Bulun.",
+    "tagline": "Genç zihinlerden doğdu. Anlamlı bağlar için geliştirildi."
+  }
+}

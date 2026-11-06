@@ -3,8 +3,10 @@ from django.contrib.auth import views as auth
 from django.urls import path
 from community import views as v
 from community.demo import presentation
+from community import project_pages as project
 from community.forms import EmailLoginForm
 urlpatterns=[
+path('about/',project.about,name='about'),path('feedback/',project.feedback,name='feedback'),path('feedback/received/',project.feedback_received,name='feedback_received'),path('calendar/',project.event_calendar,name='calendar'),path('staff/feedback/',project.feedback_inbox,name='feedback_inbox'),path('staff/feedback/<int:pk>/',project.feedback_review,name='feedback_review'),
 path('demo/',presentation,name='demo_home'),
 path('demo/events/',presentation,{'section':'events'},name='demo_events'),
 path('demo/activities/',presentation,{'section':'activities'},name='demo_activities'),
@@ -13,7 +15,7 @@ path('demo/family/',presentation,{'section':'family'},name='demo_family'),
 path('demo/organizer/',presentation,{'section':'organizer'},name='demo_organizer'),
 path('demo/organizer/new/',presentation,{'section':'creator'},name='demo_creator'),
 path('demo/saved/',presentation,{'section':'saved'},name='demo_saved'),
-path('demo/finder/',presentation,{'section':'finder'},name='demo_finder'),
+path('demo/calendar/',presentation,{'section':'calendar'},name='demo_calendar'),path('demo/finder/',presentation,{'section':'finder'},name='demo_finder'),
 path('community/',v.home,name='live_community'),
 path('family/',v.family,name='family'),path('family/setup/',v.parent_setup,name='parent_setup'),path('family/children/new/',v.child_edit,name='child_new'),path('family/children/<int:pk>/',v.child_edit,name='child_edit'),path('family/children/<int:pk>/delete/',v.child_delete,name='child_delete'),path('family/calendar.ics',v.family_calendar,name='family_calendar'),path('family/plans/<int:pk>/delete/',v.plan_delete,name='plan_delete'),path('events/<int:pk>/interest/',v.interest,name='interest'),path('events/<int:pk>/plan/',v.plan_add,name='plan_add'),path('family/requests/<int:pk>/',v.parent_review,name='parent_review'),path('staff/family-requests/<int:pk>/',v.family_confirmation,name='family_confirmation'),path('staff/activities/<int:event_id>/sessions/new/',v.session_edit,name='session_new'),path('staff/activities/<int:event_id>/sessions/<int:pk>/',v.session_edit,name='session_edit'),path('organizer/apply/',v.organizer_apply,name='organizer_apply'),path('organizer/new/',v.organizer_workspace,name='organizer_new'),path('organizer/events/<int:pk>/',v.organizer_event,name='organizer_event'),path('organizer/events/<int:pk>/cancel/',v.organizer_cancel,name='organizer_cancel'),path('organizer/events/<int:pk>/<str:kind>/<int:request_id>/decision/',v.organizer_decision,name='organizer_decision'),path('staff/organizers/',v.organizer_applications,name='organizer_applications'),path('staff/organizers/<int:pk>/',v.organizer_application_review,name='organizer_application_review'),path('organizer/',v.organizer_workspace,name='organizer'),path('organizer/<int:pk>/',v.organizer_workspace,name='organizer_edit'),path('admin/',admin.site.urls),path('',v.home,name='home'),path('welcome/',v.welcome,name='welcome'),
 path('accounts/signup/',v.signup,name='signup'),path('accounts/login/',auth.LoginView.as_view(authentication_form=EmailLoginForm),name='login'),path('accounts/logout/',auth.LogoutView.as_view(),name='logout'),
