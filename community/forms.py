@@ -139,7 +139,7 @@ class SessionForm(LocalizedFieldsMixin,forms.ModelForm):
         model=ActivitySession
         fields=['start_at','end_at','capacity','child_capacity','venue','is_cancelled']
         widgets={k:forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}) for k in ['start_at','end_at']}
-        labels={'is_cancelled':'Cancel this session and its active participation requests'}
+        labels={'is_cancelled':'Cancel this session and its active participation requests','capacity':'Maximum total attendees (leave empty for unlimited)','child_capacity':'Maximum children (leave empty for unlimited)'}
     def clean(self):
         data=super().clean()
         if data.get('start_at') and data.get('end_at') and data['end_at']<=data['start_at']: self.add_error('end_at','End time must follow the start.')

@@ -166,6 +166,12 @@ class AdditionalPrivacyTests(TestCase):
             for key in catalog('en'):
                 expected=sorted(re.findall(r'\{value\d+\}',key))
                 if expected:self.assertEqual(expected,sorted(re.findall(r'\{value\d+\}',catalog(language)[key])),(language,key))
+    def test_session_attendance_limits_use_localized_labels(self):
+        from django.utils import translation
+        from .forms import SessionForm
+        with translation.override('ar'):
+            form=SessionForm()
+            self.assertEqual(form.fields['child_capacity'].label,catalog('ar')['Maximum children (leave empty for unlimited)'])
     def test_school_and_brand_are_not_translated(self):
         en=catalog('en')
         for language in ACTIVE_LOCALES:
