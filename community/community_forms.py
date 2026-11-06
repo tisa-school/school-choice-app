@@ -76,3 +76,9 @@ class PhotoCaptionForm(LocalizedFieldsMixin,forms.ModelForm):
 
 class ReportExperienceForm(LocalizedFieldsMixin,forms.Form):
     reason=forms.CharField(max_length=1000,label='Reason for reporting',widget=forms.Textarea(attrs={'rows':3}))
+
+
+class InlineTeamPhotoForm(LocalizedFieldsMixin,forms.Form):
+    image=forms.FileField(label='Photos',widget=forms.FileInput(attrs={'accept':'image/jpeg,image/png,image/webp'}))
+    def clean_image(self):
+        return clean_photo(self.cleaned_data['image'])

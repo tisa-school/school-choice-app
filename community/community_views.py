@@ -212,3 +212,46 @@ def interface_language(request):
     from .localization import catalog,ACTIVE_LOCALES
     code=getattr(request,'ui_locale','en')
     return JsonResponse({'language':code,'dictionary':catalog(code),'direction':'rtl' if code in ['ar','ur'] else 'ltr','intl_locale':ACTIVE_LOCALES[code][2]})
+
+
+@login_required
+@require_POST
+def team_inline_upload(request,person_id):
+    import json
+    from django.conf import settings
+    from django.http import JsonResponse
+    from .community_forms import InlineTeamPhotoForm
+    project=json.loads((settings.BASE_DIR/'content/project.json').read_text())
+    person=next((p for p in project['contributors'] if p['id']==person_id),None)
+    if not person or not moderator(request.user):raise Http404()
+    member=membership(request.user)
+    school=member.school if member and member.school.name.casefold()==project['school'].casefold() else None
+    if school is None and request.user.is_superuser:
+        school=School.objects.filter(name__iexact=project['school']).order_by('pk').first()
+    if school is None:raise Http404()
+    form=InlineTeamPhotoForm(request.POST,request.FILES)
+    ajax=request.headers.get('X-Requested-With')=='XMLHttpRequest'
+    if not form.is_valid():
+        errors=' '.join(str(error) for values in form.errors.values() for error in values)
+        if ajax:return JsonResponse({'error':errors},status=400)
+        messages.error(request,errors)
+        return redirect('/about/#our-team')
+    with transaction.atomic():
+        # A school row lock serializes replacements, including the first upload.
+        School.objects.select_for_update().get(pk=school.pk)
+        photos=TeamPhoto.objects.filter(school=school,name=person['public_name'],is_group=False).order_by('-created_at','-pk')
+        photo=photos.first() or TeamPhoto(school=school)
+        photo.name=person['public_name'];photo.role=person['role']
+        photo.is_student=person['group']=='students';photo.includes_children=photo.is_student
+        photo.uploaded_by=request.user;photo.image=form.cleaned_data['image']
+        photo.description=person['public_name'].split()[0] if photo.is_student else person['public_name']
+        photo.visibility='private';photo.sharing_permission=False;photo.guardian_consent=False
+        photo.save()
+        # Older portraits must not remain publicly visible after a private replacement.
+        photos.exclude(pk=photo.pk).update(visibility='private',sharing_permission=False,guardian_consent=False)
+    message=text('Team photo saved.')
+    if ajax:
+        from django.urls import reverse
+        return JsonResponse({'message':message,'url':reverse('protected_photo',args=['team',photo.pk]),'description':photo.description})
+    messages.success(request,message)
+    return redirect('/about/#our-team')
