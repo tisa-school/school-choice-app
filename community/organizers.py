@@ -5,7 +5,7 @@ from .models import Event, Membership, OrganizerApplication, Participation, Tick
 from .services import staff_notify
 
 def can_manage(user, member, event):
-    return bool(member and member.verified and member.school_id==event.school_id and (member.role=='staff' or (member.role=='organizer' and event.created_by_id==user.pk)))
+    return bool(user.is_superuser or (member and member.verified and member.school_id==event.school_id and (member.role=='staff' or (member.role=='organizer' and event.created_by_id==user.pk))))
 
 @transaction.atomic
 def review_application(user,member,pk,status,note=''):
@@ -32,6 +32,8 @@ def cancel_listing(user,member,pk,note):
     event.is_cancelled=True;event.cancellation_note=note.strip()[:500];event.save(update_fields=['is_cancelled','cancellation_note','updated_at'])
     event.sessions.update(is_cancelled=True)
     recipients=set()
+    for booking in event.family_bookings.select_for_update().select_related('parent').filter(status__in=['pending','confirmed']):
+        booking.status='cancelled';booking.save();recipients.add(booking.parent.user_id)
     for ticket in event.requests.select_for_update().filter(status__in=['requested','under_review','approved']):
         previous=ticket.status;ticket.status='cancelled';ticket.save()
         TicketHistory.objects.create(ticket=ticket,previous_status=previous,new_status='cancelled',changed_by=user)
@@ -41,5 +43,5 @@ def cancel_listing(user,member,pk,note):
         ParticipationHistory.objects.create(participation=item,previous_status=previous,new_status='cancelled',changed_by=user)
         recipients.add(item.child.parent.user_id)
     for recipient in recipients:
-        Notification.objects.create(user_id=recipient,school=event.school,kind='event',title='A listing you requested was cancelled',message=event.cancellation_note,link='/family/' if event.participations.filter(child__parent__user_id=recipient).exists() else '/tickets/')
+        Notification.objects.create(user_id=recipient,school=event.school,kind='event',title='A listing you requested was cancelled',message=event.cancellation_note,link='/family/' if (event.participations.filter(child__parent__user_id=recipient).exists() or event.family_bookings.filter(parent__user_id=recipient).exists()) else '/tickets/')
     return event

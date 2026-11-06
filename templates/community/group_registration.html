@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% load ui %}{% block content %}
+<section class="glass form-panel"><h1>{% ui 'Register your family' %}</h1><h2 data-user-content><span data-user-content>{{ event.title  }}</span></h2>{% if session %}<p>{{ session.start_at }}</p>{% endif %}
+{% include 'community/attendance_summary.html' with target=target %}
+<p>{% ui 'Children count toward both the total attendance limit and the child limit. Pending requests do not reserve spaces.' %}</p>
+<form method="post">{% csrf_token %}{% if session %}<input type="hidden" name="session" value="{{ session.pk }}">{% endif %}{{ form.as_div }}<button class="button" type="submit">{% ui 'Send registration' %}</button></form></section>
+{% endblock %}

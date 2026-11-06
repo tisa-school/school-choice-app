@@ -20,6 +20,7 @@ from .services import request_ticket, decide, cancel, publish_due, notify_school
 from .discovery import discovery_view, visible_events, filter_listings, LANGUAGES, membership
 from .services import express_interest, parent_decision, confirm_participation
 from .persistence import saved_success
+from .attendance import confirmed_total
 
 def post_id(request,name):
     value=request.POST.get(name,'')
@@ -101,7 +102,8 @@ def detail(request,pk):
     timezone.activate(ZoneInfo(event.time_zone))
     authenticated=request.user.is_authenticated
     parent=ParentAccount.objects.filter(user=request.user).first() if authenticated else None
-    return render(request,'community/listing_detail.html',{'event':event,'saved':SavedEvent.objects.filter(user=request.user,event=event).exists() if authenticated else False,'ticket':TicketRequest.objects.filter(student=request.user,event=event).order_by('-created_at').first() if authenticated else None,'collections':Collection.objects.filter(user=request.user) if authenticated else [],'children':parent.children.all() if parent else [],'sessions':event.sessions.filter(start_at__gt=timezone.now()).order_by('start_at')})
+    from .community_views import experiences_for,can_contribute
+    return render(request,'community/listing_detail.html',{'experiences':experiences_for(request.user,event),'can_contribute':can_contribute(request.user),'event':event,'saved':SavedEvent.objects.filter(user=request.user,event=event).exists() if authenticated else False,'ticket':TicketRequest.objects.filter(student=request.user,event=event).order_by('-created_at').first() if authenticated else None,'collections':Collection.objects.filter(user=request.user) if authenticated else [],'children':parent.children.all() if parent else [],'sessions':event.sessions.filter(start_at__gt=timezone.now()).order_by('start_at')})
 @scoped()
 @require_POST
 def ticket_request(request,pk):
@@ -184,7 +186,7 @@ def profile(request):
 @scoped(staff=True)
 def staff_home(request):
     school=request.member.school
-    return render(request,'community/staff.html',{'events':Event.objects.filter(school=school).order_by('-created_at'),'event_count':Event.objects.filter(school=school,status='published').count(),'pending_count':TicketRequest.objects.filter(event__school=school,status__in=['requested','under_review']).count()+Participation.objects.filter(event__school=school,status='organizer_pending').count(),'approved_count':TicketRequest.objects.filter(event__school=school,status='approved').count()+Participation.objects.filter(event__school=school,status='confirmed').count(),'announcement_count':Announcement.objects.filter(school=school,status='published').count()})
+    return render(request,'community/staff.html',{'events':Event.objects.filter(school=school).order_by('-created_at'),'event_count':Event.objects.filter(school=school,status='published').count(),'pending_count':TicketRequest.objects.filter(event__school=school,status__in=['requested','under_review']).count()+Participation.objects.filter(event__school=school,status='organizer_pending').count(),'approved_count':confirmed_total(Event.objects.filter(school=school)),'announcement_count':Announcement.objects.filter(school=school,status='published').count()})
 @scoped(staff=True)
 def event_edit(request,pk=None):
     with transaction.atomic():
@@ -284,7 +286,7 @@ def parent_required(view):
 def family(request):
     items=Participation.objects.filter(child__parent=request.parent).select_related('event','session','child').order_by('-created_at')
     plans=sorted(FamilyPlan.objects.filter(parent=request.parent).select_related('event','session'),key=lambda plan:(plan.session or plan.event).start_at)
-    return render(request,'community/family.html',{'children':request.parent.children.all(),'participations':items,'plans':plans,'visible_ids':set(public_events(request).values_list('pk',flat=True))})
+    return render(request,'community/family.html',{'group_bookings':request.parent.bookings.select_related('event','session').order_by('-created_at'),'children':request.parent.children.all(),'participations':items,'plans':plans,'visible_ids':set(public_events(request).values_list('pk',flat=True))})
 
 @parent_required
 def child_edit(request,pk=None):
@@ -371,6 +373,10 @@ def session_edit(request,event_id,pk=None):
         if request.method=='POST' and form.is_valid():
             item=form.save()
             if item.is_cancelled:
+                from .models import FamilyBooking
+                for booking in item.family_bookings.filter(status__in=['pending','confirmed']):
+                    booking.status='cancelled';booking.save()
+                    Notification.objects.create(user=booking.parent.user,school=event.school,kind='family',title='Session cancelled',message='The organizer cancelled this session.',link='/family/')
                 for participation in item.participations.exclude(status__in=['cancelled','declined']):
                     from .services import record_participation,participation_notice
                     previous=participation.status;participation.status='cancelled';participation.save();record_participation(participation,previous,request.user);participation_notice(participation,'Session cancelled','The organizer cancelled this session. No other session is reserved automatically.')
@@ -392,7 +398,7 @@ def organizer_workspace(request,pk=None):
     listings=Event.objects.filter(created_by=request.user,school=request.member.school).order_by('-updated_at')
     editing=pk is not None or request.path.endswith('/new/') or request.method=='POST'
     if not editing:
-        return render(request,'community/organizer.html',{'listings':listings,'published_count':listings.filter(status='published',is_cancelled=False).count(),'draft_count':listings.filter(status='draft').count(),'review_count':listings.filter(status='submitted').count(),'confirmed_count':Participation.objects.filter(event__in=listings,status='confirmed').count()+TicketRequest.objects.filter(event__in=listings,status='approved').count()})
+        return render(request,'community/organizer.html',{'listings':listings,'published_count':listings.filter(status='published',is_cancelled=False).count(),'draft_count':listings.filter(status='draft').count(),'review_count':listings.filter(status='submitted').count(),'confirmed_count':confirmed_total(listings)})
     with transaction.atomic():
         event=get_object_or_404(Event.objects.select_for_update(),pk=pk,created_by=request.user,school=request.member.school) if pk else Event(school=request.member.school,created_by=request.user,visibility='public')
         timezone.activate(ZoneInfo(event.time_zone))
@@ -463,7 +469,7 @@ def organizer_event(request,pk):
     # Interest is shown as an aggregate only. Child identities are shared after parent approval.
     family=family.filter(Q(status__in=['organizer_pending','confirmed'])|Q(history__new_status='organizer_pending')).distinct()
     preview=request.GET.get('preview')=='1'
-    return render(request,'community/organizer_event.html',{'event':event,'family_requests':family.order_by('-created_at'),'tickets':tickets.order_by('-created_at'),'interest_count':event.participations.filter(status__in=['interested','parent_pending']).count(),'pending_count':event.participations.filter(status='organizer_pending').count()+event.requests.filter(status__in=['requested','under_review']).count(),'confirmed_count':event.participations.filter(status='confirmed').count()+event.requests.filter(status='approved').count(),'statuses':Participation.STATUSES,'selected_status':status,'selected_session':session,'preview':preview})
+    return render(request,'community/organizer_event.html',{'group_bookings':event.family_bookings.select_related('parent__user','session').order_by('-created_at'),'event':event,'family_requests':family.order_by('-created_at'),'tickets':tickets.order_by('-created_at'),'interest_count':event.participations.filter(status__in=['interested','parent_pending']).count(),'pending_count':event.participations.filter(status='organizer_pending').count()+event.requests.filter(status__in=['requested','under_review']).count()+event.family_bookings.filter(status='pending').count(),'confirmed_count':confirmed_total(Event.objects.filter(pk=event.pk)),'statuses':Participation.STATUSES,'selected_status':status,'selected_session':session,'preview':preview})
 
 @login_required
 @discovery_view

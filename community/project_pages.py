@@ -20,7 +20,9 @@ from .models import Feedback,Membership
 def about(request):
     folder=settings.BASE_DIR/'content'
     project=json.loads((folder/'project.json').read_text())
-    content=json.loads((folder/'about.json').read_text()).get(request.ui_locale)
+    for person in project['contributors']:
+        if person['group']=='students':person['public_name']=person['public_name'].split()[0]
+    content=json.loads((folder/'about.json').read_text()).get(request.ui_locale) or json.loads((folder/'about.json').read_text())['en']
     return render(request,'community/about.html',{'project':project,'about':content,'students':[p for p in project['contributors'] if p['group']=='students'],'lead':next(p for p in project['contributors'] if p['group']=='lead'),'coordinators':[p for p in project['contributors'] if p['group']=='coordination'],'leadership':[p for p in project['contributors'] if p['group']=='leadership'],'language_roadmap':[item for item in REQUESTED_LOCALES if item[0] not in ACTIVE_LOCALES]})
 
 @discovery_view

@@ -35,6 +35,9 @@ def decide(user,member,ticket_id,status,note=''):
     if status not in ['under_review','approved','declined']: raise ValueError('Invalid decision.')
     if ticket.status not in ['requested','under_review']: raise ValueError('This request has already been decided.')
     if status=='approved' and (event.remaining==0 or event.status!='published' or event.is_cancelled or event.start_at<=timezone.now()): raise ValueError('Approval unavailable: the event is full or unpublished.')
+    if status=='approved':
+        from .attendance import check_space
+        check_space(event,0,1)
     old=ticket.status
     ticket.status=status;ticket.reviewed_by=user;ticket.reviewed_at=timezone.now();ticket.decision_note=note[:500];ticket.save()
     TicketHistory.objects.create(ticket=ticket,previous_status=old,new_status=status,changed_by=user)
@@ -113,6 +116,8 @@ def confirm_participation(user,member,pk,status,note=''):
         low,high=map(int,item.child.age_band.split('-'))
         if event.min_age is None or event.max_age is None or low<event.min_age or high>event.max_age: raise ValueError('The child’s current age band does not fit this listing.')
         if event.status!='published' or event.is_cancelled or target.start_at<=timezone.now() or target.remaining==0: raise ValueError('This listing is full, unpublished, cancelled, or has already started.')
+        from .attendance import check_space
+        check_space(target,0,1)
         if not visible_events(item.child.parent.user).filter(pk=event.pk).exists(): raise ValueError('The family no longer has access to this listing.')
     previous=item.status;item.status=status;item.reviewed_by=user;item.reviewed_at=timezone.now();item.decision_note=note[:500];item.save()
     record_participation(item,previous,user)
