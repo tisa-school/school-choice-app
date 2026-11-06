@@ -50,3 +50,34 @@ class InlinePortraitTests(TestCase):
         from django.test import Client
         client=Client(enforce_csrf_checks=True);client.force_login(self.staff)
         self.assertEqual(client.post('/team/portraits/lead/').status_code,403)
+
+    def test_delete_removes_all_matching_portraits_only_in_own_school(self):
+        from .models import School
+        first=self.portrait();second=self.portrait()
+        other_school=School.objects.create(name='Other school',invite_code_hash='test')
+        other=self.portrait(school=other_school)
+        student=self.portrait(name='Sophia Gateneo')
+        self.client.force_login(self.staff)
+        with self.captureOnCommitCallbacks(execute=True):
+            response=self.client.post('/team/portraits/lead/',{'action':'delete'},HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code,200);self.assertTrue(response.json()['deleted'])
+        self.assertFalse(TeamPhoto.objects.filter(pk__in=[first.pk,second.pk]).exists())
+        self.assertFalse(first.image.storage.exists(first.image.name))
+        self.assertTrue(TeamPhoto.objects.filter(pk=other.pk).exists())
+        self.assertTrue(TeamPhoto.objects.filter(pk=student.pk).exists())
+        self.assertNotContains(self.client.get('/about/'),f'/protected-photos/team/{first.pk}/')
+        self.assertEqual(self.client.get(f'/protected-photos/team/{first.pk}/').status_code,404)
+    def test_delete_requires_real_staff_and_csrf_and_is_idempotent(self):
+        from django.test import Client
+        photo=self.portrait()
+        self.assertEqual(self.client.post('/team/portraits/lead/',{'action':'delete'}).status_code,302)
+        client=Client(enforce_csrf_checks=True);client.force_login(self.staff)
+        self.assertEqual(client.post('/team/portraits/lead/',{'action':'delete'}).status_code,403)
+        self.client.force_login(self.staff)
+        self.school.name='Other school';self.school.save()
+        self.assertEqual(self.client.post('/team/portraits/lead/',{'action':'delete'}).status_code,404)
+        self.assertTrue(TeamPhoto.objects.filter(pk=photo.pk).exists())
+        self.school.name='Unicorn School';self.school.save()
+        for _ in range(2):
+            response=self.client.post('/team/portraits/lead/',{'action':'delete'})
+            self.assertRedirects(response,'/about/#our-team')

@@ -13,3 +13,5 @@ html[dir=rtl]{direction:rtl}html[dir=rtl] .brand,html[dir=rtl] .sidebar{left:aut
 .team-portrait{display:block;width:128px;height:160px;max-width:100%;object-fit:cover;object-position:center top;border-radius:18px;margin-block-end:18px}
 
 .team-inline-upload{display:grid;gap:.5rem;margin:.75rem 0;max-width:100%;text-align:start}.team-inline-upload input{max-width:100%;width:100%;min-width:0}.team-inline-upload .button{justify-self:start}.team-inline-upload p{margin:0;font-size:.8rem}
+
+.team-inline-upload [hidden]{display:none!important}

@@ -229,8 +229,16 @@ def team_inline_upload(request,person_id):
     if school is None and request.user.is_superuser:
         school=School.objects.filter(name__iexact=project['school']).order_by('pk').first()
     if school is None:raise Http404()
-    form=InlineTeamPhotoForm(request.POST,request.FILES)
     ajax=request.headers.get('X-Requested-With')=='XMLHttpRequest'
+    if request.POST.get('action')=='delete':
+        with transaction.atomic():
+            School.objects.select_for_update().get(pk=school.pk)
+            TeamPhoto.objects.filter(school=school,name=person['public_name'],is_group=False).delete()
+        message=text('Photo deleted.')
+        if ajax:return JsonResponse({'message':message,'deleted':True})
+        messages.success(request,message)
+        return redirect('/about/#our-team')
+    form=InlineTeamPhotoForm(request.POST,request.FILES)
     if not form.is_valid():
         errors=' '.join(str(error) for values in form.errors.values() for error in values)
         if ajax:return JsonResponse({'error':errors},status=400)
