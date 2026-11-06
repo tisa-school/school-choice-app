@@ -105,7 +105,12 @@ class SchoolWorkflowTests(TestCase):
     def test_unknown_price_exact_text(self): self.assertContains(self.client.get(f'/events/{self.event.pk}/'),'Price on request')
     def test_no_invented_capacity(self):
         self.event.capacity=None;self.event.save()
-        self.assertNotContains(self.client.get(f'/events/{self.event.pk}/'),'spots available')
+        response=self.client.get(f'/events/{self.event.pk}/')
+        self.assertIsNone(response.context['event'].remaining)
+        from html import unescape
+        import re
+        rendered=re.sub(r'<script.*?</script>','',response.content.decode(),flags=re.S)
+        self.assertNotIn('spots available',unescape(rendered))
     def test_search_and_category(self):
         self.assertContains(self.client.get('/events/?q=Hall'),'Test rehearsal')
         self.assertNotContains(self.client.get('/events/?category=Sports'),'Test rehearsal')

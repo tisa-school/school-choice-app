@@ -35,3 +35,29 @@ class FeedbackAdmin(admin.ModelAdmin):
     def save_model(self,request,obj,form,change):
         from django.utils import timezone
         obj.reviewed_by=request.user;obj.reviewed_at=timezone.now();super().save_model(request,obj,form,change)
+
+from .models import TeamPhoto,EventExperience,ExperiencePhoto,ExperienceReport,FamilyBooking
+from .community_forms import TeamPhotoForm
+
+@admin.register(TeamPhoto)
+class TeamPhotoAdmin(admin.ModelAdmin):
+    form=TeamPhotoForm
+    list_display=['display_name','school','is_student','visibility','sharing_permission','guardian_consent']
+    list_filter=['school','visibility','is_student']
+    def has_module_permission(self,request):return request.user.is_superuser
+    def has_view_permission(self,request,obj=None):return request.user.is_superuser
+    def has_add_permission(self,request):return request.user.is_superuser
+    def has_change_permission(self,request,obj=None):return request.user.is_superuser
+    def has_delete_permission(self,request,obj=None):return request.user.is_superuser
+    def save_model(self,request,obj,form,change):
+        if not change:obj.uploaded_by=request.user
+        super().save_model(request,obj,form,change)
+
+@admin.register(EventExperience,ExperiencePhoto,ExperienceReport,FamilyBooking)
+class CommunityAuditAdmin(admin.ModelAdmin):
+    def has_module_permission(self,request):return request.user.is_superuser
+    def has_view_permission(self,request,obj=None):return request.user.is_superuser
+    # Use the application actions to enforce capacity, moderation and upload validation.
+    def has_change_permission(self,request,obj=None):return False
+    def has_add_permission(self,request):return False
+    def has_delete_permission(self,request,obj=None):return False

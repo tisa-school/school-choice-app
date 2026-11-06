@@ -22,7 +22,7 @@ class AboutTeamTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 for names in expected.values():
                     for name in names:
-                        self.assertContains(response, name, count=1)
+                        self.assertContains(response, name.split()[0] if name in expected['students'] else name, count=1)
                 self.assertContains(response, 'Unicorn School')
                 self.assertNotContains(response, 'Theodore International')
                 self.assertNotContains(response, '<p class="eyebrow">TISA')

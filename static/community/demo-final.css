@@ -7,3 +7,5 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 .art>svg{width:140px;height:140px;transform:rotate(-9deg)}.detail-art>svg{width:210px;height:210px}
+
+html[dir=rtl]{direction:rtl}html[dir=rtl] .brand,html[dir=rtl] .sidebar{left:auto;right:0}html[dir=rtl] .sidebar{border-right:0;border-left:1px solid var(--line)}html[dir=rtl] .topbar{left:0;right:236px}html[dir=rtl] main{margin-left:0;margin-right:236px}html[dir=rtl] h1,html[dir=rtl] h2,html[dir=rtl] h3,html[dir=rtl] .eyebrow{letter-spacing:normal}html[dir=rtl] input[type=email],html[dir=rtl] input[type=url]{direction:ltr}@media(max-width:1150px){html[dir=rtl] .topbar{right:200px}html[dir=rtl] main{margin-right:200px}}@media(max-width:800px){html[dir=rtl] .topbar{right:0}html[dir=rtl] main{margin-right:0}html[dir=rtl] .sidebar{border-left:0}}

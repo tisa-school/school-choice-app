@@ -5,7 +5,27 @@ from community import views as v
 from community.demo import presentation
 from community import project_pages as project
 from community.forms import EmailLoginForm
+from community import community_views as cv
 urlpatterns=[
+path('interface/language/',cv.interface_language,name='interface_language'),
+path('events/<int:pk>/register/',cv.family_registration,name='family_registration'),
+path('registrations/<int:pk>/<str:action>/',cv.booking_action,name='booking_action'),
+path('events/<int:event_id>/experiences/new/',cv.experience_edit,name='experience_new'),
+path('events/<int:event_id>/experiences/<int:pk>/edit/',cv.experience_edit,name='experience_edit'),
+path('experiences/<int:pk>/delete/',cv.experience_delete,name='experience_delete'),
+path('experience-photos/<int:pk>/edit/',cv.experience_photo_edit,name='experience_photo_edit'),
+path('experience-photos/<int:pk>/delete/',cv.experience_photo_delete,name='experience_photo_delete'),
+path('experiences/<int:pk>/report/',cv.report_experience,name='experience_report'),
+path('experiences/<int:pk>/photos/<int:photo_id>/report/',cv.report_experience,name='experience_photo_report'),
+path('staff/content/',cv.moderation,name='content_moderation'),
+path('staff/content/<int:pk>/<str:action>/',cv.moderate_experience,name='moderate_experience'),
+path('staff/photos/<int:pk>/hide/',cv.moderate_photo,name='moderate_photo'),
+path('team/photos/',cv.team_gallery,name='team_gallery'),
+path('team/photos/new/',cv.team_photo_edit,name='team_photo_new'),
+path('team/photos/<int:pk>/edit/',cv.team_photo_edit,name='team_photo_edit'),
+path('team/photos/<int:pk>/delete/',cv.team_photo_delete,name='team_photo_delete'),
+path('protected-photos/<str:kind>/<int:pk>/',cv.protected_photo,name='protected_photo'),
+
 path('about/',project.about,name='about'),path('feedback/',project.feedback,name='feedback'),path('feedback/received/',project.feedback_received,name='feedback_received'),path('calendar/',project.event_calendar,name='calendar'),path('staff/feedback/',project.feedback_inbox,name='feedback_inbox'),path('staff/feedback/<int:pk>/',project.feedback_review,name='feedback_review'),
 path('demo/',presentation,name='demo_home'),
 path('demo/creator/',presentation,{'section':'creator'}),

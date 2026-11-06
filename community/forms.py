@@ -14,6 +14,9 @@ class LocalizedFieldsMixin:
         for field in self.fields.values():
             if field.label: field.label=text(field.label)
             if field.help_text: field.help_text=text(field.help_text)
+            if isinstance(field,forms.ModelChoiceField):
+                field.widget.attrs['data-user-content']=True
+                if field.empty_label:field.empty_label=text(field.empty_label)
             if isinstance(field,forms.ChoiceField) and not isinstance(field,forms.ModelChoiceField): field.choices=[(value,text(label)) for value,label in field.choices]
 
 
@@ -58,9 +61,9 @@ class ImageValidationMixin(LocalizedFieldsMixin):
 class EventForm(ImageValidationMixin,forms.ModelForm):
     class Meta:
         model=Event
-        fields=['title','listing_type','visibility','identity_verified','category','image','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','activity_environment','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','price_text','requests_close_at','status']
+        fields=['title','listing_type','visibility','identity_verified','category','image','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','activity_environment','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','child_capacity','price_text','requests_close_at','status']
         widgets={**{k:forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}) for k in ['start_at','end_at','requests_close_at']},'image':forms.FileInput(attrs={'accept':'image/jpeg,image/png,image/webp'})}
-        labels={'identity_verified':'Organizer identity checked by staff (not a safety guarantee)','start_at':'Start at / first activity date','capacity':'Capacity (leave empty for unlimited)','price_text':'Price information (optional)','status':'Publication status'}
+        labels={'identity_verified':'Organizer identity checked by staff (not a safety guarantee)','start_at':'Start at / first activity date','capacity':'Maximum total attendees (leave empty for unlimited)','child_capacity':'Maximum children (leave empty for unlimited)','price_text':'Price information (optional)','status':'Publication status'}
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
         zone=self.data.get('time_zone') if self.is_bound else self.instance.time_zone
@@ -94,9 +97,10 @@ class EventForm(ImageValidationMixin,forms.ModelForm):
         if data.get('requests_close_at') and start and data['requests_close_at']>start: self.add_error('requests_close_at','Requests must close by the event start.')
         capacity=data.get('capacity')
         if capacity==0: self.add_error('capacity','Capacity must be at least one, or left empty.')
-        if self.instance.pk and capacity is not None and capacity<(self.instance.requests.filter(status='approved').count()+self.instance.participations.filter(status='confirmed',session__isnull=True).count()): self.add_error('capacity','Capacity cannot be lower than the number of approved tickets.')
+        if self.instance.pk and capacity is not None and capacity<self.instance.attendance['total']: self.add_error('capacity','Capacity cannot be lower than the number of approved tickets.')
         if self.instance.pk and data.get('listing_type')!=self.instance.listing_type and (self.instance.requests.exists() or self.instance.participations.exists() or self.instance.sessions.exists()): self.add_error('listing_type','A listing with requests or sessions cannot change type.')
         if data.get('status')=='published' and start and start<=timezone.now(): self.add_error('start_at','Publish an event with a future start time.')
+        if self.instance.pk and data.get('child_capacity') is not None and data['child_capacity']<self.instance.attendance['children']: self.add_error('child_capacity','Child capacity cannot be lower than confirmed children.')
         return data
 class AnnouncementForm(ImageValidationMixin,forms.ModelForm):
     class Meta:
@@ -133,14 +137,15 @@ class ChildProfileForm(LocalizedFieldsMixin,forms.ModelForm):
 class SessionForm(LocalizedFieldsMixin,forms.ModelForm):
     class Meta:
         model=ActivitySession
-        fields=['start_at','end_at','capacity','venue','is_cancelled']
+        fields=['start_at','end_at','capacity','child_capacity','venue','is_cancelled']
         widgets={k:forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}) for k in ['start_at','end_at']}
         labels={'is_cancelled':'Cancel this session and its active participation requests'}
     def clean(self):
         data=super().clean()
         if data.get('start_at') and data.get('end_at') and data['end_at']<=data['start_at']: self.add_error('end_at','End time must follow the start.')
         if data.get('capacity')==0: self.add_error('capacity','Use at least one place, or leave empty for unlimited.')
-        if self.instance.pk and data.get('capacity') is not None and data['capacity']<self.instance.participations.filter(status='confirmed').count(): self.add_error('capacity','Capacity cannot fall below confirmed places.')
+        if self.instance.pk and data.get('capacity') is not None and data['capacity']<self.instance.attendance['total']: self.add_error('capacity','Capacity cannot fall below confirmed places.')
+        if self.instance.pk and data.get('child_capacity') is not None and data['child_capacity']<self.instance.attendance['children']: self.add_error('child_capacity','Child capacity cannot be lower than confirmed children.')
         return data
 
 def normalize_languages(value):
@@ -196,4 +201,12 @@ class FeedbackForm(LocalizedFieldsMixin,forms.ModelForm):
         data=super().clean()
         if data.get('website'): raise ValidationError(text('Please try again without the extra field.'))
         if data.get('kind')=='report' and not data.get('listing'): self.add_error('listing',text('Choose a visible listing to report.'))
+        return data
+
+class FamilyBookingForm(LocalizedFieldsMixin,forms.Form):
+    adults=forms.IntegerField(min_value=0,max_value=1000,initial=1,label='Adults attending')
+    children=forms.IntegerField(min_value=0,max_value=1000,initial=1,label='Children attending')
+    def clean(self):
+        data=super().clean()
+        if data.get('adults',0)+data.get('children',0)==0: raise ValidationError(text('Enter at least one adult or child.'))
         return data

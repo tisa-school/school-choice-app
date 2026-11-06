@@ -68,3 +68,12 @@ document.addEventListener('DOMContentLoaded',()=>{
  const image=document.getElementById('id_image'),preview=document.getElementById('upload-preview');let objectUrl=null;
  image?.addEventListener('change',()=>{if(!preview)return;if(objectUrl)URL.revokeObjectURL(objectUrl);const file=image.files?.[0];if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)){preview.hidden=true;return;}objectUrl=URL.createObjectURL(file);preview.src=objectUrl;preview.hidden=false;});
 });
+
+// Keep multi-photo uploads within the serverless request budget before submission.
+document.addEventListener('DOMContentLoaded',()=>{
+ document.querySelectorAll('input[type=file]').forEach(input=>input.addEventListener('change',()=>{
+  const tooLarge=[...input.files].reduce((total,file)=>total+file.size,0)>3*1024*1024;
+  input.setCustomValidity(tooLarge?(window.TKZoneI18n?.text('The combined photo upload must be 3 MB or smaller.')||'The combined photo upload must be 3 MB or smaller.'):'');
+  if(tooLarge)input.reportValidity();
+ }));
+});

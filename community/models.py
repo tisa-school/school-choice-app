@@ -51,6 +51,7 @@ class Event(models.Model):
     start_at = models.DateTimeField(db_index=True)
     end_at = models.DateTimeField(null=True, blank=True)
     capacity = models.PositiveIntegerField(null=True, blank=True)
+    child_capacity = models.PositiveIntegerField(null=True, blank=True)
     price_text = models.CharField(max_length=100, blank=True)
     ticket_requests_enabled = models.BooleanField(default=True)
     requests_close_at = models.DateTimeField(null=True, blank=True)
@@ -59,7 +60,13 @@ class Event(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     @property
-    def remaining(self): return None if self.capacity is None else max(0,self.capacity-self.requests.filter(status='approved').count()-self.participations.filter(status='confirmed',session__isnull=True).count())
+    def attendance(self):
+        from .attendance import attendance
+        return attendance(self)
+    @property
+    def remaining(self): return self.attendance['remaining_total']
+    @property
+    def remaining_children(self): return self.attendance['remaining_children']
     @property
     def eligible(self): return not self.is_cancelled and self.listing_type=='event' and self.status=='published' and self.ticket_requests_enabled and self.start_at>timezone.now() and (not self.requests_close_at or self.requests_close_at>timezone.now()) and self.remaining != 0
     @property
@@ -122,6 +129,7 @@ class Notification(models.Model):
     link = models.CharField(max_length=200,blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+# Notification properties translate system strings in the reader's current language.
 class RateAttempt(models.Model):
     key = models.CharField(max_length=100,db_index=True)
     created_at = models.DateTimeField(auto_now_add=True,db_index=True)
@@ -151,11 +159,17 @@ class ActivitySession(models.Model):
     start_at = models.DateTimeField(db_index=True)
     end_at = models.DateTimeField()
     capacity = models.PositiveIntegerField(null=True, blank=True)
+    child_capacity = models.PositiveIntegerField(null=True, blank=True)
     venue = models.CharField(max_length=160, blank=True)
     is_cancelled = models.BooleanField(default=False)
     @property
-    def remaining(self):
-        return None if self.capacity is None else max(0,self.capacity-self.participations.filter(status='confirmed').count())
+    def attendance(self):
+        from .attendance import attendance
+        return attendance(self)
+    @property
+    def remaining(self): return self.attendance['remaining_total']
+    @property
+    def remaining_children(self): return self.attendance['remaining_children']
     def __str__(self): return str(self.start_at)
 
 class Participation(models.Model):
@@ -224,3 +238,73 @@ class Feedback(models.Model):
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_note = models.CharField(max_length=500, blank=True)
     created_at = models.DateTimeField(auto_now_add=True,db_index=True)
+
+
+class InterfacePreference(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    language = models.CharField(max_length=12, default='en')
+
+class FamilyBooking(models.Model):
+    parent = models.ForeignKey(ParentAccount, related_name='bookings', on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, related_name='family_bookings', on_delete=models.CASCADE)
+    session = models.ForeignKey(ActivitySession, related_name='family_bookings', null=True, blank=True, on_delete=models.CASCADE)
+    adults = models.PositiveSmallIntegerField(default=0)
+    children = models.PositiveSmallIntegerField(default=0)
+    status = models.CharField(max_length=12, choices=[('pending','Awaiting organizer confirmation'),('confirmed','Confirmed'),('declined','Declined'),('cancelled','Cancelled')], default='pending')
+    reviewed_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(adults__gt=0)|Q(children__gt=0), name='booking_has_attendees'),
+            models.UniqueConstraint(fields=['parent','event'], condition=Q(session__isnull=True,status__in=['pending','confirmed']), name='unique_active_group_event'),
+            models.UniqueConstraint(fields=['parent','session'], condition=Q(session__isnull=False,status__in=['pending','confirmed']), name='unique_active_group_session'),
+        ]
+    @property
+    def total(self): return self.adults+self.children
+
+class EventExperience(models.Model):
+    event = models.ForeignKey(Event, related_name='experiences', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    body = models.TextField(max_length=2000, blank=True)
+    status = models.CharField(max_length=12, choices=[('pending','Awaiting moderation'),('published','Published'),('hidden','Hidden')], default='pending')
+    reviewed_by = models.ForeignKey(User, null=True, blank=True, related_name='moderated_experiences', on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class ExperiencePhoto(models.Model):
+    experience = models.ForeignKey(EventExperience, related_name='photos', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='experiences/')
+    description = models.CharField(max_length=300)
+    caption = models.CharField(max_length=300, blank=True)
+    hidden = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class ExperienceReport(models.Model):
+    experience = models.ForeignKey(EventExperience, related_name='reports', on_delete=models.CASCADE)
+    photo = models.ForeignKey(ExperiencePhoto, null=True, blank=True, on_delete=models.CASCADE)
+    reported_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    reason = models.CharField(max_length=1000)
+    resolved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['experience','reported_by'],condition=Q(resolved=False),name='one_open_experience_report')]
+
+class TeamPhoto(models.Model):
+    school = models.ForeignKey(School, related_name='team_photos', on_delete=models.CASCADE)
+    uploaded_by = models.ForeignKey(User, on_delete=models.PROTECT)
+    name = models.CharField(max_length=160, blank=True)
+    role = models.CharField(max_length=160, blank=True)
+    is_student = models.BooleanField(default=False)
+    is_group = models.BooleanField(default=False)
+    image = models.ImageField(upload_to='team/')
+    caption = models.CharField(max_length=300, blank=True)
+    description = models.CharField(max_length=300)
+    visibility = models.CharField(max_length=12, choices=[('private','Administrators only'),('school','School members only'),('public','Public')], default='private')
+    sharing_permission = models.BooleanField(default=False)
+    guardian_consent = models.BooleanField(default=False)
+    # Group photographs may include children even when no individual student is named.
+    includes_children = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    @property
+    def display_name(self): return self.name.split()[0] if self.is_student and self.name else self.name

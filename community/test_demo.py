@@ -52,6 +52,6 @@ class PresentationModeTests(TestCase):
         for section in ['child','crews','admin','safety','about','onboarding','creator']:
             response=self.client.get('/demo/'+section+'/')
             self.assertEqual(response.status_code,200)
-            self.assertIn("connect-src 'none'",response['Content-Security-Policy'])
+            self.assertIn("connect-src 'self'",response['Content-Security-Policy'])
             self.assertIn("form-action 'none'",response['Content-Security-Policy'])
             self.assertEqual(self.client.post('/demo/'+section+'/',{}).status_code,405)
