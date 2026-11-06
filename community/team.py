@@ -17,7 +17,6 @@ def prepare_team(user, project, request=None):
         photo=portraits.get(person['public_name'])
         if photo:
             person['photo']={'url':reverse('protected_photo',args=['team',photo.pk]),'description':photo.description}
-        if person['group']=='students':person['public_name']=person['public_name'].split()[0]
         if can_upload and request is not None:
             person['upload_html']=render_to_string('community/team_inline_upload.html',{'person':person},request=request)
     return project
