@@ -160,6 +160,12 @@ class AdditionalPrivacyTests(TestCase):
         EventExperience.objects.create(event=self.event,author=self.parent,body='<script>alert(1)</script>',status='published')
         response=self.client.get(f'/events/{self.event.pk}/')
         self.assertNotContains(response,'<script>alert(1)</script>');self.assertContains(response,'&lt;script&gt;')
+    def test_translation_interpolation_tokens_are_preserved(self):
+        import re
+        for language in ACTIVE_LOCALES:
+            for key in catalog('en'):
+                expected=sorted(re.findall(r'\{value\d+\}',key))
+                if expected:self.assertEqual(expected,sorted(re.findall(r'\{value\d+\}',catalog(language)[key])),(language,key))
     def test_school_and_brand_are_not_translated(self):
         en=catalog('en')
         for language in ACTIVE_LOCALES:

@@ -316,7 +316,7 @@
   "STEAM Mentor": "স্টিম মেন্টর",
   "%Y%m%dT%H%M%SZ": "%Y%m%dT%H%M%SZ",
   "%Y-%m-%dT%H:%M": "%Y-%m-%dT%H:%M",
-  "(^|,){value0}(,|$)": "(^|,){মান0}(,|$)",
+  "(^|,){value0}(,|$)": "(^|,){value0}(,|$)",
   "(family plan — not a booking)": "(পারিবারিক পরিকল্পনা - বুকিং নয়)",
   ", or join your school to unlock its private listings": ", অথবা আপনার স্কুলের ব্যক্তিগত তালিকা আনলক করতে যোগদান করুন",
   ". Ask the organizer before deciding.": ". সিদ্ধান্ত নেওয়ার আগে সংগঠককে জিজ্ঞাসা করুন।",
