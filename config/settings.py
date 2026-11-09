@@ -73,6 +73,7 @@ X_FRAME_OPTIONS = 'DENY'
 # File-backed test database exercises the same writer locking as the development database.
 if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
     DATABASES['default']['TEST'] = {'NAME': BASE_DIR / 'test-db.sqlite3'}
-# Optional server-side search interpretation. No child profiles are sent to the provider.
-AI_API_KEY = os.getenv('AI_API_KEY', '')
-AI_MODEL = os.getenv('AI_MODEL', 'gpt-4.1-mini')
+
+# Claude Activity Finder: server-only secrets, never rendered into client code.
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001").strip()

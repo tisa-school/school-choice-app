@@ -508,4 +508,4 @@ def finder(request):
         else:
             try: results=recommendations(request.user,interpret(preferences))
             except FinderUnavailable as e: error=str(e)
-    return render(request,'community/finder.html',{'results':results,'error':error,'preferences':preferences,'searched':request.method=='POST' and not error,'ai_configured':bool(settings.AI_API_KEY)})
+    return render(request,'community/finder.html',{'results':results,'error':error,'preferences':preferences,'searched':request.method=='POST' and not error,'ai_configured':bool(settings.ANTHROPIC_API_KEY)})

@@ -111,9 +111,9 @@ Trusted administrators can grant external submitters an **Organizer** membership
 
 ### Optional AI Activity Finder
 
-Set `AI_API_KEY` securely on the server/Vercel to enable OpenAI structured search interpretation. `AI_MODEL` defaults to `gpt-4.1-mini`. No new package or paid resource is provisioned by this change. A real provider key and its usage terms are prerequisites for live AI requests; none is bundled in the source.
+Set `ANTHROPIC_API_KEY` as a Secret in Vercel → Project Settings → Environment Variables → Production (and Preview if needed), then redeploy. The server calls Claude Messages with a forced filter-extraction tool. `ANTHROPIC_MODEL` optionally overrides the default `claude-haiku-4-5-20251001`. Never put a key in source, browser code, or chat. No new package or paid resource is provisioned by this change. A real provider key and its usage terms are prerequisites for live AI requests; none is bundled in the source.
 
-Only the visitor's explicitly submitted preference sentence is sent to `https://api.openai.com/v1/chat/completions`, after they confirm it contains no private information. Stored child profiles, account details, and listing descriptions are never sent. The model outputs validated search filters, not listings or booking actions. Database filters enforce visibility, ages, language, date, price, and remaining capacity. Recommendation explanations and missing-information notes are built from actual database fields and link to source listings. No listings or availability are generated. Provider errors fail to an explanatory standard-search fallback without exposing credentials or provider response bodies.
+Only the visitor's explicitly submitted preference sentence is sent to `https://api.anthropic.com/v1/messages`, after they confirm it contains no private information. Stored child profiles, account details, and listing descriptions are never sent. The model outputs validated search filters, not listings or booking actions. Database filters enforce visibility, ages, language, date, price, and remaining capacity. Recommendation explanations and missing-information notes are built from actual database fields and link to source listings. No listings or availability are generated. Provider errors fail to an explanatory standard-search fallback without exposing credentials or provider response bodies.
 
 Without a key, the app explicitly says AI is not configured and keeps all ordinary discovery filters working. No fake AI response or automatic participation action is used.
 
@@ -156,7 +156,7 @@ Anonymous visitors to `/` now see the interactive presentation. `/demo/` is its 
 
 - Parent view: `/demo/family/` — fictional profiles, sample requests, simulated parent approval, and status tracking.
 - Organizer view: `/demo/organizer/` — post/edit a sample event, preview a local image, choose date/time/place/interests/contact details, and simulate attendee confirmation or cancellation.
-- Events, Activities, Saved, and Activity Finder are also available under `/demo/`. The finder is explicitly a simulated keyword-based demonstration, not a live AI service.
+- Events, Activities, Saved, and Activity Finder are also available under `/demo/`. The demo finder uses fictional in-memory filters, not a live AI service. Only `/finder/` calls Claude.
 - Presentation changes now remain in memory only: no localStorage, cookies, API requests, email, or database writes. Reloading or Reset Demo clears the session. See [Final presentation release](docs/TECH_WEEK_FINAL.md) for the updated flow and checks.
 - **Reset demo** restores the fictional examples for the next visitor. It does not clear real account sessions, application records, or accessibility preferences.
 

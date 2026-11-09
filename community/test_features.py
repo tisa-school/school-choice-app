@@ -157,7 +157,7 @@ class FeatureTests(TestCase):
         item=Event.objects.get(title='External submission')
         self.assertEqual(item.status,'submitted');self.assertFalse(item.identity_verified);self.assertIsNone(item.published_by)
         self.client.logout();self.assertEqual(self.client.get(f'/events/{item.pk}/').status_code,404)
-    @override_settings(AI_API_KEY='')
+    @override_settings(ANTHROPIC_API_KEY='')
     def test_ai_unavailable_does_not_break_discovery(self):
         with self.assertRaises(FinderUnavailable): interpret('art')
         response=self.client.get('/finder/')
