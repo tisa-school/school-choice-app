@@ -13,6 +13,8 @@ def presentation(request, section='home', item=''):
     project=json.loads((settings.BASE_DIR/'content/project.json').read_text())
     from .team import prepare_team
     prepare_team(request.user,project,request)
+    from .city_imagery import city_cover
+    project['activity_imagery']={'city':city_cover('Arts',request.ui_locale),'river':city_cover('Nature',request.ui_locale)}
     project['roles']={lang:{person['role']:catalog(lang).get(person['role'],person['role']) for person in project['contributors']} for lang in ACTIVE_LOCALES}
     response=render(request,'community/demo.html',{'demo_section':section,'demo_item':item,'project_credits':project,'ai_match_enabled':bool(settings.ANTHROPIC_API_KEY)})
     response['Content-Security-Policy']="default-src 'self'; connect-src 'self'; form-action 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"

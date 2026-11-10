@@ -77,3 +77,11 @@ if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
 # Claude Activity Finder: server-only secrets, never rendered into client code.
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001").strip()
+
+# Trusted public origin for crawler metadata; do not derive sharing URLs from Host.
+PUBLIC_SITE_URL = os.getenv('PUBLIC_SITE_URL', 'https://school-choice-app-hrvb.vercel.app').rstrip('/')
+from urllib.parse import urlsplit
+_public_origin = urlsplit(PUBLIC_SITE_URL)
+if (_public_origin.scheme != 'https' or not _public_origin.netloc or _public_origin.path or
+        _public_origin.query or _public_origin.fragment or _public_origin.username or _public_origin.password):
+    raise RuntimeError('PUBLIC_SITE_URL must be an HTTPS origin without a path or credentials')

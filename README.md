@@ -189,3 +189,7 @@ Shared hero glow, glass cards, brief AI-star shimmer, answer typing and hover li
 ### Ask TK assistant
 
 A floating **✦ Ask TK** opens an accessible activity assistant throughout the shared app pages. Claude interprets preferences, while the catalogue controls the suggestions. **Browse catalogue without AI** works without credits. Chat is held only in the current page, cleared on close/reload, and never written to application storage. See [Ask TK privacy and verification](docs/ASK_TK.md).
+
+### City imagery and link previews
+
+Activity cards and details use responsive, locally hosted Lisbon-inspired AI illustrations when organisers have not supplied a photo. Each is labelled as an illustration rather than a venue photograph. Shared pages include an absolute, public 1200 × 630 Open Graph/Twitter preview. See [imagery provenance and sharing checks](docs/CITY_IMAGERY.md).

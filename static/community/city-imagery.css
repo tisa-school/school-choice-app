@@ -1,0 +1,11 @@
+/* Photographic-style city illustrations never replace uploaded organiser imagery. */
+.art.city-photo{isolation:isolate;color:white;background:#1B0A4A}
+.art.city-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.art.city-photo::before{content:'';position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:0;opacity:1;background:linear-gradient(180deg,rgba(27,10,74,.15),transparent 40%,rgba(27,10,74,.82));z-index:1;pointer-events:none}
+.art.city-photo small:not(.city-image-caption){top:15px;bottom:auto;left:16px;border-radius:20px;padding:6px 10px;background:rgba(255,255,255,.95);color:#440CB0;z-index:2;font-size:10px;font-weight:700}
+.art.city-photo b{z-index:2;color:#440CB0}
+.product-shell .city-image-caption,.product-shell .detail-image .city-image-caption{position:absolute;inset:auto 12px 12px 12px;width:fit-content;max-width:calc(100% - 24px);padding:5px 8px;border-radius:7px;background:rgba(27,10,74,.88);color:#fff;z-index:2;font:11px/1.4 Archivo,sans-serif;letter-spacing:0;text-transform:none;transform:none;pointer-events:none}
+.product-shell .art.city-photo .city-image-caption{left:16px;right:16px;bottom:14px}
+.product-shell .event-image .city-cover,.product-shell .detail-image .city-cover{object-fit:cover}
+.product-shell .detail-art.city-photo{min-height:360px;overflow:hidden}
+@media(max-width:600px){.product-shell .detail-art.city-photo{min-height:250px}}
