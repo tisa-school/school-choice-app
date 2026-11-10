@@ -403,6 +403,15 @@ def session_edit(request,event_id,pk=None):
 
 @login_required
 @discovery_view
+@require_POST
+def organizer_ai_draft(request):
+    if not request.member or not request.member.verified or request.member.role not in ['organizer','staff']:
+        return HttpResponseForbidden('Verified organiser or school staff access is required.')
+    from .activity_draft import draft_response
+    return draft_response(request)
+
+@login_required
+@discovery_view
 def organizer_workspace(request,pk=None):
     if not request.member or request.member.role!='organizer' or not request.member.verified:
         return redirect('organizer_apply')

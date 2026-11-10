@@ -173,3 +173,7 @@ The existing server-only `ANTHROPIC_API_KEY` also enables short Claude match exp
 ### Voice search
 
 Discover now includes microphone input with parent agreement, browser permission, an editable transcript and an explicit **Search with AI** action. Both demo and live searches use the existing Claude interpreter; several spoken interests can match several categories. Unsupported browsers retain typed search. See [voice search implementation and privacy notes](docs/VOICE_SEARCH.md).
+
+### Organiser AI drafts
+
+**Fill with AI ✦** turns a one-sentence brief into proposed title, description, ages, category, languages and accessibility fields in demo and live organiser editors. Review the proposal, apply it, edit freely, then save or submit through the existing workflow. No dates, prices or publishing actions are generated. Unknown facts leave existing values unchanged. See [organiser AI implementation](docs/ORGANIZER_AI.md).
