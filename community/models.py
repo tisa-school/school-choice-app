@@ -39,6 +39,10 @@ class Event(models.Model):
     category = models.CharField(max_length=20, choices=CATEGORIES)
     description = models.TextField()
     image = models.ImageField(upload_to='events/', blank=True)
+    image_alt = models.CharField(max_length=300, blank=True)
+    image_source = models.CharField(max_length=12, blank=True, default='unreviewed', choices=[('unreviewed','Awaiting review'),('event','Photo taken at this event'),('stock','Illustrative stock image'),('generated','AI-generated illustration')])
+    image_review_signature = models.CharField(max_length=64, blank=True, editable=False)
+
     venue = models.CharField(max_length=160)
     organizer = models.CharField(max_length=160, blank=True)
     address = models.CharField(max_length=240, blank=True)
@@ -59,6 +63,27 @@ class Event(models.Model):
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    def image_signature(self):
+        import hashlib, json
+        values=[self.title,self.description,self.category,self.min_age,self.max_age,self.venue,self.area,self.address,self.activity_environment,self.image.name,self.image_alt,self.image_source]
+        return hashlib.sha256(json.dumps(values,ensure_ascii=False).encode()).hexdigest()
+
+    @property
+    def image_is_reviewed(self):
+        return bool(self.image and self.image_alt.strip() and self.image_source in {'event','stock','generated'} and self.image_review_signature==self.image_signature())
+
+    def save(self,*args,**kwargs):
+        if self.image and not self.image._committed:
+            self.image_review_signature=''
+            if kwargs.get('update_fields') is not None:
+                kwargs['update_fields']=set(kwargs['update_fields'])|{'image_review_signature'}
+        super().save(*args,**kwargs)
+        if getattr(self,'_review_event_image',False):
+            self._review_event_image=False
+            if self.image and self.image_alt.strip() and self.image_source in {'event','stock','generated'}:
+                self.image_review_signature=self.image_signature()
+                type(self).objects.using(self._state.db).filter(pk=self.pk).update(image_review_signature=self.image_review_signature)
+
     @property
     def attendance(self):
         from .attendance import attendance

@@ -9,3 +9,9 @@
 .product-shell .event-image .city-cover,.product-shell .detail-image .city-cover{object-fit:cover}
 .product-shell .detail-art.city-photo{min-height:360px;overflow:hidden}
 @media(max-width:600px){.product-shell .detail-art.city-photo{min-height:250px}}
+
+.activity-image-placeholder{width:100%;height:100%;min-height:185px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:28px;background:var(--light,#EDE8F7);color:var(--dark,#1B0A4A);text-align:center}.activity-image-placeholder>span{font-size:32px}.activity-image-placeholder>small{position:static!important;color:inherit;font-size:12px;letter-spacing:0}.art.city-photo>svg{position:relative;z-index:2}
+
+.studio-form input[name=image_reviewed]{width:22px;min-height:22px;accent-color:var(--primary,#440CB0)}
+
+.product-shell img.city-cover{object-position:center 65%}.image-review-panel{border-top:1px solid var(--line);padding-top:20px;margin-top:22px}.image-review-panel .upload-preview{width:min(100%,420px);height:260px;object-fit:cover;object-position:center 65%;border-radius:16px}

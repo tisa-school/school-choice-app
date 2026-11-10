@@ -1,5 +1,6 @@
 """Real browser tests of the isolated Tech Week session, plus production page regressions."""
 from pathlib import Path
+from urllib.parse import urlsplit
 from django.conf import settings
 from django.test import override_settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
@@ -20,7 +21,12 @@ class FinalDemoBrowserTests(StaticLiveServerTestCase):
             errors=[];network=[]
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(self.live_server_url+'/demo/');page.locator('#role').wait_for()
-            page.on('request',lambda r:network.append(r.url) if '/interface/language/' not in r.url else None)
+            def record_request(req):
+                url=urlsplit(req.url)
+                local=urlsplit(self.live_server_url)
+                if url.netloc==local.netloc and (url.path.startswith('/static/') or url.path=='/interface/language/'):return
+                network.append(req.url)
+            page.on('request',record_request)
             page.get_by_role('button',name='Present Demo ↗',exact=True).click()
             page.get_by_role('button',name='Next step →',exact=True).click()
             expect(page.get_by_role('heading',name='A new city. Your kind of adventures.',exact=True)).to_be_visible()
@@ -55,7 +61,7 @@ class FinalDemoBrowserTests(StaticLiveServerTestCase):
             page.locator('#role').select_option('parent')
             page.locator('[data-action="decline"]').click()
             expect(page.locator('.request-row',has_text='Laboratório de descobertas')).to_contain_text('Recusado')
-            self.assertEqual(network,[],'Demo actions must not issue requests; language dictionary lookup is separate')
+            self.assertEqual(network,[],'Demo business actions must not issue requests; same-origin static images and language lookup are separate')
             self.assertEqual(errors,[])
             self.assertFalse(db_read(lambda:Event.objects.exists()))
             browser.close()

@@ -1506,5 +1506,21 @@
   "This week": "This week",
   "individual activity requests": "individual activity requests",
   "parent-approved": "parent-approved",
-  "Counts cover individual requests created this calendar week in Lisbon. Approval is permission, not confirmed admission. Only anonymous counts are used for optional AI wording.": "Counts cover individual requests created this calendar week in Lisbon. Approval is permission, not confirmed admission. Only anonymous counts are used for optional AI wording."
+  "Counts cover individual requests created this calendar week in Lisbon. Approval is permission, not confirmed admission. Only anonymous counts are used for optional AI wording.": "Counts cover individual requests created this calendar week in Lisbon. Approval is permission, not confirmed admission. Only anonymous counts are used for optional AI wording.",
+  "Describe what the image actually shows (alt text)": "Describe what the image actually shows (alt text)",
+  "Describe the activity, approximate ages and setting. Do not claim an illustrative image shows this event.": "Describe the activity, approximate ages and setting. Do not claim an illustrative image shows this event.",
+  "I reviewed the subject, ages and venue against this image and have permission to use it.": "I reviewed the subject, ages and venue against this image and have permission to use it.",
+  "Compare the title, description, age group and indoor/outdoor venue. Unreviewed uploads stay hidden; changing these details requires a new review.": "Compare the title, description, age group and indoor/outdoor venue. Unreviewed uploads stay hidden; changing these details requires a new review.",
+  "Image source": "Image source",
+  "Photo supplied for this event": "Photo supplied for this event",
+  "Illustrative stock image": "Illustrative stock image",
+  "AI-generated illustration": "AI-generated illustration",
+  "Choose an image before confirming the review.": "Choose an image before confirming the review.",
+  "Describe the activity and setting in at least 15 characters.": "Describe the activity and setting in at least 15 characters.",
+  "Identify the image as an event photo, stock image or generated illustration.": "Identify the image as an event photo, stock image or generated illustration.",
+  "Review the activity image": "Review the activity image",
+  "Supply the activity, age range and venue before reviewing its image.": "Supply the activity, age range and venue before reviewing its image.",
+  "Choose the indoor, outdoor or mixed setting before reviewing its image.": "Choose the indoor, outdoor or mixed setting before reviewing its image.",
+  "Uploaded image awaiting descriptive alt text": "Uploaded image awaiting descriptive alt text",
+  "Photo taken at this event": "Photo taken at this event"
 }

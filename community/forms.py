@@ -59,13 +59,23 @@ class ImageValidationMixin(LocalizedFieldsMixin):
             except Exception: raise ValidationError('Choose a valid image up to 24 megapixels.')
         return image
 class EventForm(ImageValidationMixin,forms.ModelForm):
+    image_reviewed=forms.BooleanField(required=False,label='I reviewed the subject, ages and venue against this image and have permission to use it.')
+
+    def save(self,commit=True):
+        self.instance._review_event_image=bool(self.cleaned_data.get('image_reviewed'))
+        return super().save(commit=commit)
+
     class Meta:
         model=Event
-        fields=['title','listing_type','visibility','identity_verified','category','image','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','activity_environment','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','child_capacity','price_text','requests_close_at','status']
+        fields=['title','listing_type','visibility','identity_verified','category','image','image_alt','image_source','image_reviewed','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','activity_environment','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','child_capacity','price_text','requests_close_at','status']
         widgets={**{k:forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}) for k in ['start_at','end_at','requests_close_at']},'image':forms.FileInput(attrs={'accept':'image/jpeg,image/png,image/webp'})}
         labels={'identity_verified':'Organizer identity checked by staff (not a safety guarantee)','start_at':'Start at / first activity date','capacity':'Maximum total attendees (leave empty for unlimited)','child_capacity':'Maximum children (leave empty for unlimited)','price_text':'Price information (optional)','status':'Publication status'}
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
+        self.fields['image_source'].required=False
+        self.fields['image_alt'].label='Describe what the image actually shows (alt text)'
+        self.fields['image_alt'].help_text='Describe the activity, approximate ages and setting. Do not claim an illustrative image shows this event.'
+        self.fields['image_reviewed'].help_text='Compare the title, description, age group and indoor/outdoor venue. Unreviewed uploads stay hidden; changing these details requires a new review.'
         zone=self.data.get('time_zone') if self.is_bound else self.instance.time_zone
         if zone:
             try: timezone.activate(ZoneInfo(zone))
@@ -101,6 +111,14 @@ class EventForm(ImageValidationMixin,forms.ModelForm):
         if self.instance.pk and data.get('listing_type')!=self.instance.listing_type and (self.instance.requests.exists() or self.instance.participations.exists() or self.instance.sessions.exists()): self.add_error('listing_type','A listing with requests or sessions cannot change type.')
         if data.get('status')=='published' and start and start<=timezone.now(): self.add_error('start_at','Publish an event with a future start time.')
         if self.instance.pk and data.get('child_capacity') is not None and data['child_capacity']<self.instance.attendance['children']: self.add_error('child_capacity','Child capacity cannot be lower than confirmed children.')
+        data['image_source']=data.get('image_source') or self.instance.image_source or 'unreviewed'
+        if data.get('image_reviewed'):
+            for needed in ['title','description','venue','min_age','max_age']:
+                if data.get(needed) in (None,''):self.add_error(needed,'Supply the activity, age range and venue before reviewing its image.')
+            if data.get('activity_environment')=='unspecified':self.add_error('activity_environment','Choose the indoor, outdoor or mixed setting before reviewing its image.')
+            if not data.get('image'):self.add_error('image','Choose an image before confirming the review.')
+            if len((data.get('image_alt') or '').strip())<15:self.add_error('image_alt','Describe the activity and setting in at least 15 characters.')
+            if data['image_source']=='unreviewed':self.add_error('image_source','Identify the image as an event photo, stock image or generated illustration.')
         return data
 class AnnouncementForm(ImageValidationMixin,forms.ModelForm):
     class Meta:

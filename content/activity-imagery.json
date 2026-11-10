@@ -1,0 +1,480 @@
+{
+  "version": 1,
+  "scenes": {
+    "drawing": {
+      "categories": [
+        "Arts"
+      ],
+      "keywords": [
+        "draw",
+        "drawing",
+        "watercolour",
+        "watercolor",
+        "paint",
+        "painting",
+        "desenh",
+        "pintura"
+      ],
+      "exclude": [
+        "paper sculpture",
+        "origami",
+        "museum",
+        "exhibition",
+        "gallery tour"
+      ],
+      "minAge": 10,
+      "maxAge": 13,
+      "setting": "indoor",
+      "alt": {
+        "en": "Children drawing and painting with watercolours at a shared table in a bright Lisbon-inspired arts studio.",
+        "pt-PT": "Crianças a desenhar e pintar com aguarelas numa mesa partilhada num estúdio de arte inspirado em Lisboa."
+      },
+      "file": "activity-drawing"
+    },
+    "science": {
+      "categories": [
+        "Science"
+      ],
+      "keywords": [
+        "light",
+        "prism",
+        "optics",
+        "luz",
+        "otica"
+      ],
+      "exclude": [
+        "volcano",
+        "chemical",
+        "chemistry",
+        "flame"
+      ],
+      "minAge": 9,
+      "maxAge": 12,
+      "setting": "indoor",
+      "alt": {
+        "en": "Children exploring light with a prism, paper and transparent colour sheets in a bright learning room.",
+        "pt-PT": "Crianças a explorar a luz com um prisma, papel e folhas transparentes coloridas numa sala de aprendizagem."
+      },
+      "file": "activity-science"
+    },
+    "maths": {
+      "categories": [
+        "Mathematics",
+        "Science",
+        "School Life"
+      ],
+      "keywords": [
+        "shape",
+        "pattern",
+        "tangram",
+        "geometry",
+        "geometr",
+        "puzzle",
+        "forma",
+        "padro"
+      ],
+      "exclude": [
+        "crossword",
+        "sudoku",
+        "coding"
+      ],
+      "minAge": 8,
+      "maxAge": 12,
+      "setting": "indoor",
+      "alt": {
+        "en": "Children arranging geometric shapes and tangram puzzles together at a classroom table.",
+        "pt-PT": "Crianças a organizar formas geométricas e puzzles tangram numa mesa de sala de aula."
+      },
+      "file": "activity-maths"
+    },
+    "football": {
+      "categories": [
+        "Sports",
+        "School Life"
+      ],
+      "keywords": [
+        "football",
+        "futebol",
+        "soccer"
+      ],
+      "exclude": [
+        "basketball",
+        "tennis"
+      ],
+      "minAge": 7,
+      "maxAge": 10,
+      "setting": "outdoor",
+      "alt": {
+        "en": "Young children playing football together on a modest outdoor pitch with Portuguese neighbourhood buildings beyond.",
+        "pt-PT": "Crianças pequenas a jogar futebol num campo ao ar livre, com edifícios de um bairro português ao fundo."
+      },
+      "file": "activity-football"
+    },
+    "storytelling": {
+      "categories": [
+        "Theater & Drama",
+        "Arts",
+        "School Life"
+      ],
+      "keywords": [
+        "story builders",
+        "bring it to life",
+        "invent a story",
+        "acting",
+        "drama",
+        "puppet",
+        "theatr",
+        "teatro",
+        "historia"
+      ],
+      "exclude": [
+        "library reading",
+        "silent reading"
+      ],
+      "minAge": 9,
+      "maxAge": 12,
+      "setting": "indoor",
+      "alt": {
+        "en": "Children creating and acting out a story with handmade props and a cardboard puppet theatre in a community room.",
+        "pt-PT": "Crianças a criar e representar uma história com adereços artesanais e um teatro de marionetas de cartão numa sala comunitária."
+      },
+      "file": "activity-storytelling"
+    },
+    "nature": {
+      "categories": [
+        "Nature",
+        "Arts",
+        "School Life"
+      ],
+      "keywords": [
+        "plant",
+        "leaves",
+        "leaf",
+        "nature sketch",
+        "texture",
+        "planta",
+        "folha"
+      ],
+      "exclude": [
+        "bird",
+        "wildlife",
+        "animal",
+        "butterfly",
+        "insect",
+        "planting",
+        "sowing",
+        "gardening",
+        "grow plants"
+      ],
+      "minAge": 10,
+      "maxAge": 13,
+      "setting": "outdoor",
+      "alt": {
+        "en": "Children observing plants and sketching leaves in notebooks beside a garden path in a Lisbon-inspired park.",
+        "pt-PT": "Crianças a observar plantas e desenhar folhas em cadernos junto a um caminho de jardim num parque inspirado em Lisboa."
+      },
+      "file": "activity-nature"
+    },
+    "percussion": {
+      "categories": [
+        "Music",
+        "School Life"
+      ],
+      "keywords": [
+        "percussion",
+        "shaker",
+        "bucket",
+        "homemade instruments",
+        "everyday objects",
+        "percussao",
+        "instrumentos caseiros"
+      ],
+      "exclude": [
+        "guitar",
+        "piano",
+        "violin",
+        "choir",
+        "flute",
+        "saxophone",
+        "orchestra",
+        "concert"
+      ],
+      "minAge": 7,
+      "maxAge": 9,
+      "setting": "indoor",
+      "alt": {
+        "en": "Young children making rhythms with homemade shakers, wooden sticks and buckets in a community music room.",
+        "pt-PT": "Crianças pequenas a criar ritmos com instrumentos artesanais, paus de madeira e baldes numa sala de música comunitária."
+      },
+      "file": "activity-percussion"
+    },
+    "board-games": {
+      "categories": [
+        "Gaming",
+        "Games",
+        "School Life"
+      ],
+      "keywords": [
+        "board",
+        "tabletop",
+        "tabuleiro",
+        "cooperative game"
+      ],
+      "exclude": [
+        "video",
+        "console",
+        "computer",
+        "screen"
+      ],
+      "minAge": 10,
+      "maxAge": 12,
+      "setting": "indoor",
+      "alt": {
+        "en": "Children cooperating around a tabletop board game with wooden tokens and dice in a bright community room.",
+        "pt-PT": "Crianças a colaborar num jogo de tabuleiro com peças de madeira e dados numa sala comunitária iluminada."
+      },
+      "file": "activity-board-games"
+    },
+    "paper-crafts": {
+      "categories": [
+        "Arts",
+        "School Life"
+      ],
+      "keywords": [
+        "paper sculpture",
+        "paper craft",
+        "origami",
+        "papel",
+        "folded paper"
+      ],
+      "exclude": [],
+      "minAge": 10,
+      "maxAge": 12,
+      "setting": "indoor",
+      "alt": {
+        "en": "Children building paper sculptures with coloured paper, scissors and glue sticks at a makers table.",
+        "pt-PT": "Crianças a construir esculturas de papel com papel colorido, tesouras e cola numa mesa de criação."
+      },
+      "file": "activity-paper-crafts"
+    },
+    "family-market": {
+      "categories": [
+        "Shopping",
+        "School Life"
+      ],
+      "keywords": [
+        "makers market",
+        "craft market",
+        "handmade",
+        "mercado de",
+        "feira de artesanato"
+      ],
+      "exclude": [
+        "supermarket",
+        "grocery",
+        "food market",
+        "flea market"
+      ],
+      "minAge": 10,
+      "maxAge": 13,
+      "setting": "outdoor",
+      "alt": {
+        "en": "Children and parents exploring handmade paper crafts at small pretend-market tables in a covered Portuguese courtyard.",
+        "pt-PT": "Crianças e pais a explorar trabalhos de papel em pequenas bancas de um mercado imaginário num pátio português coberto."
+      },
+      "file": "activity-family-market"
+    },
+    "outdoor-painting": {
+      "categories": [
+        "Arts"
+      ],
+      "keywords": [
+        "draw",
+        "drawing",
+        "watercolour",
+        "watercolor",
+        "paint",
+        "painting",
+        "desenh",
+        "pintura"
+      ],
+      "exclude": [
+        "paper sculpture",
+        "origami",
+        "museum",
+        "exhibition",
+        "gallery tour"
+      ],
+      "minAge": 8,
+      "maxAge": 12,
+      "setting": "outdoor",
+      "alt": {
+        "en": "Children painting and making paper crafts at a picnic table in a leafy Lisbon-inspired neighbourhood park.",
+        "pt-PT": "Crianças a pintar e criar trabalhos de papel numa mesa de piquenique num parque arborizado inspirado em Lisboa."
+      },
+      "file": "activity-outdoor-painting"
+    }
+  },
+  "demoSelections": {
+    "art-afternoon": {
+      "scene": "drawing",
+      "reviewedDetails": [
+        "Creative Art Afternoon",
+        "Draw a Lisbon-inspired city together.",
+        8,
+        16,
+        "Arts",
+        "Alfama",
+        "",
+        "",
+        "Tarde de arte criativa",
+        "Desenha uma cidade inspirada em Lisboa."
+      ],
+      "note": "Editorial activity match. Exact venue is not supplied; the depicted setting is illustrative."
+    },
+    "science-lab": {
+      "scene": "science",
+      "reviewedDetails": [
+        "Little Discoveries Lab",
+        "Explore light and simple experiments.",
+        9,
+        12,
+        "Science",
+        "Parque das Nações",
+        "",
+        "",
+        "Laboratório de descobertas",
+        "Explora a luz e experiências simples."
+      ],
+      "note": "Editorial activity match. Exact venue is not supplied; the depicted setting is illustrative."
+    },
+    "math-makers": {
+      "scene": "maths",
+      "reviewedDetails": [
+        "Patterns & Puzzles",
+        "Build shapes and solve playful puzzles.",
+        8,
+        12,
+        "Mathematics",
+        "Alfama",
+        "",
+        "",
+        "Padrões e desafios",
+        "Constrói formas e resolve desafios."
+      ],
+      "note": "Editorial activity match. Exact venue is not supplied; the depicted setting is illustrative."
+    },
+    "football": {
+      "scene": "football",
+      "reviewedDetails": [
+        "Football Together",
+        "Try friendly teamwork and ball skills.",
+        7,
+        10,
+        "Sports",
+        "Campo de Ourique",
+        "",
+        "",
+        "Futebol em equipa",
+        "Experimenta jogos de equipa com bola."
+      ],
+      "note": "Editorial activity match. Exact venue is not supplied; the depicted setting is illustrative."
+    },
+    "stories": {
+      "scene": "storytelling",
+      "reviewedDetails": [
+        "Story Builders",
+        "Invent a story and bring it to life.",
+        9,
+        12,
+        "Theater & Drama",
+        "Graça",
+        "",
+        "",
+        "Construtores de histórias",
+        "Inventa uma história e dá-lhe vida."
+      ],
+      "note": "Editorial activity match. Exact venue is not supplied; the depicted setting is illustrative."
+    },
+    "nature": {
+      "scene": "nature",
+      "reviewedDetails": [
+        "Tiny Nature Explorers",
+        "Discover textures and plants through drawing.",
+        8,
+        16,
+        "Nature",
+        "Belém",
+        "",
+        "",
+        "Pequenos exploradores",
+        "Descobre plantas e texturas pelo desenho."
+      ],
+      "note": "Editorial activity match. Exact venue is not supplied; the depicted setting is illustrative."
+    },
+    "music": {
+      "scene": "percussion",
+      "reviewedDetails": [
+        "Rhythm & Friends",
+        "Make rhythms using everyday objects.",
+        7,
+        9,
+        "Music",
+        "Estrela",
+        "",
+        "",
+        "Ritmo e amigos",
+        "Cria ritmos com objetos do dia a dia."
+      ],
+      "note": "Editorial activity match. Exact venue is not supplied; the depicted setting is illustrative."
+    },
+    "gaming": {
+      "scene": "board-games",
+      "reviewedDetails": [
+        "Cooperative Games",
+        "Solve a fictional board-game challenge together.",
+        10,
+        12,
+        "Gaming",
+        "Alvalade",
+        "",
+        "",
+        "Jogos cooperativos",
+        "Resolve um desafio de jogos de tabuleiro."
+      ],
+      "note": "Editorial activity match. Exact venue is not supplied; the depicted setting is illustrative."
+    },
+    "makers": {
+      "scene": "paper-crafts",
+      "reviewedDetails": [
+        "Creative Makers Club",
+        "Create paper sculptures and share ideas.",
+        10,
+        12,
+        "Arts",
+        "Alfama",
+        "",
+        "",
+        "Clube de criação",
+        "Cria esculturas de papel e partilha ideias."
+      ],
+      "note": "Editorial activity match. Exact venue is not supplied; the depicted setting is illustrative."
+    },
+    "market": {
+      "scene": "family-market",
+      "reviewedDetails": [
+        "Family Makers Market",
+        "Explore a pretend market of handmade ideas.",
+        8,
+        16,
+        "Shopping",
+        "Belém",
+        "",
+        "",
+        "Mercado de criação em família",
+        "Explora um mercado imaginário de ideias."
+      ],
+      "note": "Editorial activity match. Exact venue is not supplied; the depicted setting is illustrative."
+    }
+  }
+}

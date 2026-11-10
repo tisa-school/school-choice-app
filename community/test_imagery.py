@@ -25,27 +25,39 @@ class ImageryTests(TestCase):
         self.assertNotContains(response,'never-share-this')
         self.assertNotContains(response,'http://testserver/static/community/imagery')
 
-    def test_live_cover_fallback_and_uploaded_image_priority(self):
+    def matched_event(self):
+        self.event.title='Watercolour drawing workshop'
+        self.event.description='Draw a Lisbon-inspired city with watercolours.'
+        self.event.venue='Alfama arts studio';self.event.area='Alfama'
+        self.event.activity_environment='indoor';self.event.save()
+
+    def test_live_activity_cover_and_reviewed_upload_priority(self):
+        self.matched_event()
         response=self.client.get(f'/events/{self.event.pk}/')
-        self.assertContains(response,'AI city scene · not the venue')
-        self.assertContains(response,'lisbon-rooftops-768.')
-        self.assertContains(response,'srcset=')
+        self.assertContains(response,'AI illustration · not this event')
+        self.assertContains(response,'activity-drawing-768.')
+        self.assertNotContains(response,'lisbon-rooftops-768.')
         self.event.image='events/existing-organiser-image.jpg';self.event.save()
+        self.assertNotContains(self.client.get(f'/events/{self.event.pk}/'),f'/media/event/{self.event.pk}/')
+        self.event.image_alt='Children drawing with watercolours at an indoor studio table.'
+        self.event.image_source='stock';self.event._review_event_image=True;self.event.save()
         response=self.client.get(f'/events/{self.event.pk}/')
         self.assertContains(response,f'/media/event/{self.event.pk}/')
-        self.assertNotContains(response,'AI city scene · not the venue')
+        self.assertContains(response,'Illustrative stock image · not this event')
         self.assertNotContains(self.client.get('/community/'),'Private school test event')
 
     def test_portuguese_cover_disclosure_and_demo_manifest(self):
-        response=self.client.get(f'/events/{self.event.pk}/?lang=pt-PT')
-        self.assertContains(response,'Imagem da cidade gerada por IA')
+        self.matched_event()
+        self.assertContains(self.client.get(f'/events/{self.event.pk}/?lang=pt-PT'),'Ilustração IA')
         self.assertContains(self.client.get('/demo/'),'activity_imagery')
-        self.assertContains(self.client.get('/demo/'),'lisbon-riverside-768.')
+        self.assertContains(self.client.get('/demo/'),'activity-football-768.')
 
     def test_bundled_image_dimensions_and_card_weight(self):
         root=settings.BASE_DIR/'static/community/imagery'
         with Image.open(root/'tk-zone-share.png') as image:self.assertEqual(image.size,(1200,630));self.assertEqual(image.format,'PNG')
-        for stem in ['lisbon-rooftops','lisbon-riverside']:
+        from .activity_imagery import specification
+        for scene in specification()['scenes'].values():
+            stem=scene['file']
             path=root/f'{stem}-768.webp'
             with Image.open(path) as image:self.assertEqual(image.width,768);self.assertEqual(image.format,'WEBP')
             self.assertLess(path.stat().st_size,200000)

@@ -7,6 +7,6 @@ def ui(value): return text(value)
 def ui_filter(value): return text(value)
 
 @register.simple_tag
-def city_cover(category=''):
-    from community.city_imagery import city_cover as cover
-    return cover(category)
+def activity_cover(event):
+    from community.activity_imagery import activity_cover as cover
+    return cover(event)
