@@ -181,3 +181,7 @@ Discover now includes microphone input with parent agreement, browser permission
 ### Advisory demo moderation
 
 New demo submissions are screened for risky wording, missing information and age fit. Valid AI results show **Safe** (no concerns detected in the text) or **Needs review**, with reasons; local concerns cannot be overridden by AI. Missing credits or failed checks always require manual review. Admins retain the final approval/rejection decision. Reports persist through refresh and are invalidated by edits. See [Demo moderation](docs/DEMO_MODERATION.md).
+
+### AI visual effects
+
+Shared hero glow, glass cards, brief AI-star shimmer, answer typing and hover lift support reduced motion. See [visual effects and accessibility](docs/AI_VISUAL_EFFECTS.md).

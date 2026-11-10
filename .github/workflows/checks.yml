@@ -37,6 +37,7 @@ jobs:
       - run: node static/community/demo-state.test.cjs
       - run: node static/community/demo-weekly.test.cjs
       - run: node static/community/demo-session.test.cjs
+      - run: node --check static/community/ai-effects.js
       - run: node --check static/community/demo.js
       - run: node --check static/community/voice-search.js
       - run: node --check static/community/organizer-ai.js

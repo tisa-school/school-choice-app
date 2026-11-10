@@ -1,0 +1,20 @@
+/* Progressive enhancement: brand colour and complete text remain readable without JS. */
+.product-shell{background-color:#faf9fc;background-image:radial-gradient(ellipse at 98% 20%,rgba(237,232,247,.7),transparent 42%)}
+.product-shell .hero{isolation:isolate;position:relative}
+.product-shell .hero[data-ai-glow]::before{content:'';position:absolute;inset:-15%;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 88% 65%,rgba(255,107,0,.26),transparent 46%),radial-gradient(ellipse at 35% 30%,rgba(68,12,176,.7),transparent 65%);transform:translate(1%,0) scale(1.02)}
+.product-shell .hero[data-ai-glow="animate"]::before{animation:ai-hero-glow 4.5s ease-in-out both}
+@keyframes ai-hero-glow{0%{transform:translate(-2%,1%) scale(.98);opacity:.65}60%{opacity:1}100%{transform:translate(1%,0) scale(1.02);opacity:1}}
+.product-shell .glass,.product-shell .panel,.product-shell .event-card,.product-shell .filter-panel,.product-shell .path-card,.product-shell .ai-activity-helper{background-color:rgba(255,255,255,.9);border-color:#ddd5ed;box-shadow:0 8px 28px rgba(27,10,74,.035);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.product-shell .lavender,.product-shell .weekly-summary,.product-shell .moderation-advice{background-color:rgba(237,232,247,.92)}
+.product-shell .event-card,.product-shell .path-card,.product-shell .crew-card{transition:transform 200ms ease,box-shadow 200ms ease,border-color 200ms ease}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){html:not(.reduced-motion) .product-shell .event-card:hover,html:not(.reduced-motion) .product-shell .path-card:hover,html:not(.reduced-motion) .product-shell .crew-card:hover{transform:translateY(-4px);box-shadow:0 16px 34px rgba(27,10,74,.09);border-color:rgba(68,12,176,.35)}}
+.product-shell .event-card:focus-within{border-color:#440CB0;box-shadow:0 0 0 2px rgba(68,12,176,.15)}
+.ai-sparkle{display:inline-block;color:inherit;transform-origin:center}
+.ai-sparkle[data-ai-shimmer]{animation:ai-spark-shimmer 1.6s ease-in-out 2}
+@keyframes ai-spark-shimmer{0%,100%{filter:none}50%{filter:drop-shadow(0 0 5px rgba(68,12,176,.45));transform:scale(1.06)}}
+.ai-typing{position:relative}.ai-typing .ai-complete-text{display:block;opacity:0}.ai-typing .ai-visual-text{position:absolute;inset:0;pointer-events:none;white-space:inherit;overflow-wrap:inherit}
+@supports not (backdrop-filter:blur(10px)){.product-shell .glass,.product-shell .panel,.product-shell .event-card,.product-shell .filter-panel,.product-shell .path-card,.product-shell .ai-activity-helper{background-color:#fff}}
+.reduced-motion .hero::before,.reduced-motion .ai-sparkle{animation:none!important;transform:none!important;filter:none!important}.reduced-motion .event-card,.reduced-motion .path-card,.reduced-motion .crew-card{transition:none!important;transform:none!important}.reduced-motion .ai-typing .ai-complete-text{opacity:1}.reduced-motion .ai-typing .ai-visual-text{display:none}
+@media(prefers-reduced-motion:reduce){.product-shell .hero::before,.ai-sparkle{animation:none!important;transform:none!important;filter:none!important}.product-shell .event-card,.product-shell .path-card,.product-shell .crew-card{transition:none!important;transform:none!important}.ai-typing .ai-complete-text{opacity:1}.ai-typing .ai-visual-text{display:none}}
+@media(prefers-reduced-transparency:reduce){.product-shell .glass,.product-shell .panel,.product-shell .event-card,.product-shell .filter-panel,.product-shell .path-card{background-color:#fff;-webkit-backdrop-filter:none;backdrop-filter:none}}
+@media(forced-colors:active){.product-shell .hero::before{display:none}.ai-sparkle{animation:none!important;filter:none!important}.product-shell .glass,.product-shell .panel,.product-shell .event-card{background:Canvas;color:CanvasText;backdrop-filter:none;border:1px solid CanvasText}}
