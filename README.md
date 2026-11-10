@@ -193,3 +193,7 @@ A floating **✦ Ask TK** opens an accessible activity assistant throughout the 
 ### City imagery and link previews
 
 Activity cards and details use responsive, locally hosted Lisbon-inspired AI illustrations when organisers have not supplied a photo. Each is labelled as an illustration rather than a venue photograph. Shared pages include an absolute, public 1200 × 630 Open Graph/Twitter preview. See [imagery provenance and sharing checks](docs/CITY_IMAGERY.md).
+
+### Brand and role consistency
+
+The interface uses the home-screen violet/orange tokens, colourful About Us panels and restrained decorative backgrounds. Sophia Gatenyo's corrected name includes a safe portrait/profile data migration. Signed-in demo roles follow accounts; studio pages and APIs reject child, parent and unverified-organiser access. Guest presentation roles remain explicit fictional simulations. See [brand and role changes](docs/BRAND_ROLE_REFRESH.md).

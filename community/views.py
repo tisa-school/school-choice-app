@@ -414,7 +414,7 @@ def organizer_ai_draft(request):
 @discovery_view
 def organizer_workspace(request,pk=None):
     if not request.member or request.member.role!='organizer' or not request.member.verified:
-        return redirect('organizer_apply')
+        return HttpResponseForbidden('Verified organiser account required for Organiser Studio.')
     listings=Event.objects.filter(created_by=request.user,school=request.member.school).order_by('-updated_at')
     editing=pk is not None or request.path.endswith('/new/') or request.method=='POST'
     if not editing:

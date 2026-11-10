@@ -29,10 +29,10 @@ class InlinePortraitTests(TestCase):
         response=self.upload(name='Wrong name',visibility='public',school=999)
         self.assertEqual(response.status_code,200)
         photo=TeamPhoto.objects.get()
-        self.assertEqual(photo.name,'Sophia Gateneo');self.assertTrue(photo.is_student)
+        self.assertEqual(photo.name,'Sophia Gatenyo');self.assertTrue(photo.is_student)
         self.assertEqual(photo.visibility,'private');self.assertFalse(photo.sharing_permission)
         body=self.client.get('/about/').content.decode()
-        self.assertLess(body.index(response.json()['url']),body.index('<h3>Sophia Gateneo</h3>'))
+        self.assertLess(body.index(response.json()['url']),body.index('<h3>Sophia Gatenyo</h3>'))
         self.client.logout();self.assertEqual(self.client.get(response.json()['url']).status_code,404)
     def test_replacement_reuses_profile_and_revokes_old_sharing(self):
         photo=self.portrait(visibility='public',sharing_permission=True)
@@ -56,7 +56,7 @@ class InlinePortraitTests(TestCase):
         first=self.portrait();second=self.portrait()
         other_school=School.objects.create(name='Other school',invite_code_hash='test')
         other=self.portrait(school=other_school)
-        student=self.portrait(name='Sophia Gateneo')
+        student=self.portrait(name='Sophia Gatenyo')
         self.client.force_login(self.staff)
         with self.captureOnCommitCallbacks(execute=True):
             response=self.client.post('/team/portraits/lead/',{'action':'delete'},HTTP_X_REQUESTED_WITH='XMLHttpRequest')

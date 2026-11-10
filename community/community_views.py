@@ -223,6 +223,7 @@ def team_inline_upload(request,person_id):
     from .community_forms import InlineTeamPhotoForm
     project=json.loads((settings.BASE_DIR/'content/project.json').read_text())
     person=next((p for p in project['contributors'] if p['id']==person_id),None)
+    from .team import person_names
     if not person or not moderator(request.user):raise Http404()
     member=membership(request.user)
     school=member.school if member and member.school.name.casefold()==project['school'].casefold() else None
@@ -233,7 +234,7 @@ def team_inline_upload(request,person_id):
     if request.POST.get('action')=='delete':
         with transaction.atomic():
             School.objects.select_for_update().get(pk=school.pk)
-            TeamPhoto.objects.filter(school=school,name=person['public_name'],is_group=False).delete()
+            TeamPhoto.objects.filter(school=school,name__in=person_names(person),is_group=False).delete()
         message=text('Photo deleted.')
         if ajax:return JsonResponse({'message':message,'deleted':True})
         messages.success(request,message)
@@ -247,7 +248,7 @@ def team_inline_upload(request,person_id):
     with transaction.atomic():
         # A school row lock serializes replacements, including the first upload.
         School.objects.select_for_update().get(pk=school.pk)
-        photos=TeamPhoto.objects.filter(school=school,name=person['public_name'],is_group=False).order_by('-created_at','-pk')
+        photos=TeamPhoto.objects.filter(school=school,name__in=person_names(person),is_group=False).order_by('-created_at','-pk')
         photo=photos.first() or TeamPhoto(school=school)
         photo.name=person['public_name'];photo.role=person['role']
         photo.is_student=person['group']=='students';photo.includes_children=photo.is_student

@@ -7,7 +7,7 @@ from .localization import ACTIVE_LOCALES, catalog
 class AboutTeamTests(TestCase):
     def test_verified_roster_in_every_language(self):
         expected = {
-            'students': ['Sophia Gateneo', 'Rosie Markovska', 'Daniel Vinnikov'],
+            'students': ['Sophia Gatenyo', 'Rosie Markovska', 'Daniel Vinnikov'],
             'lead': ['Zehra Yilmaz'],
             'coordination': ['Lucas Alves'],
             'leadership': ['Artem Tolmachev', 'Karina Medvedeva', 'Anna Kupavtseva'],

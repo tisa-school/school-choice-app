@@ -95,6 +95,9 @@ def screen(data):
 
 @require_POST
 def demo_moderation_check(request):
+    from .demo_access import allows
+    if not allows(request.user,'admin'):
+        return JsonResponse({'error':'Administrator account required.'},status=403)
     if len(request.body)>20000:return JsonResponse({'error':'Listing text is too long.'},status=400)
     try:data=validated(json.loads(request.body))
     except (ValueError,TypeError,KeyError):return JsonResponse({'error':'Invalid listing fields.'},status=400)

@@ -59,6 +59,9 @@ def generate(brief):
 
 @require_POST
 def demo_activity_draft(request):
+    from .demo_access import allows
+    if not allows(request.user,'organizer'):
+        return JsonResponse({'error':'Organiser account required.'},status=403)
     return draft_response(request)
 
 

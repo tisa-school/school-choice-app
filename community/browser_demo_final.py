@@ -109,6 +109,8 @@ class FinalDemoBrowserTests(StaticLiveServerTestCase):
                 for width in [360,390,768,1024,1440]:
                     page.set_viewport_size({'width':width,'height':1000})
                     for view in pages:
+                        if view in ['organizer','creator','admin']:
+                            page.locator('#role').select_option('admin' if view=='admin' else 'organizer')
                         page.evaluate("([view])=>{const a=document.createElement('a');a.dataset.view=view;a.dataset.id=view==='detail'?'art-afternoon':'';a.href='#';document.body.append(a);a.click();a.remove();}",[view])
                         self.assertFalse(page.evaluate('document.documentElement.scrollWidth > innerWidth'),f'{locale}, {width}, {view}')
                         self.assertTrue(page.locator('h1').is_visible())
@@ -133,7 +135,7 @@ class FinalDemoBrowserTests(StaticLiveServerTestCase):
             page.set_viewport_size({'width':390,'height':844})
             page.screenshot(path=str(screenshots/'event-detail-mobile.png'),full_page=True)
             page.locator('nav [data-view="about"]').click()
-            for name in ['Sophia Gateneo','Rosie Markovska','Daniel Vinnikov','Zehra Yilmaz','Lucas Alves','Artem Tolmachev','Karina Medvedeva','Anna Kupavtseva']:
+            for name in ['Sophia Gatenyo','Rosie Markovska','Daniel Vinnikov','Zehra Yilmaz','Lucas Alves','Artem Tolmachev','Karina Medvedeva','Anna Kupavtseva']:
                 self.assertEqual(page.get_by_role('heading',name=name,exact=True).count(),1)
             # Demo data uses sessionStorage only, never persistent localStorage.
             self.assertEqual(page.evaluate('localStorage.length'),0)
