@@ -35,6 +35,7 @@ jobs:
           node-version: '24'
       - run: node static/community/succession.test.cjs
       - run: node static/community/demo-state.test.cjs
+      - run: node static/community/demo-weekly.test.cjs
       - run: node static/community/demo-session.test.cjs
       - run: node --check static/community/demo.js
       - run: node --check static/community/voice-search.js
@@ -43,4 +44,4 @@ jobs:
       - run: python manage.py collectstatic --noinput
       - run: python manage.py check
       - run: python manage.py makemigrations --check --dry-run
-      - run: python manage.py test community.tests community.test_features community.test_migrations community.test_persistence community.test_organizers community.test_demo community.test_release_a community.test_about_team community.test_expansion community.test_about_refresh community.test_photo_administrator_grant community.test_inline_portraits community.test_portrait_publication community.test_finder_claude community.test_demo_match community.test_voice --noinput
+      - run: python manage.py test community.tests community.test_features community.test_migrations community.test_persistence community.test_organizers community.test_demo community.test_release_a community.test_about_team community.test_expansion community.test_about_refresh community.test_photo_administrator_grant community.test_inline_portraits community.test_portrait_publication community.test_finder_claude community.test_demo_match community.test_voice community.test_weekly_summary --noinput

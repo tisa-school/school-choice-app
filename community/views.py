@@ -286,7 +286,18 @@ def parent_required(view):
 def family(request):
     items=Participation.objects.filter(child__parent=request.parent).select_related('event','session','child').order_by('-created_at')
     plans=sorted(FamilyPlan.objects.filter(parent=request.parent).select_related('event','session'),key=lambda plan:(plan.session or plan.event).start_at)
-    return render(request,'community/family.html',{'group_bookings':request.parent.bookings.select_related('event','session').order_by('-created_at'),'children':request.parent.children.all(),'participations':items,'plans':plans,'visible_ids':set(public_events(request).values_list('pk',flat=True))})
+    from .weekly_summary import family_facts
+    return render(request,'community/family.html',{'weekly_facts':family_facts(request.parent),'ai_weekly_enabled':bool(settings.ANTHROPIC_API_KEY),'group_bookings':request.parent.bookings.select_related('event','session').order_by('-created_at'),'children':request.parent.children.all(),'participations':items,'plans':plans,'visible_ids':set(public_events(request).values_list('pk',flat=True))})
+
+@parent_required
+@require_POST
+def family_weekly_summary(request):
+    from .weekly_summary import family_facts,commentary
+    from django.http import JsonResponse
+    facts={**family_facts(request.parent),'locale':'pt-PT' if request.ui_locale=='pt-PT' else 'en'}
+    try:answer=commentary(facts)
+    except Exception:return JsonResponse({'error':'AI is unavailable; the factual summary remains available.'},status=503)
+    response=JsonResponse(answer);response['Cache-Control']='no-store';return response
 
 @parent_required
 def child_edit(request,pk=None):

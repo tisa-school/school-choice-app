@@ -24,7 +24,7 @@
   switch(action.type){
    case 'ONBOARD':if(!/^\d{4}$/.test(action.pin||''))return state;s.profile.onboarded=true;break;
    case 'SAVE':if(!event)return state;s.saved=s.saved.includes(action.id)?s.saved.filter(id=>id!==action.id):[...s.saved,action.id];break;
-   case 'REQUEST':if(!event||event.status!=='approved'||s.requests.some(r=>r.event===event.id&&!['declined','cancelled'].includes(r.status)))return state;s.requests.push({id:next('request'),event:event.id,status:'pending'});notice('requested',event.id);break;
+   case 'REQUEST':if(!event||event.status!=='approved'||s.requests.some(r=>r.event===event.id&&!['declined','cancelled'].includes(r.status)))return state;s.requests.push({id:next('request'),event:event.id,status:'pending',requestedAt:typeof action.requestedAt==='string'&&!Number.isNaN(Date.parse(action.requestedAt))?action.requestedAt:null});notice('requested',event.id);break;
    case 'DECIDE':if(action.role!=='parent'||!request||request.status!=='pending'||!['approved','declined'].includes(action.status))return state;{const e=s.events.find(e=>e.id===request.event);if(!e||e.status!=='approved'||(action.status==='approved'&&conflicts(s,e)))return state;request.status=action.status;notice(action.status,e.id);}break;
    case 'REQUEST_CANCEL':if(action.role!=='parent'||!request||!['pending','approved'].includes(request.status))return state;request.previousStatus=request.status;request.status='cancelled';notice('cancelled',request.event);break;
    case 'CREW_REQUEST':if(!crews.some(c=>c.id===action.id)||s.crewRequests.some(c=>c.crew===action.id&&c.status!=='declined'))return state;s.crewRequests.push({id:next('crew'),crew:action.id,status:'pending'});break;
