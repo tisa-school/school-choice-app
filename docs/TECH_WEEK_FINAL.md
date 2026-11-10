@@ -1,5 +1,7 @@
 # TK-Zone — Tech Week presentation release
 
+**AI match update:** Activity details now request a Claude explanation when `ANTHROPIC_API_KEY` is configured, using only fictional age, allow-listed interests/languages, and activity age/interest/languages. No child names, photos, venue, saved real profiles or account data are sent. The server validates fields and the structured explanation, caches successful matches for ten minutes and uses existing POST rate limits and CSRF protection. The badge says “✦ AI match” only after a genuine successful provider response. Percentages measure profile fit (40% age, 40% interests, 20% shared language), not probability, safety or verification. Without a key/credits or on provider failure, details retain a friendly “Profile match” explanation and clearly distinguish the fallback. This explicit optional AI request supersedes earlier statements that all demo operations make no external API calls. Approval/bookings remain isolated fictional state.
+
 **Refresh recovery update:** The demo now checkpoints successful actions and presenter context in sessionStorage for the current tab. Refreshing restores requests, approvals, bookmarks, submissions, moderation, notifications and guide progress. Reset Demo clears the saved action history; closing the tab ends the browser session. Invalid/stale checkpoints start a fresh demo with a notice; unavailable storage displays a persistent warning. Visual PIN digits are not stored. This supersedes the original memory-only/reload-reset description below.
 
 ## Scope and preservation

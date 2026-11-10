@@ -28,7 +28,7 @@ class FinalDemoBrowserTests(StaticLiveServerTestCase):
             expect(page.get_by_role('heading',name='1 activity to explore',exact=True)).to_be_visible()
             page.get_by_role('button',name='Next step →',exact=True).click()
             expect(page.get_by_text('Arts is one of her interests.',exact=False)).to_have_count(0)
-            expect(page.get_by_text('Art is one of her interests.',exact=False)).to_be_visible()
+            expect(page.locator('#ai-match-content')).to_contain_text('Art is one of your interests')
             page.get_by_role('button',name='Ask mum or dad ✦',exact=True).click()
             expect(page.get_by_role('button',name='Ask mum or dad ✦',exact=True)).to_have_count(0)
             page.get_by_role('button',name='♡ Save activity',exact=True).click()
@@ -213,3 +213,27 @@ class FinalDemoBrowserTests(StaticLiveServerTestCase):
             page.get_by_role('button',name='Ask mum or dad ✦',exact=True).click()
             expect(page.get_by_role('button',name='Ask mum or dad ✦',exact=True)).to_have_count(0)
             browser.close()
+
+    @override_settings(ANTHROPIC_API_KEY='test-only-key')
+    def test_real_ai_badge_and_unavailable_fallback(self):
+        import json
+        from io import BytesIO
+        from unittest.mock import patch
+        from django.core.cache import cache
+        cache.clear()
+        answer='At 11, your love of art and the English option make this activity a lovely fit.'
+        payload={'stop_reason':'tool_use','content':[{'type':'tool_use','name':'match_explanation','input':{'explanation':answer}}]}
+        with patch('community.demo_match.urllib.request.urlopen',return_value=BytesIO(json.dumps(payload).encode())) as send:
+            with sync_playwright() as p:
+                browser,page=self.launch(p)
+                page.goto(self.live_server_url+'/demo/events/art-afternoon/')
+                expect(page.locator('#ai-match-content .pill')).to_contain_text('AI match')
+                expect(page.locator('#ai-match-content .pill')).to_contain_text('100%')
+                expect(page.locator('#ai-match-content')).to_contain_text(answer)
+                self.assertEqual(page.get_by_text('This is a rule-based demo match, not AI',exact=False).count(),0)
+                cache.clear();send.side_effect=TimeoutError('Provider unavailable')
+                page.reload()
+                expect(page.locator('#ai-match-content')).to_contain_text('AI is unavailable right now')
+                expect(page.locator('#ai-match-content .pill')).to_contain_text('Profile match')
+                expect(page.locator('#ai-match-content .pill')).not_to_contain_text('AI match')
+                browser.close()

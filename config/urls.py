@@ -3,10 +3,12 @@ from django.contrib.auth import views as auth
 from django.urls import path
 from community import views as v
 from community.demo import presentation
+from community.demo_match import demo_match
 from community import project_pages as project
 from community.forms import EmailLoginForm
 from community import community_views as cv
 urlpatterns=[
+path('demo/ai-match/',demo_match,name='demo_ai_match'),
 path('interface/language/',cv.interface_language,name='interface_language'),
 path('events/<int:pk>/register/',cv.family_registration,name='family_registration'),
 path('registrations/<int:pk>/<str:action>/',cv.booking_action,name='booking_action'),

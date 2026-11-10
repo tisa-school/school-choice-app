@@ -165,3 +165,7 @@ All sample content is marked Demo and does not advertise real events, venues, ca
 `/community/` continues to expose the real public community listings; signed-in users retain their normal homepage at `/`. The presentation links are visible in the live UI too. No new environment variables or migrations are needed. Share `/demo/` at Tech Week for a consistent registration-free entry point on any device.
 
 `community.test_demo` and the presentation browser workflow test public access, separation from real private data, role switching, browser-only posting, approval simulation, reset, and isolation between visitors. The final demo browser suite is `community.browser_demo_final`.
+
+### AI explanations in demo activity details
+
+The existing server-only `ANTHROPIC_API_KEY` also enables short Claude match explanations in `/demo/events/.../`. Only fictional age, enumerated interests/languages, and activity age/category/languages are sent. A successful response displays “✦ AI match” with a deterministic estimated profile-fit percentage (age 40%, interests 40%, language 20%). Missing credits, missing keys, timeouts and invalid responses fall back to a clearly labelled profile match. No real child records are read or sent; no bookings or approvals are changed. Scores are not safety checks or calibrated probabilities.
