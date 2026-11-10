@@ -35,6 +35,7 @@ jobs:
           node-version: '24'
       - run: node static/community/succession.test.cjs
       - run: node static/community/demo-state.test.cjs
+      - run: node static/community/demo-session.test.cjs
       - run: node --check static/community/demo.js
       - run: node --check static/community/team-upload.js
       - run: pip install -r requirements.txt

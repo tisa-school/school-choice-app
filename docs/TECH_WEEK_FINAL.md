@@ -1,5 +1,7 @@
 # TK-Zone — Tech Week presentation release
 
+**Refresh recovery update:** The demo now checkpoints successful actions and presenter context in sessionStorage for the current tab. Refreshing restores requests, approvals, bookmarks, submissions, moderation, notifications and guide progress. Reset Demo clears the saved action history; closing the tab ends the browser session. Invalid/stale checkpoints start a fresh demo with a notice; unavailable storage displays a persistent warning. Visual PIN digits are not stored. This supersedes the original memory-only/reload-reset description below.
+
 ## Scope and preservation
 
 This release extends **tisa-school/school-choice-app**, the Django application in this workspace. It does not use or depend on the separate Next.js repository. Existing authentication, school boundaries, PostgreSQL models, private uploads, real parent/organiser workflows, staff ticket approvals, notifications, saved-data receipts, and community feedback remain in place. No production database changes or new migrations are required.
