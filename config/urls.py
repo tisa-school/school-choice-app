@@ -7,10 +7,12 @@ from community.demo_match import demo_match
 from community.voice import voice_filters
 from community.weekly_summary import demo_weekly_summary
 from community.activity_draft import demo_activity_draft
+from community.demo_moderation import demo_moderation_check
 from community import project_pages as project
 from community.forms import EmailLoginForm
 from community import community_views as cv
 urlpatterns=[
+path('demo/moderation-check/',demo_moderation_check,name='demo_moderation_check'),
 path('demo/ai-draft/',demo_activity_draft,name='demo_ai_draft'),
 path('organizer/ai-draft/',v.organizer_ai_draft,name='organizer_ai_draft'),
 path('demo/weekly-summary/',demo_weekly_summary,name='demo_weekly_summary'),

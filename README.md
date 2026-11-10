@@ -177,3 +177,7 @@ Discover now includes microphone input with parent agreement, browser permission
 ### Organiser AI drafts
 
 **Fill with AI ✦** turns a one-sentence brief into proposed title, description, ages, category, languages and accessibility fields in demo and live organiser editors. Review the proposal, apply it, edit freely, then save or submit through the existing workflow. No dates, prices or publishing actions are generated. Unknown facts leave existing values unchanged. See [organiser AI implementation](docs/ORGANIZER_AI.md).
+
+### Advisory demo moderation
+
+New demo submissions are screened for risky wording, missing information and age fit. Valid AI results show **Safe** (no concerns detected in the text) or **Needs review**, with reasons; local concerns cannot be overridden by AI. Missing credits or failed checks always require manual review. Admins retain the final approval/rejection decision. Reports persist through refresh and are invalidated by edits. See [Demo moderation](docs/DEMO_MODERATION.md).
