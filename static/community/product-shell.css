@@ -47,3 +47,5 @@
 @media(max-width:800px){.product-shell .product-header .top-actions,.product-shell .product-header .top-controls{flex-wrap:wrap;min-width:0}}
 .product-shell .product-header .header-join{max-width:100%;white-space:normal;overflow-wrap:break-word;text-align:center;flex:0 1 auto}
 @media(max-width:500px){.live-product .hero{grid-template-columns:1fr}.live-product .hero-art{display:none}.live-product .hero-copy{min-width:0;padding:28px}}
+
+.voice-button{display:inline-flex;align-items:center;justify-content:center;flex:0 0 46px;width:46px;min-height:46px;padding:10px;border:1px solid #ddd5ed;border-radius:12px;background:white;color:#440CB0;cursor:pointer}.voice-button svg{width:22px;height:22px}.voice-button:focus-visible{outline:3px solid #440CB0;outline-offset:3px}.voice-actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.voice-consent{display:flex;gap:10px;align-items:flex-start;font-size:14px}.voice-consent input{width:20px;min-height:20px;flex:none}#voice-dialog{max-width:calc(100% - 32px);width:560px}#voice-dialog textarea{width:100%;border:1px solid #c9bed9;border-radius:12px;padding:12px}#voice-dialog p{font-size:14px}

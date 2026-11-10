@@ -12,6 +12,9 @@ class FinderUnavailable(Exception): pass
 
 SCHEMA = {'type':'object','additionalProperties':False,'properties':{'category':{'type':'string','enum':['']+[x[0] for x in CATEGORIES]},'age':{'type':['integer','null'],'minimum':0,'maximum':17},'language':{'type':'string','enum':['','en','pt','fr','es','de','it','nl']},'area':{'type':'string'},'day':{'type':'string','description':'YYYY-MM-DD or empty'},'price':{'type':'string','enum':['','free','paid','unknown']},'period':{'type':'string','enum':['','morning','afternoon','evening']}},'required':['category','age','language','area','day','price','period']}
 
+# Optional OR categories preserve requests such as drawing and football.
+SCHEMA['properties']['categories']={'type':'array','items':{'type':'string','enum':[x[0] for x in CATEGORIES]},'maxItems':5,'uniqueItems':True}
+
 def interpret(preferences):
     if not settings.ANTHROPIC_API_KEY:
         raise FinderUnavailable('AI assistance is not configured: ANTHROPIC_API_KEY is missing. Standard activity filters are still available.')
@@ -22,7 +25,7 @@ def interpret(preferences):
             'Map art to Arts, English-friendly to en, and Saturday afternoon to the next Saturday date and afternoon period. '
             'Resolve named weekdays relative to the supplied current Lisbon date, not a remembered date. '
             'Use null for unspecified age and empty strings for unspecified text fields. '
-            'Do not assume a price, language, age, or area not requested. Interest corresponds to category.')
+            'Do not assume a price, language, age, or area not requested. Interest corresponds to category. If several interests are requested, put all relevant categories in categories and leave category empty; match any of those interests.')
     payload={'model':settings.ANTHROPIC_MODEL,'max_tokens':600,'system':prompt,
              'messages':[{'role':'user','content':preferences[:500]}],
              'tools':[{'name':'activity_filters','description':'Extract only explicit activity preferences.','input_schema':SCHEMA}],
@@ -36,7 +39,7 @@ def interpret(preferences):
         calls=[block for block in result['content'] if block.get('type')=='tool_use' and block.get('name')=='activity_filters']
         if len(calls)!=1 or not isinstance(calls[0].get('input'),dict): raise ValueError('Invalid extraction')
         data=calls[0]['input']
-        if set(data)!=set(SCHEMA['required']): raise ValueError('Unexpected extraction fields')
+        if not set(SCHEMA['required'])<=set(data) or not set(data)<=set(SCHEMA['properties']): raise ValueError('Unexpected extraction fields')
         return validate_filters(data)
     except Exception:
         # Never expose credentials, raw prompts, provider bodies or internal errors.
@@ -49,6 +52,11 @@ def validate_filters(data):
         value=data.get(name,'')
         if value not in choices: raise ValueError('Invalid preference')
         result[name]=value
+    categories=data.get('categories',[])
+    if not isinstance(categories,list) or len(categories)>5 or any(not isinstance(c,str) or c not in dict(CATEGORIES) for c in categories): raise ValueError('Invalid interests')
+    if categories:
+        result['categories']=list(dict.fromkeys(categories))
+        result['category']='' if len(result['categories'])>1 else result['categories'][0]
     age=data.get('age')
     if age is not None and (type(age) is not int or not 0<=age<=17): raise ValueError('Invalid age')
     result['age']=str(age) if age is not None else ''
@@ -64,6 +72,7 @@ def validate_filters(data):
 def recommendations(user,filters):
     from zoneinfo import ZoneInfo
     matches=filter_listings(visible_events(user).filter(is_cancelled=False),filters)
+    if filters.get('categories'):matches=matches.filter(category__in=filters['categories'])
     results=[]
     for listing in matches.order_by('start_at'):
         targets=listing.sessions.filter(start_at__gt=timezone.now(),is_cancelled=False).order_by('start_at') if listing.listing_type=='activity' else [listing]
@@ -79,7 +88,7 @@ def recommendations(user,filters):
             eligible.append(target)
         if not eligible: continue
         reasons=[]
-        if filters.get('category'): reasons.append('Matches '+listing.category)
+        if filters.get('category') or filters.get('categories'): reasons.append('Matches '+listing.category)
         if filters.get('age'): reasons.append(f'Published ages {listing.min_age}–{listing.max_age}')
         if filters.get('language'): reasons.append('Listed language: '+filters['language'])
         if filters.get('area'): reasons.append('Area: '+listing.area)

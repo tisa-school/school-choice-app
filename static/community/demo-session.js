@@ -17,7 +17,8 @@
    if(typeof c.item==='string')context.item=c.item;
    context.presenting=c.presenting===true;
    if(Number.isInteger(c.step)&&c.step>=0&&c.step<9)context.step=c.step;
-   context.filters={};if(c.filters&&typeof c.filters==='object')for(const [k,v] of Object.entries(c.filters)){if(['age','interest','area','language','price','q','weekend'].includes(k)&&typeof v==='string'&&v.length<=500)context.filters[k]=v;}
+   context.filters={};if(c.filters&&typeof c.filters==='object')for(const [k,v] of Object.entries(c.filters)){if(['age','interest','area','language','price','q','weekend','day','period'].includes(k)&&typeof v==='string'&&v.length<=500)context.filters[k]=v;}
+   if(Array.isArray(c.filters?.interests)&&c.filters.interests.length<=5&&c.filters.interests.every(v=>typeof v==='string'&&v.length<=40))context.filters.interests=c.filters.interests;
    return {state,actions:data.actions,context,restored:true,warning:false};
   }catch(_){return {...empty,warning:true};}
  }

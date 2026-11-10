@@ -169,3 +169,7 @@ All sample content is marked Demo and does not advertise real events, venues, ca
 ### AI explanations in demo activity details
 
 The existing server-only `ANTHROPIC_API_KEY` also enables short Claude match explanations in `/demo/events/.../`. Only fictional age, enumerated interests/languages, and activity age/category/languages are sent. A successful response displays “✦ AI match” with a deterministic estimated profile-fit percentage (age 40%, interests 40%, language 20%). Missing credits, missing keys, timeouts and invalid responses fall back to a clearly labelled profile match. No real child records are read or sent; no bookings or approvals are changed. Scores are not safety checks or calibrated probabilities.
+
+### Voice search
+
+Discover now includes microphone input with parent agreement, browser permission, an editable transcript and an explicit **Search with AI** action. Both demo and live searches use the existing Claude interpreter; several spoken interests can match several categories. Unsupported browsers retain typed search. See [voice search implementation and privacy notes](docs/VOICE_SEARCH.md).
