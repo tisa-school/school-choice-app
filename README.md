@@ -185,3 +185,7 @@ New demo submissions are screened for risky wording, missing information and age
 ### AI visual effects
 
 Shared hero glow, glass cards, brief AI-star shimmer, answer typing and hover lift support reduced motion. See [visual effects and accessibility](docs/AI_VISUAL_EFFECTS.md).
+
+### Ask TK assistant
+
+A floating **✦ Ask TK** opens an accessible activity assistant throughout the shared app pages. Claude interprets preferences, while the catalogue controls the suggestions. **Browse catalogue without AI** works without credits. Chat is held only in the current page, cleared on close/reload, and never written to application storage. See [Ask TK privacy and verification](docs/ASK_TK.md).

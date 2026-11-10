@@ -11,7 +11,9 @@ from community.demo_moderation import demo_moderation_check
 from community import project_pages as project
 from community.forms import EmailLoginForm
 from community import community_views as cv
+from community.ask_tk import ask_tk
 urlpatterns=[
+path('assistant/ask/',ask_tk,name='ask_tk'),
 path('demo/moderation-check/',demo_moderation_check,name='demo_moderation_check'),
 path('demo/ai-draft/',demo_activity_draft,name='demo_ai_draft'),
 path('organizer/ai-draft/',v.organizer_ai_draft,name='organizer_ai_draft'),
