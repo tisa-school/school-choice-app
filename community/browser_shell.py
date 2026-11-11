@@ -20,6 +20,7 @@ class ProductShellBrowserTests(StaticLiveServerTestCase):
                     for route in ['/demo/','/community/','/finder/']:
                         response=page.goto(self.live_server_url+route+'?lang='+locale)
                         self.assertEqual(response.status,200)
+                        if width<=800:page.locator('.nav-menu-toggle').click()
                         page.locator('.product-sidebar').wait_for()
                         if page.evaluate('document.documentElement.scrollWidth > innerWidth'):
                             page.screenshot(path='/tmp/product-shell-overflow.png',full_page=True)

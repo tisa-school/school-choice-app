@@ -41,7 +41,5 @@ document.addEventListener('DOMContentLoaded',()=>{
   const before=read('compare'),next=before.filter(s=>s!==id);if(input.checked){if(next.length===3){input.checked=false;say(t('Compare up to three schools. Remove one first.','Compara até três escolas. Remove uma primeiro.'));return;}next.push(id);}
   try{write('compare',next);sync();}catch(_){input.checked=before.includes(id);say(t('Selection could not be saved on this device.','Não foi possível guardar a seleção neste dispositivo.'));}
  });
- // Native tools collapse on phones; the registration-free presentation keeps its workspace links available.
- if(!document.getElementById('demo-app')&&(matchMedia('(max-width:800px)').matches||/^\/(schools|discover|saved)\//.test(location.pathname)))document.querySelectorAll('.community-tools').forEach(details=>details.open=false);
  document.addEventListener('tkzone:render',sync);window.addEventListener('pageshow',sync);sync();refreshSaved();
 });

@@ -17,6 +17,7 @@ class WeeklyBrowserTests(StaticLiveServerTestCase):
             page.get_by_role('button',name='Approve',exact=True).click()
             expect(page.locator('.weekly-facts')).to_contain_text('1 activity; 1 approved')
             expect(page.locator('.weekly-next')).to_contain_text('Little Discoveries Lab')
+            if page.locator('.nav-menu-toggle').is_visible() and not page.locator('.product-sidebar').is_visible():page.locator('.nav-menu-toggle').click()
             page.locator('nav [data-view="events"]').click()
             page.locator('[data-view="detail"][data-id="math-makers"]').first.click()
             page.get_by_role('button',name='Ask mum or dad ✦',exact=True).click()

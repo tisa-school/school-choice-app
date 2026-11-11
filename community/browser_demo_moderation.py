@@ -48,6 +48,7 @@ class DemoModerationBrowserTests(StaticLiveServerTestCase):
             expect(page.locator('.moderation-advice')).to_contain_text('AI screening is unavailable')
             page.get_by_role('button',name='Approve example',exact=True).click()
             expect(page.locator('.moderation-advice')).to_have_count(0)
+            if page.locator('.nav-menu-toggle').is_visible() and not page.locator('.product-sidebar').is_visible():page.locator('.nav-menu-toggle').click()
             page.locator('nav [data-view="events"]').click()
             expect(page.get_by_role('heading',name='Supervised art workshop',exact=True)).to_be_visible()
             browser.close()

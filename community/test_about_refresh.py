@@ -44,7 +44,7 @@ class AboutRefreshTests(TestCase):
         for code in ACTIVE_LOCALES:
             response=Client().get('/about/',{'lang':code});self.assertEqual(response.status_code,200)
             body=re.sub(r'<script.*?</script>','',response.content.decode(),flags=re.S)
-            self.assertNotRegex(body,r'(?i)tech[\s-]?week');self.assertNotRegex(body,r'7[^\d]{0,15}12')
+            self.assertNotRegex(body,r'(?i)tech[\s-]?week');self.assertNotRegex(re.sub(r'<[^>]+>','',body),r'7[^\d]{0,15}12')
             self.assertEqual(set(catalog(code)),set(catalog('en')))
         source=(settings.BASE_DIR/'static/community/demo.js').read_text()
         self.assertNotRegex(source,r'(?i)tech[\s-]?week');self.assertIn('credits.age_range.max',source)
