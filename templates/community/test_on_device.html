@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% load static ui %}
+{% block title %}Test on your phone · TK-ZONE{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'community/device-test.css' %}">
+<script defer src="{% static 'community/device-test.js' %}"></script>
+<header class="discovery-heading"><p class="eyebrow">{% ui 'TRY TK-ZONE' %} · ✦</p><h1>{% ui 'Big discoveries. Any screen.' %}</h1><p>{% ui 'Scan the QR code with your camera to explore on your phone or tablet.' %}</p></header>
+<div class="device-test-grid">
+<section class="glass portal-panel device-qr-panel" aria-labelledby="qr-title">
+<h2 id="qr-title">{% ui 'Test on your phone' %}</h2>
+<form method="get"><label for="test-target">{% ui 'Choose what to test' %}</label><select id="test-target" name="target">{% for key,label in test_destinations %}<option value="{{ key }}" {% if key == test_target %}selected{% endif %}>{{ label|ui }}</option>{% endfor %}</select><button class="button secondary">{% ui 'Show QR code' %}</button></form>
+<img class="device-qr" src="{{ qr_url }}" width="370" height="370" alt="{% ui 'QR code for the link displayed below' %}">
+<p><strong>{{ test_label|ui }}</strong></p><a class="device-test-url" id="device-test-url" href="{{ test_url }}">{{ test_url }}</a>
+<div class="actions"><a class="button" href="{{ test_url }}">{% ui 'Open on this device' %} ↗</a><button class="button secondary" type="button" id="copy-test-link">{% ui 'Copy link' %}</button><a class="text-link" href="{{ qr_url }}" download="tk-zone-{{ test_target }}-qr.png">{% ui 'Download QR code' %}</a><button type="button" class="text-link" id="print-test-page">{% ui 'Print QR page' %}</button></div><p id="copy-test-status" role="status" aria-live="polite"></p>
+{% if test_target == 'preview' %}<p class="device-test-notice">{% ui 'This preview currently requires Vercel sign-in. A QR code does not grant access. Use the public school directory or ask the owner for tester access.' %}</p>{% endif %}
+</section>
+<section class="glass portal-panel"><p class="eyebrow">{% ui 'A QUICK TEST DRIVE' %}</p><h2>{% ui 'Help us make school choice easier.' %}</h2><ol class="device-test-steps"><li>{% ui 'Browse schools and try a town, age or teaching-language filter.' %}</li><li>{% ui 'Shortlist a school, then compare up to three profiles.' %}</li><li>{% ui 'Open an official school website to check admissions and arrange a visit.' %}</li><li>{% ui 'Try the family demo with invented details. Demo bookings are simulations.' %}</li><li>{% ui 'Switch language and check that navigation works on your screen.' %}</li></ol><p>{% ui 'School browsing needs no account. Guest shortlists stay in this browser; scanning does not transfer saved items or sign you in.' %}</p><div class="actions"><a class="button secondary" href="{% url 'feedback' %}">{% ui 'Share Feedback' %} ↗</a><a class="text-link" href="{% url 'school_discovery' %}">{% ui 'Find schools' %}</a></div></section>
+</div>{% endblock %}

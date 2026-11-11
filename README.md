@@ -197,3 +197,7 @@ Activity cards and details use activity-led, locally hosted illustrations matche
 ### Brand and role consistency
 
 The interface uses the home-screen violet/orange tokens, colourful About Us panels and restrained decorative backgrounds. Sophia Gatenyo's corrected name includes a safe portrait/profile data migration. Signed-in demo roles follow accounts; studio pages and APIs reject child, parent and unverified-organiser access. Guest presentation roles remain explicit fictional simulations. See [brand and role changes](docs/BRAND_ROLE_REFRESH.md).
+
+### Expanded schools and phone testing
+
+Six official-site profiles, town filters and sorting expand the school directory. `/test/` provides downloadable QR codes, copy/print controls and a device-testing checklist. The original protected preview remains an explicit alternative. See [sources, implementation and suggested next features](docs/DIRECTORY_DEVICE_TESTING.md).
