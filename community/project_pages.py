@@ -86,3 +86,39 @@ def event_calendar(request):
     from django.utils.formats import date_format
     weekdays=[date_format(datetime(2026,11,2)+timedelta(days=i),'D') for i in range(7)]
     return render(request,'community/calendar.html',{'weekdays':weekdays,'weeks':weeks,'month':current,'previous':(current-timedelta(days=1)).strftime('%Y-%m'),'next':upcoming.strftime('%Y-%m')})
+
+
+# Fixed destinations prevent Host-header poisoning and arbitrary QR redirects.
+def device_destinations():
+    return {
+        'schools': ('Find schools', settings.PUBLIC_SITE_URL + '/schools/'),
+        'demo': ('Try the family demo', settings.PUBLIC_SITE_URL + '/demo/'),
+        'preview': ('Original preview link', 'https://school-choice-app-hrvb-g09ybtogx-tisa9.vercel.app/schools/'),
+    }
+
+@discovery_view
+def test_on_device(request):
+    from django.urls import reverse
+    selected=request.GET.get('target','schools')
+    if selected not in device_destinations(): selected='schools'
+    label,url=device_destinations()[selected]
+    return render(request,'community/test_on_device.html',{
+        'test_target':selected,'test_url':url,'test_label':label,
+        'qr_url':reverse('device_qr')+'?target='+selected,
+        'test_destinations':[(key,item[0]) for key,item in device_destinations().items()],
+    })
+
+def device_qr(request):
+    from io import BytesIO
+    from django.http import HttpResponse
+    import qrcode
+    selected=request.GET.get('target','schools')
+    if selected not in device_destinations(): raise Http404()
+    url=device_destinations()[selected][1]
+    code=qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M,box_size=10,border=4)
+    code.add_data(url);code.make(fit=True)
+    data=BytesIO();code.make_image(fill_color='black',back_color='white').save(data,format='PNG')
+    response=HttpResponse(data.getvalue(),content_type='image/png')
+    response['Content-Disposition']='inline; filename="tk-zone-'+selected+'-qr.png"'
+    response['Cache-Control']='public, max-age=3600'
+    return response

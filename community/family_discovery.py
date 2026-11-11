@@ -7,7 +7,7 @@ from uuid import uuid4
 from zoneinfo import ZoneInfo
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Q,Prefetch
+from django.db.models import Q,Prefetch,F
 from django.http import JsonResponse,HttpResponseBadRequest
 from django.shortcuts import get_object_or_404,redirect,render
 from django.utils import timezone
@@ -83,6 +83,7 @@ def filtered_schools(values):
     form=SchoolSearchForm(values);query=SchoolProfile.objects.filter(is_published=True)
     if not form.is_valid():return form,query.none()
     data=form.cleaned_data
+    if data.get('city'):query=query.filter(city__iexact=data['city'])
     if data.get('q'):query=query.filter(Q(name__icontains=data['q'])|Q(city__icontains=data['q'])|Q(neighbourhood__icontains=data['q'])|Q(address__icontains=data['q']))
     if data.get('age_group'):
         low,high=map(int,data['age_group'].split('-'));query=query.filter(min_age__lte=high,max_age__gte=low)
@@ -91,6 +92,10 @@ def filtered_schools(values):
     if data.get('language'):query=query.filter(languages__regex=rf"(^|,){data['language']}(,|$)")
     if data.get('curriculum'):query=query.filter(curriculum__icontains=data['curriculum'])
     if data.get('max_fee') is not None:query=query.filter(annual_fee_from__lte=data['max_fee']).exclude(fee_year='')
+    sort=data.get('sort')
+    if sort=='name_desc':query=query.order_by('-name')
+    elif sort=='recent':query=query.order_by(F('last_checked').desc(nulls_last=True),'name')
+    elif sort=='fee':query=query.order_by(F('annual_fee_from').asc(nulls_last=True),'name')
     return form,query
 
 

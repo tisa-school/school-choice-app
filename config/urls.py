@@ -16,6 +16,8 @@ from community.ask_tk import ask_tk
 urlpatterns=[
 path('discover/activities/',fd.activities,name='activity_discovery'),
 path('schools/',fd.schools,name='school_discovery'),
+path('test/',project.test_on_device,name='test_on_device'),
+path('test/qr.png',project.device_qr,name='device_qr'),
 path('schools/compare/',fd.compare_schools,name='school_compare'),
 path('schools/<slug:slug>/',fd.school_detail,name='school_detail'),
 path('discovery/saves/<str:kind>/<str:key>/',fd.save_choice,name='discovery_save'),

@@ -38,6 +38,9 @@ class SchoolSearchForm(DiscoveryFieldsMixin,forms.Form):
     curriculum=forms.CharField(label='Curriculum',max_length=200,required=False)
     max_fee=forms.DecimalField(label='Maximum starting annual fee (€)',min_value=0,max_digits=10,decimal_places=2,required=False)
 
+    city=forms.CharField(label='Town or city',max_length=100,required=False)
+    sort=forms.ChoiceField(label='Sort schools',required=False,choices=[('', 'Name A–Z'),('name_desc','Name Z–A'),('recent','Recently checked'),('fee','Lowest published starting fee')])
+
 class SchoolProfileForm(DiscoveryFieldsMixin,forms.ModelForm):
     stages=forms.MultipleChoiceField(choices=SchoolProfile.STAGES,required=False,widget=forms.CheckboxSelectMultiple)
     class Meta:
