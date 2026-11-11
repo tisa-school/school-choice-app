@@ -61,3 +61,22 @@ class CommunityAuditAdmin(admin.ModelAdmin):
     def has_change_permission(self,request,obj=None):return False
     def has_add_permission(self,request):return False
     def has_delete_permission(self,request,obj=None):return False
+
+from .models import SchoolProfile
+from .directory_forms import SchoolProfileForm
+@admin.register(SchoolProfile)
+class SchoolDirectoryAdmin(admin.ModelAdmin):
+    form=SchoolProfileForm
+    list_display=['name','city','school_type','is_published','last_checked']
+    list_filter=['is_published','school_type','city']
+    search_fields=['name','city','neighbourhood']
+    def has_module_permission(self,request):return request.user.is_superuser
+    def has_view_permission(self,request,obj=None):return request.user.is_superuser
+    def has_add_permission(self,request):return request.user.is_superuser
+    def has_change_permission(self,request,obj=None):return request.user.is_superuser
+    def has_delete_permission(self,request,obj=None):return request.user.is_superuser
+    def save_model(self,request,obj,form,change):
+        from django.utils.text import slugify
+        from uuid import uuid4
+        if not obj.slug:obj.slug=slugify(obj.name)[:150]+'-'+uuid4().hex[:8]
+        super().save_model(request,obj,form,change)

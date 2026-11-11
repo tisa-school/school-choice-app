@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth import views as auth
 from django.urls import path
 from community import views as v
+from community import family_discovery as fd
 from community.demo import presentation
 from community.demo_match import demo_match
 from community.voice import voice_filters
@@ -13,6 +14,13 @@ from community.forms import EmailLoginForm
 from community import community_views as cv
 from community.ask_tk import ask_tk
 urlpatterns=[
+path('discover/activities/',fd.activities,name='activity_discovery'),
+path('schools/',fd.schools,name='school_discovery'),
+path('schools/compare/',fd.compare_schools,name='school_compare'),
+path('schools/<slug:slug>/',fd.school_detail,name='school_detail'),
+path('discovery/saves/<str:kind>/<str:key>/',fd.save_choice,name='discovery_save'),
+path('discovery/saved/',fd.saved_fragment,name='discovery_saved_fragment'),
+path('staff/school-profile/',fd.manage_school,name='manage_school_profile'),
 path('assistant/ask/',ask_tk,name='ask_tk'),
 path('demo/moderation-check/',demo_moderation_check,name='demo_moderation_check'),
 path('demo/ai-draft/',demo_activity_draft,name='demo_ai_draft'),
@@ -59,7 +67,7 @@ path('demo/organizer/new/',presentation,{'section':'creator'},name='demo_creator
 path('demo/saved/',presentation,{'section':'saved'},name='demo_saved'),
 path('demo/calendar/',presentation,{'section':'calendar'},name='demo_calendar'),path('demo/finder/',presentation,{'section':'finder'},name='demo_finder'),
 path('community/',v.home,name='live_community'),
-path('family/',v.family,name='family'),path('family/setup/',v.parent_setup,name='parent_setup'),path('family/children/new/',v.child_edit,name='child_new'),path('family/children/<int:pk>/',v.child_edit,name='child_edit'),path('family/children/<int:pk>/delete/',v.child_delete,name='child_delete'),path('family/calendar.ics',v.family_calendar,name='family_calendar'),path('family/plans/<int:pk>/delete/',v.plan_delete,name='plan_delete'),path('events/<int:pk>/interest/',v.interest,name='interest'),path('events/<int:pk>/plan/',v.plan_add,name='plan_add'),path('family/requests/<int:pk>/',v.parent_review,name='parent_review'),path('staff/family-requests/<int:pk>/',v.family_confirmation,name='family_confirmation'),path('staff/activities/<int:event_id>/sessions/new/',v.session_edit,name='session_new'),path('staff/activities/<int:event_id>/sessions/<int:pk>/',v.session_edit,name='session_edit'),path('organizer/apply/',v.organizer_apply,name='organizer_apply'),path('organizer/new/',v.organizer_workspace,name='organizer_new'),path('organizer/events/<int:pk>/',v.organizer_event,name='organizer_event'),path('organizer/events/<int:pk>/cancel/',v.organizer_cancel,name='organizer_cancel'),path('organizer/events/<int:pk>/<str:kind>/<int:request_id>/decision/',v.organizer_decision,name='organizer_decision'),path('staff/organizers/',v.organizer_applications,name='organizer_applications'),path('staff/organizers/<int:pk>/',v.organizer_application_review,name='organizer_application_review'),path('organizer/',v.organizer_workspace,name='organizer'),path('organizer/<int:pk>/',v.organizer_workspace,name='organizer_edit'),path('admin/',admin.site.urls),path('',v.home,name='home'),path('welcome/',v.welcome,name='welcome'),
+path('family/',v.family,name='family'),path('family/setup/',v.parent_setup,name='parent_setup'),path('family/children/new/',v.child_edit,name='child_new'),path('family/children/<int:pk>/',v.child_edit,name='child_edit'),path('family/children/<int:pk>/delete/',v.child_delete,name='child_delete'),path('family/calendar.ics',v.family_calendar,name='family_calendar'),path('family/plans/<int:pk>/delete/',v.plan_delete,name='plan_delete'),path('events/<int:pk>/interest/',v.interest,name='interest'),path('events/<int:pk>/plan/',v.plan_add,name='plan_add'),path('family/requests/<int:pk>/',v.parent_review,name='parent_review'),path('staff/family-requests/<int:pk>/',v.family_confirmation,name='family_confirmation'),path('staff/activities/<int:event_id>/sessions/new/',v.session_edit,name='session_new'),path('staff/activities/<int:event_id>/sessions/<int:pk>/',v.session_edit,name='session_edit'),path('organizer/apply/',v.organizer_apply,name='organizer_apply'),path('organizer/new/',v.organizer_workspace,name='organizer_new'),path('organizer/events/<int:pk>/',v.organizer_event,name='organizer_event'),path('organizer/events/<int:pk>/cancel/',v.organizer_cancel,name='organizer_cancel'),path('organizer/events/<int:pk>/<str:kind>/<int:request_id>/decision/',v.organizer_decision,name='organizer_decision'),path('staff/organizers/',v.organizer_applications,name='organizer_applications'),path('staff/organizers/<int:pk>/',v.organizer_application_review,name='organizer_application_review'),path('organizer/',v.organizer_workspace,name='organizer'),path('organizer/<int:pk>/',v.organizer_workspace,name='organizer_edit'),path('admin/',admin.site.urls),path('',fd.discovery_home,name='home'),path('welcome/',v.welcome,name='welcome'),
 path('accounts/signup/',v.signup,name='signup'),path('accounts/login/',auth.LoginView.as_view(authentication_form=EmailLoginForm),name='login'),path('accounts/logout/',auth.LogoutView.as_view(),name='logout'),
 path('accounts/password-reset/',auth.PasswordResetView.as_view(),name='password_reset'),path('accounts/password-reset/done/',auth.PasswordResetDoneView.as_view(),name='password_reset_done'),path('accounts/reset/<uidb64>/<token>/',auth.PasswordResetConfirmView.as_view(),name='password_reset_confirm'),path('accounts/reset/done/',auth.PasswordResetCompleteView.as_view(),name='password_reset_complete'),
 path('accounts/password-change/',auth.PasswordChangeView.as_view(success_url='/profile/'),name='password_change'),path('join/',v.join,name='join'),

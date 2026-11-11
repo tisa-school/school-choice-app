@@ -100,10 +100,17 @@ def home(request):
 def detail(request,pk):
     event=get_object_or_404(public_events(request),pk=pk)
     timezone.activate(ZoneInfo(event.time_zone))
+    from urllib.parse import urlsplit
+    back=request.GET.get('return_to','')
+    try:
+        parsed=urlsplit(back)
+        if parsed.scheme or parsed.netloc or parsed.path not in ['/discover/activities/','/saved/']:back=''
+    except ValueError:back=''
+    request.discovery_return=back
     authenticated=request.user.is_authenticated
     parent=ParentAccount.objects.filter(user=request.user).first() if authenticated else None
     from .community_views import experiences_for,can_contribute
-    return render(request,'community/listing_detail.html',{'experiences':experiences_for(request.user,event),'can_contribute':can_contribute(request.user),'event':event,'saved':SavedEvent.objects.filter(user=request.user,event=event).exists() if authenticated else False,'ticket':TicketRequest.objects.filter(student=request.user,event=event).order_by('-created_at').first() if authenticated else None,'collections':Collection.objects.filter(user=request.user) if authenticated else [],'children':parent.children.all() if parent else [],'sessions':event.sessions.filter(start_at__gt=timezone.now()).order_by('start_at')})
+    return render(request,'community/listing_detail.html',{'experiences':experiences_for(request.user,event),'can_contribute':can_contribute(request.user),'discovery_return':getattr(request,'discovery_return',''),'duration_minutes':int((event.end_at-event.start_at).total_seconds()/60) if event.end_at and event.end_at>event.start_at else None,'event':event,'saved':SavedEvent.objects.filter(user=request.user,event=event).exists() if authenticated else False,'ticket':TicketRequest.objects.filter(student=request.user,event=event).order_by('-created_at').first() if authenticated else None,'collections':Collection.objects.filter(user=request.user) if authenticated else [],'children':parent.children.all() if parent else [],'sessions':event.sessions.filter(start_at__gt=timezone.now()).order_by('start_at')})
 @scoped()
 @require_POST
 def ticket_request(request,pk):
@@ -134,15 +141,17 @@ def save_event(request,pk):
             saved_success(request,'Event removed from saved.')
         else: SavedEvent.objects.create(user=request.user,event=event);saved_success(request,'✦ Saved for later.')
     return redirect('detail',pk=pk)
-@login_required
 @discovery_view
 def saved(request):
+    from .family_discovery import saved_context
+    if not request.user.is_authenticated:
+        return render(request,'discovery/saved.html',saved_context(request))
     events=public_events(request).filter(savedevent__user=request.user).order_by('start_at')
     collection=None
     if request.GET.get('collection'):
         collection=get_object_or_404(Collection,pk=request.GET['collection'],user=request.user)
         events=events.filter(collection=collection)
-    return render(request,'community/saved.html',{'events':events,'collections':Collection.objects.filter(user=request.user),'collection':collection,'saved_ids':set(events.values_list('id',flat=True))})
+    return render(request,'community/saved.html',{**saved_context(request),'events':events,'collections':Collection.objects.filter(user=request.user),'collection':collection,'saved_ids':set(events.values_list('id',flat=True))})
 @login_required
 @discovery_view
 def collection_edit(request,pk=None):

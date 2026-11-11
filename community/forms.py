@@ -67,7 +67,7 @@ class EventForm(ImageValidationMixin,forms.ModelForm):
 
     class Meta:
         model=Event
-        fields=['title','listing_type','visibility','identity_verified','category','image','image_alt','image_source','image_reviewed','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','activity_environment','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','child_capacity','price_text','requests_close_at','status']
+        fields=['title','listing_type','visibility','identity_verified','category','image','image_alt','image_source','image_reviewed','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','activity_environment','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','child_capacity','price_text','booking_url','requests_close_at','status']
         widgets={**{k:forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}) for k in ['start_at','end_at','requests_close_at']},'image':forms.FileInput(attrs={'accept':'image/jpeg,image/png,image/webp'})}
         labels={'identity_verified':'Organizer identity checked by staff (not a safety guarantee)','start_at':'Start at / first activity date','capacity':'Maximum total attendees (leave empty for unlimited)','child_capacity':'Maximum children (leave empty for unlimited)','price_text':'Price information (optional)','status':'Publication status'}
     def __init__(self,*args,**kwargs):
@@ -96,7 +96,7 @@ class EventForm(ImageValidationMixin,forms.ModelForm):
         if (low is None)!=(high is None) or (low is not None and (low>high or high>17)):
             self.add_error('max_age','Provide both age bounds, with minimum no higher than maximum, up to 17.')
         if data.get('price_amount') is not None and data['price_amount']<0: self.add_error('price_amount','Price cannot be negative.')
-        for field in ['contact_website']:
+        for field in ['contact_website','booking_url']:
             if data.get(field) and not data[field].startswith(('https://','http://')): self.add_error(field,'Use an HTTPS or HTTP website address.')
         if data.get('contact_phone'):
             import re

@@ -45,6 +45,7 @@ class Event(models.Model):
 
     venue = models.CharField(max_length=160)
     organizer = models.CharField(max_length=160, blank=True)
+    booking_url = models.URLField(blank=True)
     address = models.CharField(max_length=240, blank=True)
     contact_name = models.CharField(max_length=100, blank=True)
     contact_phone = models.CharField(max_length=40, blank=True)
@@ -333,3 +334,73 @@ class TeamPhoto(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     @property
     def display_name(self): return self.name.split()[0] if self.is_student and self.name else self.name
+
+class SchoolProfile(models.Model):
+    """Public directory data, separate from private membership/invite records."""
+    TYPES=[('public','Public'),('private','Private'),('international','International')]
+    STAGES=[('early','Early years'),('primary','Primary'),('lower_secondary','Lower secondary'),('upper_secondary','Upper secondary')]
+    school=models.OneToOneField(School,on_delete=models.SET_NULL,null=True,blank=True,related_name='directory_profile')
+    slug=models.SlugField(max_length=190,unique=True)
+    name=models.CharField(max_length=180)
+    city=models.CharField(max_length=100,default='Lisbon',db_index=True)
+    neighbourhood=models.CharField(max_length=120,blank=True)
+    summary=models.TextField(blank=True)
+    school_type=models.CharField(max_length=20,choices=TYPES,blank=True,db_index=True)
+    min_age=models.PositiveSmallIntegerField(null=True,blank=True)
+    max_age=models.PositiveSmallIntegerField(null=True,blank=True)
+    stages=models.CharField(max_length=120,blank=True)
+    languages=models.CharField(max_length=120,blank=True)
+    curriculum=models.CharField(max_length=200,blank=True)
+    teaching_approach=models.TextField(blank=True)
+    address=models.CharField(max_length=300,blank=True)
+    website=models.URLField(blank=True)
+    hours=models.CharField(max_length=200,blank=True)
+    facilities=models.TextField(blank=True)
+    extracurriculars=models.TextField(blank=True)
+    annual_fee_from=models.DecimalField(max_digits=10,decimal_places=2,null=True,blank=True)
+    annual_fee_to=models.DecimalField(max_digits=10,decimal_places=2,null=True,blank=True)
+    fee_year=models.CharField(max_length=30,blank=True)
+    fee_includes=models.TextField(blank=True)
+    admissions=models.TextField(blank=True)
+    visit_url=models.URLField(blank=True)
+    source_name=models.CharField(max_length=250,blank=True)
+    source_url=models.URLField(blank=True)
+    last_checked=models.DateField(null=True,blank=True)
+    is_published=models.BooleanField(default=False,db_index=True)
+    updated_at=models.DateTimeField(auto_now=True)
+    class Meta:
+        ordering=['name']
+    def __str__(self):return self.name
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        from urllib.parse import urlsplit
+        errors={}
+        if (self.min_age is None)!=(self.max_age is None) or (self.min_age is not None and not 0<=self.min_age<=self.max_age<=21):errors['max_age']='Provide a complete, valid school age range.'
+        if self.annual_fee_from is not None and self.annual_fee_from<0:errors['annual_fee_from']='Fees cannot be negative.'
+        if self.annual_fee_to is not None and (self.annual_fee_to<0 or self.annual_fee_from is None or self.annual_fee_to<self.annual_fee_from):errors['annual_fee_to']='Provide a consistent annual fee range.'
+        if self.annual_fee_from is not None and (not self.fee_year or not self.fee_includes):errors['fee_year']='State the academic year and what the quoted fee covers.'
+        for field in ['website','source_url','visit_url']:
+            value=getattr(self,field)
+            if value:
+                try:
+                    parsed=urlsplit(value)
+                    if parsed.scheme not in ['http','https'] or not parsed.netloc or parsed.username or parsed.password:raise ValueError()
+                except ValueError:errors[field]='Use an HTTP or HTTPS website without embedded credentials.'
+        if self.is_published and (not self.source_name or not self.last_checked):errors['source_name']='Published profiles need a source and a last-checked date.'
+        if self.last_checked and self.last_checked>timezone.localdate():errors['last_checked']='The last-checked date cannot be in the future.'
+        if errors:raise ValidationError(errors)
+    @property
+    def stage_labels(self):return ', '.join(dict(self.STAGES).get(s,s) for s in self.stages.split(',') if s)
+    @property
+    def language_labels(self):
+        from .discovery import LANGUAGES
+        return ', '.join(dict(LANGUAGES).get(s,s) for s in self.languages.split(',') if s)
+    @property
+    def age_label(self):return f'{self.min_age}–{self.max_age}' if self.min_age is not None else ''
+
+class ShortlistedSchool(models.Model):
+    user=models.ForeignKey(User,on_delete=models.CASCADE,related_name='shortlisted_schools')
+    profile=models.ForeignKey(SchoolProfile,on_delete=models.CASCADE,related_name='shortlisted_by')
+    created_at=models.DateTimeField(auto_now_add=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=['user','profile'],name='one_school_shortlist_per_user')]
