@@ -2047,5 +2047,12 @@
   "Unpublish incomplete or outdated information until it can be checked.": "Despublique informação incompleta ou desatualizada até ser verificada.",
   "Mixed": "Misto",
   "Use a nickname and age band. No exact birth date, school class, public child profile, or live location is collected. Optional photos are private and access-controlled.": "Use uma alcunha e faixa etária. Não se recolhem datas de nascimento exatas, turmas, perfis infantis públicos ou localização em tempo real. As fotografias opcionais são privadas e protegidas por controlo de acesso.",
-  "Use a public HTTP or HTTPS source without credentials.": "Utilize uma fonte HTTP ou HTTPS pública, sem credenciais."
+  "Use a public HTTP or HTTPS source without credentials.": "Utilize uma fonte HTTP ou HTTPS pública, sem credenciais.",
+  "Add photo": "Adicionar fotografia",
+  "Change photo": "Alterar fotografia",
+  "Selected photo preview": "Pré-visualização da fotografia selecionada",
+  "Manage About Us photos": "Gerir fotografias de Sobre nós",
+  "You are signed in as an authorised administrator. Add, replace or delete photos on the team cards below.": "Tem sessão iniciada como administrador autorizado. Adicione, substitua ou elimine fotografias nos cartões da equipa abaixo.",
+  "Uploads are private by default. Public sharing requires the separate photo permission and guardian consent review.": "As fotografias são privadas por predefinição. A partilha pública requer uma revisão separada das permissões e do consentimento parental.",
+  "Open photo management and cropping": "Abrir gestão e recorte de fotografias"
 }

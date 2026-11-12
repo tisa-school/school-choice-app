@@ -9,3 +9,5 @@
 .product-shell .actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}.information-page .trust-columns{margin-top:26px}.live-product .hero{background:white;border:1px solid var(--line);color:var(--dark);min-height:0}.live-product .hero-art{display:none}.live-product .hero-copy{padding:28px}.live-product .hero h2,.live-product .hero p{color:var(--dark)}.live-product .hero .hero-eyebrow{color:var(--primary)}
 .school-photo-credit{font-size:11px!important;color:#655b70;margin-top:-8px;margin-bottom:15px}.school-photo-credit a{text-decoration:underline}
 [data-portrait-editor] canvas{max-width:100%;height:auto;border-radius:16px;border:1px solid var(--line);margin:18px 0}
+
+.about-photo-management{padding:1.5rem;margin-bottom:2rem;border-inline-start:4px solid #440CB0}.team-inline-upload [data-inline-photo-preview]{object-fit:cover;border-radius:16px;max-width:100%;height:160px}.team-inline-upload [data-inline-photo-preview][hidden]{display:none}

@@ -2047,5 +2047,12 @@
   "Unpublish incomplete or outdated information until it can be checked.": "Unpublish incomplete or outdated information until it can be checked.",
   "Mixed": "Mixed",
   "Use a nickname and age band. No exact birth date, school class, public child profile, or live location is collected. Optional photos are private and access-controlled.": "Use a nickname and age band. No exact birth date, school class, public child profile, or live location is collected. Optional photos are private and access-controlled.",
-  "Use a public HTTP or HTTPS source without credentials.": "Use a public HTTP or HTTPS source without credentials."
+  "Use a public HTTP or HTTPS source without credentials.": "Use a public HTTP or HTTPS source without credentials.",
+  "Add photo": "Add photo",
+  "Change photo": "Change photo",
+  "Selected photo preview": "Selected photo preview",
+  "Manage About Us photos": "Manage About Us photos",
+  "You are signed in as an authorised administrator. Add, replace or delete photos on the team cards below.": "You are signed in as an authorised administrator. Add, replace or delete photos on the team cards below.",
+  "Uploads are private by default. Public sharing requires the separate photo permission and guardian consent review.": "Uploads are private by default. Public sharing requires the separate photo permission and guardian consent review.",
+  "Open photo management and cropping": "Open photo management and cropping"
 }

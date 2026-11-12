@@ -88,3 +88,9 @@ All are captured from the application, using an isolated test database. The name
 - Local performance budgets: passed at 390px/1440px. FCP/LCP 220ms/224ms, CLS 0; see the JSON artifact for scope and limits. These are not production measurements.
 - Django: **294 backend tests passed** (56.314 seconds), including privacy, authorisation, validation, persistence, migrations and the existing workflows.
 - Development branch: `feature/tk-zone-2`. Main is preserved. GitHub CLI authentication is unavailable, so automatic PR creation and remote CI status are unverified. Vercel credentials/access are unavailable; a hosted preview cannot be certified from this environment.
+
+## About Us administrator photo follow-up
+
+About Us now highlights the authorised photo-management area above the team. Each existing team card provides Add photo / Change photo, a local image preview, Save photo and Delete photo. Controls and private media remain permission-checked by the existing server endpoints; no separate team identities or public administrator shortcuts were added. The dedicated management page still provides cropping.
+
+Verified with 26 focused backend tests and two Chromium workflows, including direct About Us upload, replacement, reload, deletion and signed-out denial. This code is on the feature branch; it does not establish that the production deployment or a particular live account has received it.

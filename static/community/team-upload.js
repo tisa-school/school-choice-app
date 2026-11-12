@@ -1,5 +1,12 @@
 /* Real account permissions are enforced by the upload endpoint. */
 (()=>{'use strict';
+document.addEventListener('change',event=>{
+ const input=event.target.closest('[data-inline-photo-file]');if(!input)return;
+ const preview=input.form.querySelector('[data-inline-photo-preview]');
+ preview.hidden=true;preview.removeAttribute('src');
+ const file=input.files[0];if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type))return;
+ const reader=new FileReader();reader.onload=()=>{if(input.files[0]!==file)return;preview.src=reader.result;preview.hidden=false;};reader.readAsDataURL(file);
+});
 document.addEventListener('submit',async event=>{
  const form=event.target.closest('[data-team-upload]');if(!form)return;
  event.preventDefault();if(form.dataset.busy)return;
@@ -23,6 +30,10 @@ document.addEventListener('submit',async event=>{
   photo={url:result.url,description:result.description};form.querySelector('[data-delete-portrait]').hidden=false;
   }
   status.textContent=result.message;form.reset();
+  const label=form.querySelector('[data-inline-photo-label]');
+  if(label?.firstChild)label.firstChild.textContent=document.documentElement.lang==='pt-PT'?(result.deleted?'Adicionar fotografia':'Alterar fotografia'):(result.deleted?'Add photo':'Change photo');
+  const preview=form.querySelector('[data-inline-photo-preview]');
+  if(preview){preview.hidden=true;preview.removeAttribute('src');}
   document.dispatchEvent(new CustomEvent('team-portrait-updated',{detail:{id:form.dataset.person,photo}}));
  }catch(error){status.textContent=error.name==='TypeError'?(document.documentElement.lang==='pt-PT'?'Não foi possível guardar a fotografia. Verifica a ligação e tenta novamente.':'Photo could not be saved. Check the connection and try again.'):error.message;}
  finally{delete form.dataset.busy;buttons.forEach(button=>button.disabled=false);form.removeAttribute('aria-busy');}
