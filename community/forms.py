@@ -34,8 +34,8 @@ class SignupForm(LocalizedFieldsMixin,UserCreationForm):
         if commit: user.save()
         return user
 class EmailLoginForm(LocalizedFieldsMixin,AuthenticationForm):
-    username=forms.EmailField(label='Email')
-    def clean_username(self): return self.cleaned_data['username'].strip().lower()
+    username=forms.CharField(label='Email or username',max_length=254,widget=forms.TextInput(attrs={'autocomplete':'username','autocapitalize':'none'}))
+    def clean_username(self): return self.cleaned_data['username'].strip()
 class JoinForm(LocalizedFieldsMixin,forms.Form):
     school=forms.ModelChoiceField(queryset=None,empty_label='Choose your school')
     code=forms.CharField(label='School invite code',widget=forms.PasswordInput)
@@ -63,11 +63,12 @@ class EventForm(ImageValidationMixin,forms.ModelForm):
 
     def save(self,commit=True):
         self.instance._review_event_image=bool(self.cleaned_data.get('image_reviewed'))
+        if self.cleaned_data.get('status')=='published':self.instance.archived=False
         return super().save(commit=commit)
 
     class Meta:
         model=Event
-        fields=['title','listing_type','visibility','identity_verified','category','image','image_alt','image_source','image_reviewed','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','activity_environment','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','child_capacity','price_text','booking_url','requests_close_at','status']
+        fields=['title','listing_type','visibility','identity_verified','category','image','image_alt','image_source','image_reviewed','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','activity_environment','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','child_capacity','price_text','booking_url','source_url','last_verified','requests_close_at','status']
         widgets={**{k:forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}) for k in ['start_at','end_at','requests_close_at']},'image':forms.FileInput(attrs={'accept':'image/jpeg,image/png,image/webp'})}
         labels={'identity_verified':'Organizer identity checked by staff (not a safety guarantee)','start_at':'Start at / first activity date','capacity':'Maximum total attendees (leave empty for unlimited)','child_capacity':'Maximum children (leave empty for unlimited)','price_text':'Price information (optional)','status':'Publication status'}
     def __init__(self,*args,**kwargs):

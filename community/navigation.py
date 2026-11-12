@@ -17,48 +17,12 @@ ICONS={
 }
 
 def navigation(request,member):
-    authenticated=request.user.is_authenticated
-    staff=bool(member and member.role=='staff' and member.verified)
-    organizer=bool(member and member.role=='organizer' and member.verified)
-    access=access_for(request.user)
-    items=[]
-    def add(key,label,url,icon='workspace',demo_view='',required_role=''):
-        if not url.startswith('/demo/'):demo_view=''
-        items.append(dict(key=key,label=label,url=url,icon_path=ICONS[icon],demo_view=demo_view,required_role=required_role,active=False))
-    add('home','Home','/','home','home')
-    add('activities','Activities','/discover/activities/','activities','events')
-    add('schools','Find schools','/schools/','schools')
-    add('saved','Saved','/saved/','saved')
-    add('family','Family workspace','/family/' if authenticated else '/demo/family/','family','family')
-    add('community','Live school community','/community/','community')
-    add('finder','Activity Finder','/finder/','finder')
-    add('calendar','Calendar','/calendar/','calendar')
-    add('demo-catalogue','Demo catalogue','/demo/events/','activities','events')
-    add('child','My zone','/demo/child/','family','child')
-    add('crews','Crews','/demo/crews/','community','crews')
-    add('demo-calendar','Demo family calendar','/demo/calendar/','calendar','calendar')
-    add('presentation','Presentation demo','/demo/','workspace')
-    add('safety','Safety Centre','/demo/safety/','safety','safety')
-    add('feedback','Share Feedback','/feedback/','community')
-    if member and member.role!='organizer':
-        add('announcements','School announcements','/announcements/','community')
-        if member.role=='student':add('tickets','My school tickets','/tickets/','saved')
-    elif authenticated and not member:add('join','Join your school','/join/','schools')
-    if staff:
-        for key,label,url in [('staff','Overview & listings','/staff/'),('school-profile','School directory profile','/staff/school-profile/'),('approvals','Participation requests','/staff/requests/'),('studio','Announcement studio','/staff/announcements/'),('feedback-inbox','Listing reports & feedback','/staff/feedback/'),('applications','Organizer applications','/staff/organizers/'),('moderation','Content moderation','/staff/content/')]:add(key,label,url)
-    if organizer:add('organizer','Organiser studio','/organizer/','workspace','organizer','organizer')
-    elif not authenticated:add('organizer','Organiser studio','/demo/organizer/','workspace','organizer','organizer')
-    if 'admin' in access['roles']:add('admin','Demo moderation','/demo/admin/','workspace','admin','admin')
-    if authenticated:add('notifications','Notifications','/notifications/','community')
-    add('account','Profile & settings' if authenticated else 'Account access','/profile/' if authenticated else '/accounts/login/','family')
-    add('about','About Us','/about/','about','about')
-    add('photos','Team photos','/team/photos/','photos')
+    # Existing tools are reached through their owning section or the role-aware account menu.
     path=request.path
-    mappings=[('/staff/school-profile/','school-profile'),('/staff/requests/','approvals'),('/staff/announcements/','studio'),('/staff/feedback/','feedback-inbox'),('/staff/organizers/','applications'),('/staff/content/','moderation'),('/staff/','staff'),('/organizer/','organizer'),('/schools/','schools'),('/saved/','saved'),('/collections/','saved'),('/discover/activities/','activities'),('/activities/','activities'),('/events/','activities'),('/family/','family'),('/community/','community'),('/finder/','finder'),('/calendar/','calendar'),('/announcements/','announcements'),('/tickets/','tickets'),('/join/','join'),('/feedback/','feedback'),('/about/','about'),('/team/','photos'),('/notifications/','notifications'),('/profile/','account'),('/accounts/','account')]
-    active=next((key for prefix,key in mappings if path.startswith(prefix)),'home')
-    if path.startswith('/demo/'):
-        section=path.split('/')[2] if len(path.split('/'))>2 else ''
-        active={'':'presentation','events':'demo-catalogue','activities':'demo-catalogue','detail':'demo-catalogue','family':'family','calendar':'demo-calendar','creator':'organizer','onboarding':'child','finder':'finder'}.get(section,section)
-    if active not in {item['key'] for item in items}:active='home'
-    for item in items:item['active']=item['key']==active
-    return items
+    active='discover'
+    if path.startswith(('/discover/activities/','/events/','/activities/','/experiences/','/finder/','/calendar/')):active='activities'
+    elif path.startswith('/schools/'):active='schools'
+    elif path.startswith(('/my-family/','/family/','/saved/','/collections/','/private/children/')):active='family'
+    elif path.startswith(('/community/','/announcements/','/tickets/')):active='community'
+    rows=[('discover','Discover','/','home'),('activities','Activities','/discover/activities/','activities'),('schools','Schools','/schools/','schools'),('family','My Family','/my-family/','family'),('community','Community','/community/','community')]
+    return [dict(key=key,label=label,url=url,icon_path=ICONS[icon],demo_view='',required_role='',active=key==active) for key,label,url,icon in rows]

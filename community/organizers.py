@@ -9,18 +9,19 @@ def can_manage(user, member, event):
 
 @transaction.atomic
 def review_application(user,member,pk,status,note=''):
-    if not member or member.role!='staff' or not member.verified: raise PermissionError()
-    application=OrganizerApplication.objects.select_for_update().get(pk=pk,school=member.school)
+    if not user.is_superuser and (not member or member.role!='staff' or not member.verified): raise PermissionError()
+    application=OrganizerApplication.objects.select_for_update().get(**({'pk':pk} if user.is_superuser else {'pk':pk,'school':member.school}))
+    school=application.school
     if status not in ['approved','declined'] or application.status!='pending': raise ValueError('This application is not awaiting a valid decision.')
     if status=='approved':
         # Serialize with other approvals involving this same account.
         from django.contrib.auth.models import User
         User.objects.select_for_update().get(pk=application.user_id)
         existing=Membership.objects.select_for_update().filter(user=application.user).first()
-        if existing and (existing.school_id!=member.school_id or existing.role in ['student','staff']): raise ValueError('This account has an incompatible school role. A trusted administrator must review it.')
-        Membership.objects.update_or_create(user=application.user,defaults={'school':member.school,'role':'organizer','verified':True})
+        if existing and (existing.school_id!=school.pk or existing.role in ['student','staff']): raise ValueError('This account has an incompatible school role. A trusted administrator must review it.')
+        Membership.objects.update_or_create(user=application.user,defaults={'school':school,'role':'organizer','verified':True})
     application.status=status;application.reviewed_by=user;application.reviewed_at=timezone.now();application.decision_note=note[:500];application.save()
-    Notification.objects.create(user=application.user,school=member.school,kind='organizer',title='Organizer application '+status,message=note[:500] or 'Your organizer application has been reviewed.',link='/organizer/')
+    Notification.objects.create(user=application.user,school=school,kind='organizer',title='Organizer application '+status,message=note[:500] or 'Your organizer application has been reviewed.',link='/organizer/')
     return application
 
 @transaction.atomic

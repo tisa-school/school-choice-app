@@ -18,7 +18,7 @@ def visible_events(user):
         if member.role=='organizer':
             if member.verified: scope |= Q(school=member.school,created_by=user)
         else: scope |= Q(school=member.school)
-    return Event.objects.filter(scope,status='published').select_related('school')
+    return Event.objects.filter(scope,status='published',archived=False).select_related('school')
 
 def discovery_view(view):
     @wraps(view)
@@ -33,7 +33,7 @@ def discovery_view(view):
 
 def filter_listings(queryset, values):
     q=values.get('q','').strip()[:200]
-    if q: queryset=queryset.filter(Q(title__icontains=q)|Q(description__icontains=q)|Q(venue__icontains=q)|Q(organizer__icontains=q))
+    if q: queryset=queryset.filter(Q(title__icontains=q)|Q(description__icontains=q)|Q(venue__icontains=q)|Q(organizer__icontains=q)|Q(area__icontains=q)|Q(category__icontains=q)|Q(address__icontains=q))
     category=values.get('category','All')
     if category and category!='All': queryset=queryset.filter(category=category)
     age=values.get('age','')

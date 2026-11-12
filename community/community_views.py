@@ -214,34 +214,52 @@ def interface_language(request):
     return JsonResponse({'language':code,'dictionary':catalog(code),'direction':'rtl' if code in ['ar','ur'] else 'ltr','intl_locale':ACTIVE_LOCALES[code][2]})
 
 
+def photo_save_errors(view):
+    from functools import wraps
+    @wraps(view)
+    def wrapped(request,*args,**kwargs):
+        from django.db import DatabaseError
+        try:return view(request,*args,**kwargs)
+        except (DatabaseError,OSError):
+            import logging
+            from django.http import JsonResponse
+            logging.getLogger(__name__).exception('Private portrait save failed')
+            message=text('Photo could not be saved. Please try again or contact an administrator.')
+            if request.headers.get('X-Requested-With')=='XMLHttpRequest':return JsonResponse({'error':message},status=503)
+            messages.error(request,message);return redirect('/about/#our-team')
+    return wrapped
+
+
 @login_required
 @require_POST
+@photo_save_errors
 def team_inline_upload(request,person_id):
     import json
     from django.conf import settings
     from django.http import JsonResponse
-    from .community_forms import InlineTeamPhotoForm
+    from .community_forms import PortraitCropForm
     project=json.loads((settings.BASE_DIR/'content/project.json').read_text())
     person=next((p for p in project['contributors'] if p['id']==person_id),None)
     from .team import person_names
     if not person or not moderator(request.user):raise Http404()
     member=membership(request.user)
-    school=member.school if member and member.school.name.casefold()==project['school'].casefold() else None
-    if school is None and request.user.is_superuser:
-        school=School.objects.filter(name__iexact=project['school']).order_by('pk').first()
-    if school is None:raise Http404()
+    from .team import project_school
+    school=project_school(project)
+    if school is None or not moderator(request.user,school.pk):raise Http404()
     ajax=request.headers.get('X-Requested-With')=='XMLHttpRequest'
     if request.POST.get('action')=='delete':
         with transaction.atomic():
             School.objects.select_for_update().get(pk=school.pk)
             TeamPhoto.objects.filter(school=school,name__in=person_names(person),is_group=False).delete()
+        from .models import PlatformAudit
+        PlatformAudit.objects.create(actor=request.user,school=school,action='portrait.deleted',entity_type='TeamProfile',entity_id=person_id,changed_fields=['image'])
         message=text('Photo deleted.')
         if ajax:return JsonResponse({'message':message,'deleted':True})
         messages.success(request,message)
         return redirect('/about/#our-team')
-    form=InlineTeamPhotoForm(request.POST,request.FILES)
+    form=PortraitCropForm(request.POST,request.FILES)
     if not form.is_valid():
-        errors=' '.join(str(error) for values in form.errors.values() for error in values)
+        errors=' '.join(text(str(error)) for values in form.errors.values() for error in values)
         if ajax:return JsonResponse({'error':errors},status=400)
         messages.error(request,errors)
         return redirect('/about/#our-team')
@@ -258,6 +276,8 @@ def team_inline_upload(request,person_id):
         photo.save()
         # Older portraits must not remain publicly visible after a private replacement.
         photos.exclude(pk=photo.pk).update(visibility='private',sharing_permission=False,guardian_consent=False)
+    from .management_views import audit
+    audit(request,'portrait.updated',photo,school=school,fields=['image','visibility'])
     message=text('Team photo saved.')
     if ajax:
         from django.urls import reverse

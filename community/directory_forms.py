@@ -12,6 +12,8 @@ class DiscoveryFieldsMixin(LocalizedFieldsMixin):
         super().__init__(*args,**kwargs)
 
 class ActivityDiscoveryForm(DiscoveryFieldsMixin,forms.Form):
+    sort=forms.ChoiceField(label='Sort activities',required=False,choices=[('','Upcoming first'),('name','Name'),('recent','Recently added')])
+    theme=forms.ChoiceField(label='Interest group',required=False,choices=[('','All interests'),('sports','Football & Sports'),('art','Art & Creativity'),('science','Science & Technology'),('culture','Museums & Culture'),('nature','Nature & Outdoors'),('music','Music & Performing Arts'),('visits','Educational Visits'),('family','Family Weekends')])
     q=forms.CharField(label='Search activities',required=False,max_length=200)
     age_group=forms.ChoiceField(label='Age group',choices=AGE_GROUPS,required=False)
     age=forms.IntegerField(label='Exact age (optional)',required=False,min_value=0,max_value=17)

@@ -1,0 +1,14 @@
+{
+  "schools": [
+    {"key":"united-lisbon","name":"United Lisbon International School","url":"https://www.unitedlisbon.school/"},
+    {"key":"st-julians","name":"St. Julian's School","url":"https://www.stjulians.com/"},
+    {"key":"carlucci","name":"Carlucci American International School of Lisbon","url":"https://www.caislisbon.org/"},
+    {"key":"oeiras-international","name":"Oeiras International School","url":"https://ois.pt/"},
+    {"key":"park","name":"PaRK International School","url":"https://www.park-is.com/"},
+    {"key":"tasis","name":"TASIS Portugal","url":"https://www.tasisportugal.org/"},
+    {"key":"british-lisbon","name":"British School of Lisbon","url":"https://www.britishschool.pt/"},
+    {"key":"redbridge","name":"Redbridge International School","url":"https://redbridgeschool.com/"}
+  ],
+  "additional_schools": ["St. Dominic's International School","King's College School Cascais","International Sharing School"],
+  "experiences": ["Benfica Stadium and Museum tours","Sporting CP Stadium and Museum experiences","Unicorn Factory Lisboa educational enquiries","MAAT Museum family and educational programmes","Oceanário de Lisboa","Pavilhão do Conhecimento","Museu da Marioneta","Museu Nacional dos Coches"]
+}

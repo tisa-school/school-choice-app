@@ -2,14 +2,14 @@
 from django.db import transaction
 from django.db.models.signals import post_delete,pre_save
 from django.dispatch import receiver
-from .models import TeamPhoto,ExperiencePhoto
+from .models import TeamPhoto,ExperiencePhoto,ChildProfile,SchoolMedia
 
 @receiver(post_delete,sender=TeamPhoto)
 @receiver(post_delete,sender=ExperiencePhoto)
 def delete_photo_bytes(sender,instance,**kwargs):
     if instance.image:
         storage,name=instance.image.storage,instance.image.name
-        transaction.on_commit(lambda:storage.delete(name))
+        transaction.on_commit(lambda:storage.delete(name),robust=True)
 
 @receiver(pre_save,sender=TeamPhoto)
 def replace_photo_bytes(sender,instance,**kwargs):
@@ -17,4 +17,24 @@ def replace_photo_bytes(sender,instance,**kwargs):
     old=sender.objects.filter(pk=instance.pk).first()
     if old and old.image and old.image.name!=instance.image.name:
         storage,name=old.image.storage,old.image.name
-        transaction.on_commit(lambda:storage.delete(name))
+        transaction.on_commit(lambda:storage.delete(name),robust=True)
+
+@receiver(post_delete,sender=ChildProfile)
+def delete_child_photo(sender,instance,**kwargs):
+    if instance.photo:
+        storage,name=instance.photo.storage,instance.photo.name
+        transaction.on_commit(lambda:storage.delete(name),robust=True)
+
+@receiver(pre_save,sender=ChildProfile)
+def replace_child_photo(sender,instance,**kwargs):
+    if not instance.pk:return
+    old=sender.objects.filter(pk=instance.pk).first()
+    if old and old.photo and old.photo.name!=instance.photo.name:
+        storage,name=old.photo.storage,old.photo.name
+        transaction.on_commit(lambda:storage.delete(name),robust=True)
+
+@receiver(post_delete,sender=SchoolMedia)
+def delete_school_media(sender,instance,**kwargs):
+    if instance.image:
+        storage,name=instance.image.storage,instance.image.name
+        transaction.on_commit(lambda:storage.delete(name),robust=True)

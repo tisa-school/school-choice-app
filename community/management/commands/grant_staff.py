@@ -9,7 +9,10 @@ class Command(BaseCommand):
         parser.add_argument('--school-id',required=True,type=int)
     @transaction.atomic
     def handle(self,*args,**options):
-        user=User.objects.filter(email__iexact=options['email']).first()
+        users=list(User.objects.filter(email__iexact=options['email'])[:2])
+        if len(users)!=1:raise CommandError('Exactly one existing account must match this email; review ambiguous identities first.')
+        user=users[0]
+        if not user.is_active or not user.has_usable_password():raise CommandError('An active existing account with a usable password is required.')
         school=School.objects.filter(pk=options['school_id']).first()
         if not user or not school: raise CommandError('Existing registered account and school are required.')
         member=Membership.objects.filter(user=user).first()

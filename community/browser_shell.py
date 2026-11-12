@@ -33,9 +33,9 @@ class ProductShellBrowserTests(StaticLiveServerTestCase):
                         self.assertTrue(page.locator('.product-sidebar').is_visible())
             page.goto(self.live_server_url+'/community/?lang=en')
             expect(page.locator('.product-sidebar a[href="/community/"]')).to_have_attribute('aria-current','page')
-            page.locator('.product-sidebar a[href="/finder/"]').click()
+            page.goto(self.live_server_url+'/finder/')
             expect(page.get_by_label('Search preferences only',exact=True)).to_be_visible()
-            expect(page.locator('.product-sidebar a[href="/finder/"]')).to_have_attribute('aria-current','page')
+            expect(page.locator('.product-sidebar a[href="/discover/activities/"]')).to_have_attribute('aria-current','page')
             self.assertTrue(page.locator('input[name="csrfmiddlewaretoken"]').count())
             page.set_viewport_size({'width':1440,'height':1000})
             folder=Path(settings.BASE_DIR)/'docs/screenshots'

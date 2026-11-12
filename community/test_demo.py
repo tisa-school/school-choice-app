@@ -7,7 +7,7 @@ class PresentationModeTests(TestCase):
     def test_home_opens_presentation_without_registration(self):
         response=self.client.get('/')
         self.assertEqual(response.status_code,200)
-        self.assertContains(response,'Big discoveries for little explorers.')
+        self.assertContains(response,'Discover more for your family in Lisbon.')
         self.assertContains(response,'No registration')
         self.assertNotContains(response,'type="password"')
         self.assertNotContains(response,'type="email"')

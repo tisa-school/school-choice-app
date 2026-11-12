@@ -49,10 +49,13 @@ def text(value,locale=None):
 class InterfaceLanguageMiddleware:
     def __init__(self,get_response):self.get_response=get_response
     def __call__(self,request):
-        from .models import InterfacePreference
+        if request.path=='/health/':return self.get_response(request)
+        from .models import InterfacePreference,SiteConfiguration
+        request.site_configuration=SiteConfiguration.objects.filter(pk=1).first()
+        default_language=request.site_configuration.default_language if request.site_configuration else 'en'
         supplied=ALIASES.get(request.GET.get('lang'),request.GET.get('lang'))
         stored=InterfacePreference.objects.filter(user=request.user).values_list('language',flat=True).first() if request.user.is_authenticated else None
-        locale=supplied if supplied in ACTIVE_LOCALES else stored or request.COOKIES.get('tkzone_language','en')
+        locale=supplied if supplied in ACTIVE_LOCALES else stored or request.COOKIES.get('tkzone_language',default_language)
         if locale not in ACTIVE_LOCALES:locale='en'
         request.ui_locale=locale;previous=translation.get_language();translation.activate(ACTIVE_LOCALES[locale][1])
         try:
@@ -73,7 +76,7 @@ class InterfaceLanguageMiddleware:
         if request.user.is_authenticated:response['Cache-Control']='private, no-store'
         if supplied in ACTIVE_LOCALES:
             response.set_cookie('tkzone_language',locale,max_age=31536000,secure=request.is_secure(),httponly=True,samesite='Lax')
-        if request.user.is_authenticated and (supplied in ACTIVE_LOCALES or not stored):InterfacePreference.objects.update_or_create(user=request.user,defaults={'language':locale})
+        if request.user.is_authenticated and request.path not in ['/tour/','/manage/tour/'] and (supplied in ACTIVE_LOCALES or not stored):InterfacePreference.objects.update_or_create(user=request.user,defaults={'language':locale})
         return response
 
 def interface_context(request):

@@ -85,3 +85,5 @@ _public_origin = urlsplit(PUBLIC_SITE_URL)
 if (_public_origin.scheme != 'https' or not _public_origin.netloc or _public_origin.path or
         _public_origin.query or _public_origin.fragment or _public_origin.username or _public_origin.password):
     raise RuntimeError('PUBLIC_SITE_URL must be an HTTPS origin without a path or credentials')
+
+AUTHENTICATION_BACKENDS = ['community.authentication.ExistingIdentityBackend','django.contrib.auth.backends.ModelBackend']

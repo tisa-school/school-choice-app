@@ -22,7 +22,7 @@ class BrandRoleBrowserTests(StaticLiveServerTestCase):
             page.locator('#role').select_option('parent')
             expect(page.locator('nav [data-view="organizer"]')).to_have_count(0)
             page.locator('#role').select_option('organizer')
-            expect(page.locator('nav [data-view="organizer"]')).to_have_count(1)
+            expect(page.locator('#demo-app')).to_have_attribute('data-screen','organizer')
             page.locator('#role').select_option('child')
             page.goto(self.live_server_url+'/demo/about/')
             expect(page.locator('#demo-app')).to_contain_text('Sophia Gatenyo')

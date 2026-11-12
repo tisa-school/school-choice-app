@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
 from django.utils import timezone
 
-CATEGORIES = [('Sports','Sports'),('Music','Music'),('Arts','Arts'),('School Life','School Life'),('Science','Science'),('Nature','Nature'),('Coding','Coding'),('Games','Games'),('Gaming','Gaming'),('Shopping','Shopping'),('Theater & Drama','Theater & Drama')]
+CATEGORIES = [('Sports','Sports'),('Music','Music'),('Arts','Arts'),('School Life','School Life'),('Science','Science'),('Nature','Nature'),('Coding','Coding'),('Games','Games'),('Gaming','Gaming'),('Shopping','Shopping'),('Theater & Drama','Theater & Drama'),('Museums & Culture','Museums & Culture'),('Educational Visits','Educational Visits'),('Family Weekends','Family Weekends'),('Entrepreneurship','Entrepreneurship'),('Technology','Technology'),('Summer Camps','Summer Camps')]
 class School(models.Model):
     name = models.CharField(max_length=160)
     invite_code_hash = models.CharField(max_length=256)
@@ -46,6 +46,8 @@ class Event(models.Model):
     venue = models.CharField(max_length=160)
     organizer = models.CharField(max_length=160, blank=True)
     booking_url = models.URLField(blank=True)
+    source_url = models.URLField(blank=True)
+    last_verified = models.DateField(null=True,blank=True)
     address = models.CharField(max_length=240, blank=True)
     contact_name = models.CharField(max_length=100, blank=True)
     contact_phone = models.CharField(max_length=40, blank=True)
@@ -60,6 +62,7 @@ class Event(models.Model):
     price_text = models.CharField(max_length=100, blank=True)
     ticket_requests_enabled = models.BooleanField(default=True)
     requests_close_at = models.DateTimeField(null=True, blank=True)
+    archived = models.BooleanField(default=False,db_index=True)
     status = models.CharField(max_length=12, choices=[('draft','Draft'),('submitted','Awaiting staff review'),('published','Published')], default='draft')
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -94,7 +97,7 @@ class Event(models.Model):
     @property
     def remaining_children(self): return self.attendance['remaining_children']
     @property
-    def eligible(self): return not self.is_cancelled and self.listing_type=='event' and self.status=='published' and self.ticket_requests_enabled and self.start_at>timezone.now() and (not self.requests_close_at or self.requests_close_at>timezone.now()) and self.remaining != 0
+    def eligible(self): return not self.archived and not self.is_cancelled and self.listing_type=='event' and self.status=='published' and self.ticket_requests_enabled and self.start_at>timezone.now() and (not self.requests_close_at or self.requests_close_at>timezone.now()) and self.remaining != 0
     @property
     def map_url(self):
         from urllib.parse import urlencode
@@ -103,6 +106,9 @@ class Event(models.Model):
     def phone_link(self):
         return 'tel:'+''.join(char for char in self.contact_phone if char.isdigit() or char=='+')
     def __str__(self): return self.title
+    class Meta:
+        indexes=[models.Index(fields=['status','visibility','start_at'],name='event_public_discovery'),models.Index(fields=['school','status','start_at'],name='event_school_discovery')]
+
 class TicketRequest(models.Model):
     STATUSES = [(s,s.replace('_',' ').title()) for s in ['requested','under_review','approved','declined','cancelled']]
     event = models.ForeignKey(Event, related_name='requests', on_delete=models.CASCADE)
@@ -178,6 +184,8 @@ class ChildProfile(models.Model):
     age_band = models.CharField(max_length=8, choices=[('3-5','3–5'),('6-8','6–8'),('9-11','9–11'),('12-14','12–14'),('15-17','15–17')])
     interests = models.CharField(max_length=200, blank=True)
     languages = models.CharField(max_length=120, blank=True)
+    photo = models.ImageField(upload_to='children/',blank=True)
+    preferred_activity_types = models.CharField(max_length=200,blank=True)
     def __str__(self): return self.nickname
 
 class ActivitySession(models.Model):
@@ -342,7 +350,7 @@ class SchoolProfile(models.Model):
     school=models.OneToOneField(School,on_delete=models.SET_NULL,null=True,blank=True,related_name='directory_profile')
     slug=models.SlugField(max_length=190,unique=True)
     name=models.CharField(max_length=180)
-    city=models.CharField(max_length=100,default='Lisbon',db_index=True)
+    city=models.CharField(max_length=100,blank=True,default='',db_index=True)
     neighbourhood=models.CharField(max_length=120,blank=True)
     summary=models.TextField(blank=True)
     school_type=models.CharField(max_length=20,choices=TYPES,blank=True,db_index=True)
@@ -352,6 +360,7 @@ class SchoolProfile(models.Model):
     languages=models.CharField(max_length=120,blank=True)
     curriculum=models.CharField(max_length=200,blank=True)
     teaching_approach=models.TextField(blank=True)
+    transport_info=models.TextField(blank=True)
     address=models.CharField(max_length=300,blank=True)
     website=models.URLField(blank=True)
     hours=models.CharField(max_length=200,blank=True)
@@ -367,9 +376,11 @@ class SchoolProfile(models.Model):
     source_url=models.URLField(blank=True)
     last_checked=models.DateField(null=True,blank=True)
     is_published=models.BooleanField(default=False,db_index=True)
+    archived=models.BooleanField(default=False,db_index=True)
     updated_at=models.DateTimeField(auto_now=True)
     class Meta:
         ordering=['name']
+        indexes=[models.Index(fields=['is_published','school_type','city'],name='school_directory_filters')]
     def __str__(self):return self.name
     def clean(self):
         from django.core.exceptions import ValidationError
@@ -386,15 +397,26 @@ class SchoolProfile(models.Model):
                     parsed=urlsplit(value)
                     if parsed.scheme not in ['http','https'] or not parsed.netloc or parsed.username or parsed.password:raise ValueError()
                 except ValueError:errors[field]='Use an HTTP or HTTPS website without embedded credentials.'
+        if self.is_published and not self.city.strip():errors['city']='Confirm the school location before publishing.'
+        if self.is_published and self.archived:errors['is_published']='Unarchive the school before publishing.'
         if self.is_published and (not self.source_name or not self.last_checked):errors['source_name']='Published profiles need a source and a last-checked date.'
         if self.last_checked and self.last_checked>timezone.localdate():errors['last_checked']='The last-checked date cannot be in the future.'
         if errors:raise ValidationError(errors)
     @property
-    def stage_labels(self):return ', '.join(dict(self.STAGES).get(s,s) for s in self.stages.split(',') if s)
+    def stage_labels(self):
+        from .localization import text
+        return ', '.join(text(dict(self.STAGES).get(s,s)) for s in self.stages.split(',') if s)
     @property
     def language_labels(self):
         from .discovery import LANGUAGES
-        return ', '.join(dict(LANGUAGES).get(s,s) for s in self.languages.split(',') if s)
+        from .localization import text
+        return ', '.join(text(dict(LANGUAGES).get(s,s)) for s in self.languages.split(',') if s)
+    @property
+    def public_media(self):return self.media.filter(permission_confirmed=True).filter(Q(includes_children=False)|Q(guardian_consent=True))
+    @property
+    def map_url(self):
+        from urllib.parse import urlencode
+        return 'https://www.openstreetmap.org/search?'+urlencode({'query':self.address or ', '.join(s for s in [self.neighbourhood,self.city] if s)})
     @property
     def age_label(self):return f'{self.min_age}–{self.max_age}' if self.min_age is not None else ''
 
@@ -404,3 +426,105 @@ class ShortlistedSchool(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
     class Meta:
         constraints=[models.UniqueConstraint(fields=['user','profile'],name='one_school_shortlist_per_user')]
+
+class PlatformAudit(models.Model):
+    actor=models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
+    school=models.ForeignKey(School,on_delete=models.SET_NULL,null=True,blank=True)
+    action=models.CharField(max_length=80)
+    entity_type=models.CharField(max_length=60)
+    entity_id=models.CharField(max_length=80)
+    changed_fields=models.JSONField(default=list)
+    created_at=models.DateTimeField(auto_now_add=True,db_index=True)
+    class Meta:
+        ordering=['-created_at','-pk']
+        indexes=[models.Index(fields=['school','created_at'],name='scoped_audit_history')]
+
+class SiteConfiguration(models.Model):
+    project_school=models.ForeignKey(School,on_delete=models.SET_NULL,null=True,blank=True)
+    support_email=models.EmailField(blank=True)
+    default_language=models.CharField(max_length=8,choices=[('en','English'),('pt-PT','Português')],default='en')
+    updated_at=models.DateTimeField(auto_now=True)
+    def save(self,*args,**kwargs):self.pk=1;super().save(*args,**kwargs)
+
+class ExperienceListing(models.Model):
+    TYPES=[('ongoing','Ongoing experience'),('appointment','By appointment'),('proposed','Proposed activity'),('unverified','Unverified listing')]
+    title=models.CharField(max_length=180,db_index=True)
+    slug=models.SlugField(max_length=190,unique=True)
+    description=models.TextField(blank=True)
+    organizer=models.CharField(max_length=180,blank=True)
+    school=models.ForeignKey(School,on_delete=models.PROTECT,null=True,blank=True)
+    created_by=models.ForeignKey(User,on_delete=models.PROTECT)
+    category=models.CharField(max_length=80,db_index=True)
+    area=models.CharField(max_length=120,blank=True,db_index=True)
+    address=models.CharField(max_length=300,blank=True)
+    min_age=models.PositiveSmallIntegerField(null=True,blank=True)
+    max_age=models.PositiveSmallIntegerField(null=True,blank=True)
+    languages=models.CharField(max_length=120,blank=True)
+    duration=models.CharField(max_length=120,blank=True)
+    environment=models.CharField(max_length=12,choices=[('unspecified','Not supplied'),('indoor','Indoor'),('outdoor','Outdoor'),('mixed','Mixed')],default='unspecified')
+    accessibility=models.TextField(blank=True)
+    price_text=models.CharField(max_length=200,blank=True)
+    source_url=models.URLField(blank=True)
+    source_name=models.CharField(max_length=200,blank=True)
+    last_verified=models.DateField(null=True,blank=True)
+    price_amount=models.DecimalField(max_digits=10,decimal_places=2,null=True,blank=True)
+    price_unit=models.CharField(max_length=80,blank=True)
+    kind=models.CharField(max_length=16,choices=TYPES,default='unverified')
+    is_published=models.BooleanField(default=False,db_index=True)
+    archived=models.BooleanField(default=False,db_index=True)
+    updated_at=models.DateTimeField(auto_now=True)
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        errors={}
+        if (self.min_age is None)!=(self.max_age is None) or self.min_age is not None and not 0<=self.min_age<=self.max_age<=17:errors['max_age']='Provide a valid complete age range.'
+        if self.price_amount is not None and self.price_amount<0:errors['price_amount']='Prices cannot be negative.'
+        if self.is_published and (not self.source_url or not self.source_name or not self.last_verified):errors['source_url']='Published experiences need an official source and verification date.'
+        if self.source_url:
+            from urllib.parse import urlsplit
+            try:
+                source=urlsplit(self.source_url)
+                valid=source.scheme in ('http','https') and source.netloc and not source.username and not source.password
+            except ValueError:valid=False
+            if not valid:errors['source_url']='Use a public HTTP or HTTPS source without credentials.'
+        if self.last_verified and self.last_verified>timezone.localdate():errors['last_verified']='Verification dates cannot be in the future.'
+        if errors:raise ValidationError(errors)
+    def __str__(self):return self.title
+    class Meta:
+        indexes=[models.Index(fields=['is_published','archived','category','area'],name='experience_discovery_filters')]
+
+class SavedExperience(models.Model):
+    user=models.ForeignKey(User,on_delete=models.CASCADE)
+    experience=models.ForeignKey(ExperienceListing,on_delete=models.CASCADE)
+    created_at=models.DateTimeField(auto_now_add=True)
+    class Meta:constraints=[models.UniqueConstraint(fields=['user','experience'],name='unique_saved_experience')]
+
+class PrivateFamilyEvent(models.Model):
+    parent=models.ForeignKey(ParentAccount,on_delete=models.CASCADE,related_name='private_events')
+    title=models.CharField(max_length=180)
+    start_at=models.DateTimeField(db_index=True)
+    end_at=models.DateTimeField()
+    note=models.CharField(max_length=500,blank=True)
+    experience=models.ForeignKey(ExperienceListing,on_delete=models.SET_NULL,null=True,blank=True)
+    created_at=models.DateTimeField(auto_now_add=True)
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.start_at and self.end_at and self.end_at<=self.start_at:raise ValidationError({'end_at':'End time must follow start time.'})
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=['parent','title','start_at','end_at'],name='unique_private_family_event')]
+        indexes=[models.Index(fields=['parent','start_at'],name='private_family_calendar')]
+
+class SchoolMedia(models.Model):
+    school_profile=models.ForeignKey(SchoolProfile,on_delete=models.CASCADE,related_name='media')
+    image=models.ImageField(upload_to='school-media/')
+    description=models.CharField(max_length=300)
+    credit=models.CharField(max_length=200)
+    license_url=models.URLField(blank=True)
+    permission_confirmed=models.BooleanField(default=False)
+    includes_children=models.BooleanField(default=False)
+    guardian_consent=models.BooleanField(default=False)
+    uploaded_by=models.ForeignKey(User,on_delete=models.PROTECT)
+    created_at=models.DateTimeField(auto_now_add=True)
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if not self.permission_confirmed:raise ValidationError({'permission_confirmed':'Confirm school approval or a valid image licence.'})
+        if self.includes_children and not self.guardian_consent:raise ValidationError({'guardian_consent':'Permission for children shown is required.'})

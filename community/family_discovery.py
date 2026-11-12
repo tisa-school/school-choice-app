@@ -15,7 +15,8 @@ from django.utils.text import slugify
 from django.views.decorators.http import require_POST,require_GET
 from .discovery import discovery_view,visible_events,filter_listings,LANGUAGES
 from .directory_forms import ActivityDiscoveryForm,SchoolSearchForm,SchoolProfileForm,AGE_GROUPS,INTERESTS
-from .models import Event,ActivitySession,SavedEvent,SchoolProfile,ShortlistedSchool,SaveReceipt
+from .localization import text
+from .models import Event,ActivitySession,SavedEvent,SchoolProfile,ShortlistedSchool,SaveReceipt,ExperienceListing,SavedExperience
 
 
 def weekend_dates():
@@ -31,6 +32,9 @@ def activity_results(user,values):
     data=form.cleaned_data
     basics={k:data.get(k) or '' for k in ['q','age','category','area','price','environment','language']}
     query=filter_listings(visible_events(user).filter(is_cancelled=False),basics)
+    if data.get('theme'):
+        from .platform_views import THEMES
+        query=query.filter(category__in=next((cats for code,label,cats in THEMES if code==data['theme']),[]))
     if data.get('age_group'):
         low,high=map(int,data['age_group'].split('-'));query=query.filter(min_age__lte=high,max_age__gte=low)
     if data.get('max_price') is not None:query=query.filter(price_amount__lte=data['max_price'])
@@ -50,7 +54,9 @@ def activity_results(user,values):
         event.discovery_next_at=eligible[0].start_at if eligible else None
         event.discovery_session=eligible[0] if eligible and event.listing_type=='activity' else None
         results.append(event)
-    results.sort(key=lambda e:(e.discovery_next_at is None,e.discovery_next_at or timezone.now(),e.pk))
+    if data.get('sort')=='name':results.sort(key=lambda e:(e.title.casefold(),e.pk))
+    elif data.get('sort')=='recent':results.sort(key=lambda e:(e.created_at,e.pk),reverse=True)
+    else:results.sort(key=lambda e:(e.discovery_next_at is None,e.discovery_next_at or timezone.now(),e.pk))
     return form,results
 
 
@@ -63,24 +69,28 @@ def activity_choices(user):
 @require_GET
 def discovery_home(request):
     _,weekend=activity_results(request.user,{'weekend':'on'})
-    return render(request,'discovery/home.html',{'weekend_activities':weekend[:6],**activity_choices(request.user),'school_count':SchoolProfile.objects.filter(is_published=True).count(),'saved_ids':set(SavedEvent.objects.filter(user=request.user).values_list('event_id',flat=True)) if request.user.is_authenticated else set()})
+    return render(request,'discovery/home.html',{'weekend_activities':weekend[:6],**activity_choices(request.user),'school_count':SchoolProfile.objects.filter(is_published=True,archived=False).count(),'saved_ids':set(SavedEvent.objects.filter(user=request.user).values_list('event_id',flat=True)) if request.user.is_authenticated else set()})
 
 
 @discovery_view
 @require_GET
 def activities(request):
     form,results=activity_results(request.user,request.GET)
+    from .platform_views import experience_results
+    experiences=list(experience_results(request.GET))
     query=request.GET.copy();query.pop('surprise',None)
     back='/discover/activities/'+('?' + query.urlencode() if query else '')
-    if request.GET.get('surprise') and results:
-        event=random.choice(results)
-        return redirect('/events/'+str(event.pk)+'/?'+urlencode({'return_to':back}))
-    context={'form':form,'activity_results':results,'result_count':len(results),'discovery_back':back,'surprise_empty':bool(request.GET.get('surprise')) and not results,'active_filters':[(form.fields[k].label,v) for k,v in request.GET.items() if k in form.fields and v],'saved_ids':set(SavedEvent.objects.filter(user=request.user).values_list('event_id',flat=True)) if request.user.is_authenticated else set(),**activity_choices(request.user)}
+    matches=[('event',item) for item in results]+[('experience',item) for item in experiences]
+    if request.GET.get('surprise') and matches:
+        kind,item=random.choice(matches)
+        path='/events/'+str(item.pk)+'/' if kind=='event' else '/experiences/'+item.slug+'/'
+        return redirect(path+'?'+urlencode({'return_to':back}))
+    context={'form':form,'activity_results':results,'experience_results':experiences,'result_count':len(matches),'discovery_back':back,'surprise_empty':bool(request.GET.get('surprise')) and not matches,'active_filters':[(form.fields[k].label,v) for k,v in request.GET.items() if k in form.fields and v],'saved_ids':set(SavedEvent.objects.filter(user=request.user).values_list('event_id',flat=True)) if request.user.is_authenticated else set(),**activity_choices(request.user)}
     return render(request,'discovery/activities.html',context)
 
 
 def filtered_schools(values):
-    form=SchoolSearchForm(values);query=SchoolProfile.objects.filter(is_published=True)
+    form=SchoolSearchForm(values);query=SchoolProfile.objects.filter(is_published=True,archived=False)
     if not form.is_valid():return form,query.none()
     data=form.cleaned_data
     if data.get('q'):query=query.filter(Q(name__icontains=data['q'])|Q(city__icontains=data['q'])|Q(neighbourhood__icontains=data['q'])|Q(address__icontains=data['q']))
@@ -102,24 +112,24 @@ def schools(request):
         selected=form.cleaned_data
         for profile in profiles:
             reasons=[]
-            if selected.get('age_group'):reasons.append('Age range overlaps '+selected['age_group'])
-            if selected.get('school_type'):reasons.append(profile.get_school_type_display())
-            if selected.get('language'):reasons.append('Teaching language: '+dict(LANGUAGES).get(selected['language'],selected['language']))
-            if selected.get('stage'):reasons.append(dict(SchoolProfile.STAGES)[selected['stage']])
+            if selected.get('age_group'):reasons.append(text('Age range overlaps {value0}').format(value0=selected['age_group']))
+            if selected.get('school_type'):reasons.append(text(profile.get_school_type_display()))
+            if selected.get('language'):reasons.append(text('Teaching language')+': '+text(dict(LANGUAGES).get(selected['language'],selected['language'])))
+            if selected.get('stage'):reasons.append(text(dict(SchoolProfile.STAGES)[selected['stage']]))
             if selected.get('curriculum'):reasons.append(profile.curriculum)
-            if selected.get('max_fee') is not None:reasons.append('Published starting annual fee is within your filter; confirm grade-specific costs.')
+            if selected.get('max_fee') is not None:reasons.append(text('Published starting annual fee is within your filter; confirm grade-specific costs.'))
             profile.match_reasons=reasons
-    return render(request,'discovery/schools.html',{'school_form':form,'school_results':profiles,'school_saved':set(ShortlistedSchool.objects.filter(user=request.user).values_list('profile_id',flat=True)) if request.user.is_authenticated else set(),'school_curricula':SchoolProfile.objects.filter(is_published=True).exclude(curriculum='').values_list('curriculum',flat=True).distinct(),'school_active':[(form.fields[k].label,v) for k,v in request.GET.items() if k in form.fields and v]})
+    return render(request,'discovery/schools.html',{'school_form':form,'school_results':profiles,'school_saved':set(ShortlistedSchool.objects.filter(user=request.user).values_list('profile_id',flat=True)) if request.user.is_authenticated else set(),'school_curricula':SchoolProfile.objects.filter(is_published=True,archived=False).exclude(curriculum='').values_list('curriculum',flat=True).distinct(),'school_active':[(form.fields[k].label,v) for k,v in request.GET.items() if k in form.fields and v]})
 
 
 @discovery_view
 @require_GET
 def school_detail(request,slug):
-    profile=get_object_or_404(SchoolProfile,is_published=True,slug=slug)
+    profile=get_object_or_404(SchoolProfile,is_published=True,archived=False,slug=slug)
     back=request.GET.get('return_to','')
     try:
         parsed=urlsplit(back)
-        if parsed.netloc or parsed.scheme or parsed.path not in ['/schools/','/saved/','/schools/compare/']:back='/schools/'
+        if parsed.netloc or parsed.scheme or parsed.path not in ['/schools/','/saved/','/schools/compare/','/search/']:back='/schools/'
     except ValueError:back='/schools/'
     return render(request,'discovery/school_detail.html',{'school_profile':profile,'school_back':back,'school_saved':set(ShortlistedSchool.objects.filter(user=request.user,profile=profile).values_list('profile_id',flat=True)) if request.user.is_authenticated else set()})
 
@@ -128,19 +138,20 @@ def school_detail(request,slug):
 @require_GET
 def compare_schools(request):
     slugs=list(dict.fromkeys(request.GET.getlist('school')))
-    if len(slugs)>3:return HttpResponseBadRequest('Choose up to three schools to compare.')
-    profiles={p.slug:p for p in SchoolProfile.objects.filter(is_published=True,slug__in=slugs)}
+    if len(slugs)>4:return HttpResponseBadRequest('Choose up to four schools to compare.')
+    profiles={p.slug:p for p in SchoolProfile.objects.filter(is_published=True,archived=False,slug__in=slugs)}
     selected=[profiles[s] for s in slugs if s in profiles]
-    fields=[('Location','location'),('Ages','age_label'),('School type','type'),('Educational stages','stage_labels'),('Teaching languages','language_labels'),('Curriculum','curriculum'),('School hours','hours'),('Facilities','facilities'),('Extracurricular activities','extracurriculars'),('Annual fees','fees'),('Academic year','fee_year'),('Fee coverage','fee_includes'),('Admissions','admissions'),('Source','source_name'),('Last checked','last_checked')]
+    fields=[('Location','location'),('Ages','age_label'),('School type','type'),('Educational stages','stage_labels'),('Teaching languages','language_labels'),('Curriculum','curriculum'),('School hours','hours'),('Facilities','facilities'),('Extracurricular activities','extracurriculars'),('Annual fees','fees'),('Academic year','fee_year'),('Fee coverage','fee_includes'),('Admissions','admissions'),('Transport','transport_info'),('Distance','distance'),('Source','source_name'),('Last checked','last_checked')]
     rows=[]
     for label,field in fields:
         values=[]
         for p in selected:
             if field=='location':value=', '.join(s for s in [p.neighbourhood,p.city] if s)
-            elif field=='type':value=p.get_school_type_display()
-            elif field=='fees':value=(f'From €{p.annual_fee_from:,.2f} / year'+(f' to €{p.annual_fee_to:,.2f}' if p.annual_fee_to is not None else '')) if p.annual_fee_from is not None and p.fee_year else ''
+            elif field=='type':value=text(p.get_school_type_display())
+            elif field=='distance':value=text('Information unavailable: verified coordinates and an origin are required.')
+            elif field=='fees':value=(text('From')+f' €{p.annual_fee_from:,.2f} / '+text('year')+((' '+text('up to')+f' €{p.annual_fee_to:,.2f}') if p.annual_fee_to is not None else '')) if p.annual_fee_from is not None and p.fee_year else ''
             else:value=getattr(p,field)
-            values.append(value or 'Not provided')
+            values.append(value or text('Information unavailable'))
         rows.append((label,values))
     return render(request,'discovery/compare.html',{'compare_profiles':selected,'compare_rows':rows,'missing_profiles':len(selected)<len(slugs)})
 
@@ -154,7 +165,9 @@ def save_choice(request,kind,key):
         if not isinstance(data,dict) or set(data)!={'saved'} or type(data['saved'])is not bool:raise ValueError()
     except (ValueError,TypeError):return JsonResponse({'error':'Choose a valid save action.'},status=400)
     if kind=='school':
-        item=get_object_or_404(SchoolProfile,is_published=True,slug=key);model=ShortlistedSchool;lookup={'user':request.user,'profile':item}
+        item=get_object_or_404(SchoolProfile,is_published=True,archived=False,slug=key);model=ShortlistedSchool;lookup={'user':request.user,'profile':item}
+    elif kind=='experience' and key.isdigit():
+        item=get_object_or_404(ExperienceListing,pk=int(key),is_published=True,archived=False);model=SavedExperience;lookup={'user':request.user,'experience':item}
     elif kind=='activity' and key.isdigit():
         item=get_object_or_404(visible_events(request.user),pk=int(key));model=SavedEvent;lookup={'user':request.user,'event':item}
     else:return JsonResponse({'error':'Unknown item.'},status=404)
@@ -168,16 +181,19 @@ def save_choice(request,kind,key):
 def saved_context(request):
     if request.user.is_authenticated:
         events=visible_events(request.user).filter(savedevent__user=request.user)
-        profiles=SchoolProfile.objects.filter(is_published=True,shortlisted_by__user=request.user)
+        profiles=SchoolProfile.objects.filter(is_published=True,archived=False,shortlisted_by__user=request.user)
+        experiences=ExperienceListing.objects.filter(is_published=True,archived=False,savedexperience__user=request.user)
     else:
         ids=[int(s) for s in request.GET.get('activities','').split(',')[:100] if s.isdigit() and len(s)<12]
         slugs=[s for s in request.GET.get('schools','').split(',')[:100] if len(s)<=190]
         events=visible_events(request.user).filter(pk__in=ids)
-        profiles=SchoolProfile.objects.filter(is_published=True,slug__in=slugs)
+        profiles=SchoolProfile.objects.filter(is_published=True,archived=False,slug__in=slugs)
+        experience_ids=[int(s) for s in request.GET.get('experiences','').split(',')[:100] if s.isdigit() and len(s)<12]
+        experiences=ExperienceListing.objects.filter(is_published=True,archived=False,pk__in=experience_ids)
     for event in events:
         session=event.sessions.filter(is_cancelled=False,start_at__gt=timezone.now()).order_by('start_at').first() if event.listing_type=='activity' else None
         event.discovery_next_at=session.start_at if session else event.start_at if event.listing_type=='event' else None
-    return {'school_return':'/saved/','discovery_back':'/saved/','activity_results':events,'school_results':profiles,'saved_ids':set(events.values_list('pk',flat=True)),'school_saved':set(profiles.values_list('pk',flat=True))}
+    return {'experience_results':experiences,'experience_saved_ids':set(experiences.values_list('pk',flat=True)),'school_return':'/saved/','discovery_back':'/saved/','activity_results':events,'school_results':profiles,'saved_ids':set(events.values_list('pk',flat=True)),'school_saved':set(profiles.values_list('pk',flat=True))}
 
 
 @discovery_view

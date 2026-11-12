@@ -9,7 +9,8 @@ document.addEventListener('submit',async event=>{
   const data=new FormData(form);if(event.submitter?.value==='delete'){data.set('action','delete');data.delete('image');}
   const response=await fetch(form.getAttribute('action'),{method:'POST',body:data,headers:{'X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'});
   if(response.redirected){window.location.assign(response.url);return;}
-  const result=await response.json();if(!response.ok)throw new Error(result.error||response.statusText);
+  let result;try{result=await response.json();}catch(_){throw new Error(document.documentElement.lang==='pt-PT'?'Não foi possível guardar a fotografia. Tenta novamente.':'Photo could not be saved. Please try again.');}
+  if(!response.ok)throw new Error(result.error||(document.documentElement.lang==='pt-PT'?'Não foi possível guardar a fotografia.':'Photo could not be saved.'));
   const container=form.closest('article')||form.closest('.lead-panel');
   let image=container.querySelector('.team-portrait');
   let photo=null;
@@ -23,6 +24,6 @@ document.addEventListener('submit',async event=>{
   }
   status.textContent=result.message;form.reset();
   document.dispatchEvent(new CustomEvent('team-portrait-updated',{detail:{id:form.dataset.person,photo}}));
- }catch(error){status.textContent=error.message;}
+ }catch(error){status.textContent=error.name==='TypeError'?(document.documentElement.lang==='pt-PT'?'Não foi possível guardar a fotografia. Verifica a ligação e tenta novamente.':'Photo could not be saved. Check the connection and try again.'):error.message;}
  finally{delete form.dataset.busy;buttons.forEach(button=>button.disabled=false);form.removeAttribute('aria-busy');}
 });})();

@@ -49,12 +49,12 @@ def signup(request):
     form=SignupForm(request.POST or None)
     if request.method=='POST' and form.is_valid():
         email=form.cleaned_data['email'].lower()
-        if not User.objects.filter(username=email).exists():
+        if not User.objects.filter(Q(username__iexact=email)|Q(email__iexact=email)).exists():
             try:
                 with transaction.atomic(): user=form.save()
             except IntegrityError: user=None
             if user:
-                login(request,user)
+                login(request,user,backend='community.authentication.ExistingIdentityBackend')
                 from django.utils.http import url_has_allowed_host_and_scheme
                 destination=request.GET.get('next','')
                 if destination and url_has_allowed_host_and_scheme(destination,allowed_hosts={request.get_host()},require_https=request.is_secure()): return redirect(destination)
@@ -104,7 +104,7 @@ def detail(request,pk):
     back=request.GET.get('return_to','')
     try:
         parsed=urlsplit(back)
-        if parsed.scheme or parsed.netloc or parsed.path not in ['/discover/activities/','/saved/']:back=''
+        if parsed.scheme or parsed.netloc or parsed.path not in ['/discover/activities/','/saved/','/search/']:back=''
     except ValueError:back=''
     request.discovery_return=back
     authenticated=request.user.is_authenticated
@@ -311,9 +311,10 @@ def family_weekly_summary(request):
 @parent_required
 def child_edit(request,pk=None):
     child=get_object_or_404(ChildProfile,pk=pk,parent=request.parent) if pk else ChildProfile(parent=request.parent)
-    form=ChildProfileForm(request.POST or None,instance=child)
+    from .management_forms import PrivateChildForm
+    form=PrivateChildForm(request.POST or None,request.FILES or None,instance=child)
     if request.method=='POST' and form.is_valid(): form.save();saved_success(request,'Private child profile saved ✦');return redirect('family')
-    return render(request,'community/form.html',{'form':form,'title':'Their own little interests.','eyebrow':'PRIVATE FAMILY PROFILE','submit':'Save child profile ✦','help':'Use a nickname and age band. No exact birth date, school class, public photo, or live location is collected.'})
+    return render(request,'community/form.html',{'child':child,'form':form,'title':'Their own little interests.','eyebrow':'PRIVATE FAMILY PROFILE','submit':'Save child profile ✦','help':'Use a nickname and age band. No exact birth date, school class, public child profile, or live location is collected. Optional photos are private and access-controlled.'})
 
 @parent_required
 @require_POST
@@ -367,6 +368,8 @@ def family_calendar(request):
         target=plan.session or plan.event
         if plan.event.is_cancelled or (plan.session and plan.session.is_cancelled): continue
         rows+=['BEGIN:VEVENT','UID:plan-'+str(plan.pk)+'@tk-zone','DTSTAMP:'+timezone.now().strftime('%Y%m%dT%H%M%SZ'),'DTSTART:'+target.start_at.astimezone(ZoneInfo('UTC')).strftime('%Y%m%dT%H%M%SZ'),'SUMMARY:'+escape(plan.event.title+' (family plan — not a booking)'),'DESCRIPTION:'+escape(plan.note or 'A saved family plan; participation is not confirmed.'),'END:VEVENT']
+    for item in request.parent.private_events.all():
+        rows+=['BEGIN:VEVENT','UID:private-'+str(item.pk)+'@tk-zone','DTSTAMP:'+timezone.now().strftime('%Y%m%dT%H%M%SZ'),'DTSTART:'+item.start_at.astimezone(ZoneInfo('UTC')).strftime('%Y%m%dT%H%M%SZ'),'DTEND:'+item.end_at.astimezone(ZoneInfo('UTC')).strftime('%Y%m%dT%H%M%SZ'),'SUMMARY:'+escape(item.title),'DESCRIPTION:'+escape(item.note or 'Private family plan; not a booking.'),'END:VEVENT']
     rows+=['END:VCALENDAR']
     response=HttpResponse('\r\n'.join(rows)+'\r\n',content_type='text/calendar; charset=utf-8');response['Content-Disposition']='attachment; filename="tkzone-family.ics"';response['Cache-Control']='private, no-store'
     return response

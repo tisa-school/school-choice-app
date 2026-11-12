@@ -24,12 +24,12 @@ class FamilyDiscoveryTests(TestCase):
         ActivitySession.objects.create(activity=cls.club,start_at=cls.day,end_at=cls.day+timedelta(hours=1))
         ActivitySession.objects.create(activity=cls.club,start_at=cls.day+timedelta(days=1),end_at=cls.day+timedelta(days=1,hours=1),is_cancelled=True)
         cls.profiles=[]
-        for i in range(4):
+        for i in range(5):
             cls.profiles.append(SchoolProfile.objects.create(name=f'Sourced test school {i}',slug=f'test-school-{i}',city='Lisbon',school_type='international',min_age=6,max_age=12,stages='primary,lower_secondary',languages='en,pt',curriculum='Test curriculum',annual_fee_from=5000,fee_year='2026–27',fee_includes='Tuition only',source_name='Isolated test source',last_checked=timezone.now().date(),is_published=True))
         cls.draft=SchoolProfile.objects.create(name='Unpublished test school',slug='unpublished-school')
     def test_home_and_primary_destinations_are_public(self):
         response=self.client.get('/')
-        self.assertContains(response,'Big discoveries for little explorers.')
+        self.assertContains(response,'Discover more for your family in Lisbon.')
         for path in ['/discover/activities/','/schools/','/saved/']:
             self.assertEqual(self.client.get(path).status_code,200)
         self.assertNotContains(response,self.private.title)
@@ -47,7 +47,7 @@ class FamilyDiscoveryTests(TestCase):
         self.assertContains(self.client.get('/discover/activities/?age_group=3-5&surprise=1'),'No published activities')
     def test_school_filters_only_supported_published_facts(self):
         response=self.client.get('/schools/',{'q':'Sourced test','age_group':'9-12','school_type':'international','stage':'primary','language':'en','curriculum':'Test curriculum','max_fee':'6000'})
-        self.assertEqual(len(response.context['school_results']),4)
+        self.assertEqual(len(response.context['school_results']),5)
         self.assertNotContains(response,self.draft.name)
         self.assertEqual(len(self.client.get('/schools/?max_fee=4000').context['school_results']),0)
         self.assertEqual(self.client.get('/schools/unpublished-school/').status_code,404)
@@ -61,8 +61,8 @@ class FamilyDiscoveryTests(TestCase):
         query=[('school',p.slug) for p in self.profiles]
         from urllib.parse import urlencode
         self.assertEqual(self.client.get('/schools/compare/?'+urlencode(query)).status_code,400)
-        response=self.client.get('/schools/compare/?'+urlencode(query[:3]))
-        self.assertEqual(len(response.context['compare_profiles']),3);self.assertContains(response,'Not provided')
+        response=self.client.get('/schools/compare/?'+urlencode(query[:4]))
+        self.assertEqual(len(response.context['compare_profiles']),4);self.assertContains(response,'Not provided')
         self.assertNotContains(self.client.get('/schools/compare/?school=unpublished-school'),self.draft.name)
     def test_account_saves_are_idempotent_private_and_separate(self):
         self.client.force_login(self.parent)

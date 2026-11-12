@@ -1,0 +1,1 @@
+{% load ui %}<section class="saved-experiences"><h2>{% ui 'Saved experiences' %}</h2><div class="event-grid">{% for experience in experience_results %}{% include 'platform/experience_card.html' %}{% empty %}<p>{% ui 'No saved experiences yet.' %}</p>{% endfor %}</div></section>

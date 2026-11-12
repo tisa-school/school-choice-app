@@ -58,6 +58,7 @@ class TeamPhotoForm(LocalizedFieldsMixin,forms.ModelForm):
     class Meta:
         model=TeamPhoto
         fields=['school','name','role','is_student','is_group','includes_children','image','description','caption','visibility','sharing_permission','guardian_consent']
+        widgets={'image':forms.FileInput(attrs={'accept':'image/jpeg,image/png,image/webp'})}
         help_texts={'name':'Student public display uses the first name only.','guardian_consent':'Required before sharing photos that include children.'}
     def clean_image(self):
         image=self.cleaned_data.get('image')
@@ -82,3 +83,23 @@ class InlineTeamPhotoForm(LocalizedFieldsMixin,forms.Form):
     image=forms.FileField(label='Photos',widget=forms.FileInput(attrs={'accept':'image/jpeg,image/png,image/webp'}))
     def clean_image(self):
         return clean_photo(self.cleaned_data['image'])
+
+class PortraitCropForm(LocalizedFieldsMixin,forms.Form):
+    image=forms.FileField(label='Add or change photo',widget=forms.FileInput(attrs={'accept':'image/jpeg,image/png,image/webp','data-crop-file':''}))
+    crop_x=forms.FloatField(label='Horizontal position',required=False,min_value=0,max_value=1,initial=.5,widget=forms.NumberInput(attrs={'type':'range','step':'.01','data-crop-axis':'x'}))
+    crop_y=forms.FloatField(label='Vertical position',required=False,min_value=0,max_value=1,initial=.5,widget=forms.NumberInput(attrs={'type':'range','step':'.01','data-crop-axis':'y'}))
+    crop_zoom=forms.FloatField(label='Zoom',required=False,min_value=1,max_value=3,initial=1,widget=forms.NumberInput(attrs={'type':'range','step':'.05','data-crop-axis':'zoom'}))
+    def clean_image(self):return clean_photo(self.cleaned_data['image'])
+    def clean(self):
+        data=super().clean()
+        if self.errors or not data.get('image'):return data
+        data['image']=crop_photo(data['image'],data.get('crop_x') if data.get('crop_x') is not None else .5,data.get('crop_y') if data.get('crop_y') is not None else .5,data.get('crop_zoom') or 1)
+        return data
+
+def crop_photo(photo,x=.5,y=.5,zoom=1):
+    image=Image.open(photo)
+    side=max(1,min(image.size)/zoom)
+    left=min(image.width-1,max(0,round((image.width-side)*x)));top=min(image.height-1,max(0,round((image.height-side)*y)))
+    image=image.crop((left,top,min(image.width,max(left+1,round(left+side))),min(image.height,max(top+1,round(top+side)))))
+    image.thumbnail((1024,1024));output=BytesIO();image.save(output,format='JPEG',quality=88)
+    return ContentFile(output.getvalue(),name='portrait.jpg')

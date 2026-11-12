@@ -49,6 +49,6 @@ class DemoModerationBrowserTests(StaticLiveServerTestCase):
             page.get_by_role('button',name='Approve example',exact=True).click()
             expect(page.locator('.moderation-advice')).to_have_count(0)
             if page.locator('.nav-menu-toggle').is_visible() and not page.locator('.product-sidebar').is_visible():page.locator('.nav-menu-toggle').click()
-            page.locator('nav [data-view="events"]').click()
+            page.goto(self.live_server_url+'/demo/events/')
             expect(page.get_by_role('heading',name='Supervised art workshop',exact=True)).to_be_visible()
             browser.close()

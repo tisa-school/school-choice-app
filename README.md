@@ -2,6 +2,10 @@
 
 A working, school-scoped events and community application. Django 5.2 LTS, Python 3.12+, SQLite, server-rendered semantic HTML, and progressive JavaScript. The six brand colors are shared CSS variables; Archivo Black and Inter are hosted locally under their included OFL licenses. No external frontend runtime, invented events, default accounts, invite codes, or statistics.
 
+## TK-ZONE 2.0 upgrade
+
+See [implementation evidence, limitations and safe deployment steps](docs/PLATFORM_V2_RELEASE.md) for the five-section discovery platform, private family calendar, four-school comparison, consolidated product tour and scoped administrator workspace. New research targets remain unpublished until checked against official sources.
+
 ## Vercel + GitHub
 
 See [the deployment guide](docs/VERCEL.md) for the `tisa9` team. PostgreSQL persistence, private database-backed images, static assets, production migrations, and GitHub checks are configured. Connecting the GitHub App and supplying production service credentials in Vercel are separate from this local setup.
