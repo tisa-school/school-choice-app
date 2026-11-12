@@ -2054,5 +2054,12 @@
   "Manage About Us photos": "Gerir fotografias de Sobre nós",
   "You are signed in as an authorised administrator. Add, replace or delete photos on the team cards below.": "Tem sessão iniciada como administrador autorizado. Adicione, substitua ou elimine fotografias nos cartões da equipa abaixo.",
   "Uploads are private by default. Public sharing requires the separate photo permission and guardian consent review.": "As fotografias são privadas por predefinição. A partilha pública requer uma revisão separada das permissões e do consentimento parental.",
-  "Open photo management and cropping": "Abrir gestão e recorte de fotografias"
+  "Open photo management and cropping": "Abrir gestão e recorte de fotografias",
+  "Administrator photo access": "Acesso administrativo às fotografias",
+  "Photo management needs school access": "A gestão de fotografias requer acesso à escola",
+  "Your administrator account cannot upload team photos until the existing Unicorn School context and school permission are configured.": "A sua conta de administrador não pode carregar fotografias da equipa até que o contexto da Unicorn School e a permissão da escola estejam configurados.",
+  "Configure project school": "Configurar escola do projeto",
+  "Ask a super administrator to review your school membership. Selecting Admin in the demo does not grant photo access.": "Peça a um superadministrador para rever a sua associação à escola. Selecionar Admin na demonstração não concede acesso às fotografias.",
+  "Only authorised Unicorn School administrators can upload or delete team photos.": "Apenas administradores autorizados da Unicorn School podem carregar ou eliminar fotografias da equipa.",
+  "Selecting Admin in the demo does not grant access. Sign in with your verified administrator account.": "Selecionar Admin na demonstração não concede acesso. Inicie sessão com a sua conta de administrador verificada."
 }

@@ -2054,5 +2054,12 @@
   "Manage About Us photos": "Manage About Us photos",
   "You are signed in as an authorised administrator. Add, replace or delete photos on the team cards below.": "You are signed in as an authorised administrator. Add, replace or delete photos on the team cards below.",
   "Uploads are private by default. Public sharing requires the separate photo permission and guardian consent review.": "Uploads are private by default. Public sharing requires the separate photo permission and guardian consent review.",
-  "Open photo management and cropping": "Open photo management and cropping"
+  "Open photo management and cropping": "Open photo management and cropping",
+  "Administrator photo access": "Administrator photo access",
+  "Photo management needs school access": "Photo management needs school access",
+  "Your administrator account cannot upload team photos until the existing Unicorn School context and school permission are configured.": "Your administrator account cannot upload team photos until the existing Unicorn School context and school permission are configured.",
+  "Configure project school": "Configure project school",
+  "Ask a super administrator to review your school membership. Selecting Admin in the demo does not grant photo access.": "Ask a super administrator to review your school membership. Selecting Admin in the demo does not grant photo access.",
+  "Only authorised Unicorn School administrators can upload or delete team photos.": "Only authorised Unicorn School administrators can upload or delete team photos.",
+  "Selecting Admin in the demo does not grant access. Sign in with your verified administrator account.": "Selecting Admin in the demo does not grant access. Sign in with your verified administrator account."
 }

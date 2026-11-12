@@ -94,3 +94,9 @@ All are captured from the application, using an isolated test database. The name
 About Us now highlights the authorised photo-management area above the team. Each existing team card provides Add photo / Change photo, a local image preview, Save photo and Delete photo. Controls and private media remain permission-checked by the existing server endpoints; no separate team identities or public administrator shortcuts were added. The dedicated management page still provides cropping.
 
 Verified with 26 focused backend tests and two Chromium workflows, including direct About Us upload, replacement, reload, deletion and signed-out denial. This code is on the feature branch; it does not establish that the production deployment or a particular live account has received it.
+
+### Missing photo buttons
+
+About Us provides an Administrator photo access sign-in entry for visitors. Signed-in users without a verified administrator role see a permission explanation. Authorised administrators whose Unicorn School context cannot be resolved see a configuration message; super administrators can open Site Settings to select the existing school. The system does not grant upload access from a demo role selector. These states have focused regression coverage.
+
+GitHub main remained at `83a5d9b` during this investigation; the feature-branch fixes were not merged into production. The absence of a button alone does not establish a storage/upload error or the live account's role.

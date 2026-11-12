@@ -70,3 +70,14 @@ class PlatformManagementTests(TestCase):
         with patch('django.core.files.storage.FileSystemStorage._save',side_effect=OSError('isolated storage failure')):
             response=self.client.post('/team/portraits/student-3/',{'image':self.image()},HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code,503);self.assertIn('could not be saved',response.json()['error'])
+
+    def test_about_us_explains_photo_access_instead_of_silently_hiding_controls(self):
+        self.assertContains(self.client.get('/about/'),'Administrator photo access')
+        self.assertNotContains(self.client.get('/about/'),'data-team-upload')
+        self.client.force_login(self.staff)
+        self.assertContains(self.client.get('/about/'),'Manage About Us photos')
+        self.assertContains(self.client.get('/about/'),'data-team-upload')
+        self.school.name='Different school';self.school.save()
+        response=self.client.get('/about/')
+        self.assertContains(response,'Photo management needs school access')
+        self.assertNotContains(response,'data-team-upload')
