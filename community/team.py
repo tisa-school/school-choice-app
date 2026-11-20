@@ -35,6 +35,9 @@ def prepare_team(user, project, request=None):
         photo=portraits.get(person['public_name'])
         if photo:
             person['photo']={'url':reverse('protected_photo',args=['team',photo.pk]),'description':canonical_team_text(photo.description)}
-        if can_upload and request is not None:
-            person['upload_html']=render_to_string('community/team_inline_upload.html',{'person':person},request=request)
+        if request is not None:
+            if can_upload:
+                person['upload_html']=render_to_string('community/team_inline_upload.html',{'person':person},request=request)
+            else:
+                person['photo_action_html']=render_to_string('community/team_photo_access.html',{'person':person},request=request)
     return project

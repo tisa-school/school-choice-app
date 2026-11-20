@@ -6,3 +6,5 @@
 .team-inline-upload [data-inline-photo-preview][hidden]{display:none}
 [data-portrait-editor] canvas{max-width:100%;height:auto;border-radius:16px}
 .private-child-portrait{width:72px;height:72px;border-radius:50%;object-fit:cover}
+
+.team-photo-entry{margin:.75rem 0}.team-photo-entry .quiet{font-size:.8rem;margin:.5rem 0}.team-photo-entry .button{display:inline-flex;min-height:44px;align-items:center}

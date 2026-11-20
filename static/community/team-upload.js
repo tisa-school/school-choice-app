@@ -1,5 +1,9 @@
 /* Real account permissions are enforced by the upload endpoint. */
 (()=>{'use strict';
+document.addEventListener('click',event=>{
+ const button=event.target.closest('[data-inline-photo-choose]');if(!button)return;
+ button.form.querySelector('[data-inline-photo-file]')?.click();
+});
 document.addEventListener('change',event=>{
  const input=event.target.closest('[data-inline-photo-file]');if(!input)return;
  const preview=input.form.querySelector('[data-inline-photo-preview]');
@@ -32,6 +36,7 @@ document.addEventListener('submit',async event=>{
   status.textContent=result.message;form.reset();
   const label=form.querySelector('[data-inline-photo-label]');
   if(label?.firstChild)label.firstChild.textContent=document.documentElement.lang==='pt-PT'?(result.deleted?'Adicionar fotografia':'Alterar fotografia'):(result.deleted?'Add photo':'Change photo');
+  const choose=form.querySelector('[data-inline-photo-choose]');if(choose)choose.textContent=document.documentElement.lang==='pt-PT'?(result.deleted?'Adicionar fotografia':'Alterar fotografia'):(result.deleted?'Add photo':'Change photo');
   const preview=form.querySelector('[data-inline-photo-preview]');
   if(preview){preview.hidden=true;preview.removeAttribute('src');}
   document.dispatchEvent(new CustomEvent('team-portrait-updated',{detail:{id:form.dataset.person,photo}}));

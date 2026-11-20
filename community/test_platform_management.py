@@ -97,3 +97,13 @@ class PlatformManagementTests(TestCase):
         self.assertContains(page,'Delete photo')
         self.assertContains(page,f'/protected-photos/team/{photo.pk}/')
         self.assertTrue(TeamPhoto.objects.filter(pk=photo.pk).exists())
+
+    def test_public_photo_entry_is_visible_but_does_not_grant_administrator_permissions(self):
+        response=self.client.get('/about/')
+        self.assertContains(response,'data-photo-access="student-3"')
+        self.assertNotContains(response,'data-team-upload')
+        self.assertEqual(self.client.get('/manage/team/student-3/').status_code,302)
+        self.client.force_login(self.other)
+        self.assertContains(self.client.get('/about/'),'data-photo-access="student-3"')
+        self.assertEqual(self.client.get('/manage/team/student-3/').status_code,403)
+        self.assertEqual(self.client.post('/team/portraits/student-3/',{'image':self.image()}).status_code,404)

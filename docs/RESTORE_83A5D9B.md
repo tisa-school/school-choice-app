@@ -42,3 +42,11 @@ Screenshots below show the implemented restored interface. The About Us photo-co
 - [Restored desktop homepage](screenshots/restored-83a5d9b-home-desktop.png)
 - [Restored mobile homepage](screenshots/restored-83a5d9b-home-mobile.png)
 - [About Us administrator photo controls](screenshots/restored-about-photo-controls.png)
+
+## Visible photo-button follow-up
+
+Each contributor card now has a visible Add photo / Change photo entry in both `/about/` and `/demo/about/`. Visitors follow the button through real administrator sign-in to the existing protected editor; the button itself grants no role or upload permission. Authorised inline upload forms have an actual Add photo button that opens the file picker, followed by preview and Save photo. The button changes to Change photo after saving.
+
+Accessible descriptions reference existing team headings so contributor names and leadership credits are not duplicated. The selected homepage and sidebar remain unchanged. No real portrait was inserted by this code change: the earlier inline chat image was unavailable as a workspace file, and no live database/admin session was connected.
+
+Verification: 35 focused backend tests and seven real-browser workflows passed, including the visible button in both About Us views, real sign-in, native file selection, saved-photo persistence, and unauthorised denial. JavaScript syntax, migration drift and the isolated preview build were also checked.
