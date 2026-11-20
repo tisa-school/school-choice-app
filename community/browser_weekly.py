@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from unittest.mock import patch
 from django.test import override_settings
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
@@ -10,6 +11,8 @@ class WeeklyBrowserTests(StaticLiveServerTestCase):
         with sync_playwright() as p:
             browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
             page=browser.new_page(viewport={'width':390,'height':844})
+            # The fictional catalogue is dated November 2026; pin this calendar fixture.
+            page.clock.set_fixed_time(datetime(2026,11,10,12,tzinfo=timezone.utc))
             page.goto(self.live_server_url+'/demo/events/art-afternoon/')
             page.get_by_role('button',name='Ask mum or dad ✦',exact=True).click()
             page.locator('#role').select_option('parent')

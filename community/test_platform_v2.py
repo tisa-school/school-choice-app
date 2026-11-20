@@ -25,15 +25,15 @@ class PlatformV2Tests(TestCase):
         cls.experience=ExperienceListing.objects.create(title='Museum enquiry test',slug='museum-enquiry-test',created_by=cls.admin,school=cls.school,category='Museums & Culture',area='Lisbon',source_url='https://example.test/official',source_name='Isolated official test source',last_verified=timezone.now().date(),is_published=True,kind='appointment')
     def image(self):
         out=BytesIO();Image.new('RGB',(100,100),'purple').save(out,'PNG');return SimpleUploadedFile('photo.png',out.getvalue(),content_type='image/png')
-    def test_five_primary_sections_and_no_prototype_tools(self):
+    def test_restored_primary_destinations_and_existing_tools(self):
         response=self.client.get('/');self.assertEqual(response.status_code,200)
-        items=response.context['unified_navigation'];self.assertEqual([x['label'] for x in items],['Discover','Activities','Schools','My Family','Community'])
-        self.assertNotIn('demo-catalogue',[x['key'] for x in items]);self.assertContains(response,'Discover more for your family in Lisbon.')
-        self.assertContains(response,'What would you like to discover?');self.assertContains(response,'/help/')
+        items=response.context['unified_navigation'];self.assertEqual([x['label'] for x in items][:5],['Home','Activities','Find schools','Saved','Family workspace'])
+        self.assertIn('demo-catalogue',[x['key'] for x in items]);self.assertContains(response,'Big discoveries for little explorers.')
+        self.assertContains(response,'Explore their interests')
     def test_account_menu_dashboard_is_permission_scoped(self):
         self.assertNotContains(self.client.get('/'),'href="/manage/"')
         self.client.force_login(self.parent);self.assertNotContains(self.client.get('/'),'href="/manage/"')
-        self.client.force_login(self.admin);self.assertContains(self.client.get('/'),'Administrator Dashboard')
+        self.client.force_login(self.admin);self.assertContains(self.client.get('/about/'),'Manage About Us photos')
     def test_global_search_is_scoped_and_returns_actual_records(self):
         response=self.client.get('/search/?q=football');self.assertContains(response,self.event.title);self.assertNotContains(response,self.private.title)
         self.assertContains(self.client.get('/search/?q=museum'),'Museum enquiry test')

@@ -190,7 +190,7 @@ class FinalDemoBrowserTests(StaticLiveServerTestCase):
             page.locator('#pin').fill('2468')
             page.get_by_role('checkbox').check()
             page.locator('#onboarding button[type=submit], #onboarding button:not([type])').click()
-            expect(page.locator('.unified-navigation [data-nav-key="discover"]')).to_have_attribute('aria-current','page')
+            expect(page.locator('.unified-navigation [data-nav-key="child"]')).to_have_attribute('aria-current','page')
             self.assertFalse('2468' in page.content())
             context=browser.new_context(java_script_enabled=False)
             plain=context.new_page();plain.goto(self.live_server_url+'/about/')

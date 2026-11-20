@@ -1,0 +1,8 @@
+/* Photo controls added to the restored 83a5d9b design. */
+.about-photo-management{padding:1.25rem;margin-bottom:1.5rem;border-inline-start:4px solid #440CB0}
+.about-photo-access{padding:1rem 0 1.5rem;border-bottom:1px solid #E5D8FF;margin-bottom:1.5rem}
+.about-photo-access p{max-width:65ch}
+.team-inline-upload [data-inline-photo-preview]{object-fit:cover;border-radius:16px;max-width:100%;height:160px}
+.team-inline-upload [data-inline-photo-preview][hidden]{display:none}
+[data-portrait-editor] canvas{max-width:100%;height:auto;border-radius:16px}
+.private-child-portrait{width:72px;height:72px;border-radius:50%;object-fit:cover}

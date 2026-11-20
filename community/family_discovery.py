@@ -138,20 +138,19 @@ def school_detail(request,slug):
 @require_GET
 def compare_schools(request):
     slugs=list(dict.fromkeys(request.GET.getlist('school')))
-    if len(slugs)>4:return HttpResponseBadRequest('Choose up to four schools to compare.')
+    if len(slugs)>3:return HttpResponseBadRequest('Choose up to three schools to compare.')
     profiles={p.slug:p for p in SchoolProfile.objects.filter(is_published=True,archived=False,slug__in=slugs)}
     selected=[profiles[s] for s in slugs if s in profiles]
-    fields=[('Location','location'),('Ages','age_label'),('School type','type'),('Educational stages','stage_labels'),('Teaching languages','language_labels'),('Curriculum','curriculum'),('School hours','hours'),('Facilities','facilities'),('Extracurricular activities','extracurriculars'),('Annual fees','fees'),('Academic year','fee_year'),('Fee coverage','fee_includes'),('Admissions','admissions'),('Transport','transport_info'),('Distance','distance'),('Source','source_name'),('Last checked','last_checked')]
+    fields=[('Location','location'),('Ages','age_label'),('School type','type'),('Educational stages','stage_labels'),('Teaching languages','language_labels'),('Curriculum','curriculum'),('School hours','hours'),('Facilities','facilities'),('Extracurricular activities','extracurriculars'),('Annual fees','fees'),('Academic year','fee_year'),('Fee coverage','fee_includes'),('Admissions','admissions'),('Source','source_name'),('Last checked','last_checked')]
     rows=[]
     for label,field in fields:
         values=[]
         for p in selected:
             if field=='location':value=', '.join(s for s in [p.neighbourhood,p.city] if s)
-            elif field=='type':value=text(p.get_school_type_display())
-            elif field=='distance':value=text('Information unavailable: verified coordinates and an origin are required.')
-            elif field=='fees':value=(text('From')+f' €{p.annual_fee_from:,.2f} / '+text('year')+((' '+text('up to')+f' €{p.annual_fee_to:,.2f}') if p.annual_fee_to is not None else '')) if p.annual_fee_from is not None and p.fee_year else ''
+            elif field=='type':value=p.get_school_type_display()
+            elif field=='fees':value=(f'From €{p.annual_fee_from:,.2f} / year'+(f' to €{p.annual_fee_to:,.2f}' if p.annual_fee_to is not None else '')) if p.annual_fee_from is not None and p.fee_year else ''
             else:value=getattr(p,field)
-            values.append(value or text('Information unavailable'))
+            values.append(value or 'Not provided')
         rows.append((label,values))
     return render(request,'discovery/compare.html',{'compare_profiles':selected,'compare_rows':rows,'missing_profiles':len(selected)<len(slugs)})
 

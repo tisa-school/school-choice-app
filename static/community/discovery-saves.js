@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  const notice=document.createElement('div');notice.className='discovery-toast';notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');document.body.append(notice);
  function say(message){notice.textContent=message;clearTimeout(say.timer);say.timer=setTimeout(()=>notice.textContent='',5500);}
  const valid=value=>typeof value==='string'&&/^[a-zA-Z0-9_-]{1,190}$/.test(value);
- function read(kind){try{const data=JSON.parse(localStorage.getItem(keys[kind])||'[]');return Array.isArray(data)?[...new Set(data.filter(valid))].slice(0,kind==='compare'?4:100):[];}catch(_){return [];}}
+ function read(kind){try{const data=JSON.parse(localStorage.getItem(keys[kind])||'[]');return Array.isArray(data)?[...new Set(data.filter(valid))].slice(0,kind==='compare'?3:100):[];}catch(_){return [];}}
  function write(kind,data){localStorage.setItem(keys[kind],JSON.stringify(data));}
  function sync(){
   for(const kind of ['activity','school','experience'])for(const button of document.querySelectorAll(`[data-save-${kind}]`)){
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const selected=read('compare');document.querySelectorAll('[data-compare-school]').forEach(input=>input.checked=selected.includes(input.dataset.compareSchool));
   document.querySelectorAll('[data-open-comparison]').forEach(link=>link.href='/schools/compare/'+(selected.length?'?'+selected.map(s=>'school='+encodeURIComponent(s)).join('&'):''));
   let bar=document.getElementById('school-compare-bar');
-  if(selected.length){if(!bar){bar=document.createElement('aside');bar.id='school-compare-bar';bar.setAttribute('aria-label',t('Selected schools','Escolas selecionadas'));document.body.append(bar);}bar.replaceChildren();const count=document.createElement('span');count.textContent=`${selected.length}/4 `+t('schools selected','escolas selecionadas');const link=document.createElement('a');link.className='button';link.href='/schools/compare/?'+selected.map(s=>'school='+encodeURIComponent(s)).join('&');link.textContent=t('Compare schools','Comparar escolas');const clear=document.createElement('button');clear.type='button';clear.className='text-link';clear.textContent=t('Clear selection','Limpar seleção');clear.addEventListener('click',()=>{try{write('compare',[]);sync();}catch(_){say(t('Selection could not be saved on this device.','Não foi possível guardar a seleção neste dispositivo.'));}});bar.append(count,link,clear);}else bar?.remove();document.body.classList.toggle('has-school-comparison',selected.length>0);
+  if(selected.length){if(!bar){bar=document.createElement('aside');bar.id='school-compare-bar';bar.setAttribute('aria-label',t('Selected schools','Escolas selecionadas'));document.body.append(bar);}bar.replaceChildren();const count=document.createElement('span');count.textContent=`${selected.length}/3 `+t('schools selected','escolas selecionadas');const link=document.createElement('a');link.className='button';link.href='/schools/compare/?'+selected.map(s=>'school='+encodeURIComponent(s)).join('&');link.textContent=t('Compare schools','Comparar escolas');const clear=document.createElement('button');clear.type='button';clear.className='text-link';clear.textContent=t('Clear selection','Limpar seleção');clear.addEventListener('click',()=>{try{write('compare',[]);sync();}catch(_){say(t('Selection could not be saved on this device.','Não foi possível guardar a seleção neste dispositivo.'));}});bar.append(count,link,clear);}else bar?.remove();document.body.classList.toggle('has-school-comparison',selected.length>0);
  }
  async function refreshSaved(){
   const target=document.getElementById('saved-discovery-content');if(!target||account)return;
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  });
  document.addEventListener('change',event=>{
   const input=event.target.closest('[data-compare-school]');if(!input)return;const id=input.dataset.compareSchool;if(!valid(id))return;
-  const before=read('compare'),next=before.filter(s=>s!==id);if(input.checked){if(next.length>=4){input.checked=false;say(t('Compare up to four schools. Remove one first.','Compara até quatro escolas. Remove uma primeiro.'));return;}next.push(id);}
+  const before=read('compare'),next=before.filter(s=>s!==id);if(input.checked){if(next.length>=3){input.checked=false;say(t('Compare up to three schools. Remove one first.','Compara até três escolas. Remove uma primeiro.'));return;}next.push(id);}
   try{write('compare',next);sync();}catch(_){input.checked=before.includes(id);say(t('Selection could not be saved on this device.','Não foi possível guardar a seleção neste dispositivo.'));}
  });
  document.addEventListener('tkzone:render',sync);window.addEventListener('pageshow',sync);sync();refreshSaved();

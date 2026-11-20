@@ -2,7 +2,11 @@
 
 A working, school-scoped events and community application. Django 5.2 LTS, Python 3.12+, SQLite, server-rendered semantic HTML, and progressive JavaScript. The six brand colors are shared CSS variables; Archivo Black and Inter are hosted locally under their included OFL licenses. No external frontend runtime, invented events, default accounts, invite codes, or statistics.
 
-## TK-ZONE 2.0 upgrade
+## Current website — restored final design
+
+The public website uses the homepage, navigation and styling selected from commit `83a5d9b`, with the administrator About Us photo feature retained. See [the restoration report](docs/RESTORE_83A5D9B.md). Existing database records and migration history are preserved.
+
+## Historical TK-ZONE 2.0 upgrade
 
 See [implementation evidence, limitations and safe deployment steps](docs/PLATFORM_V2_RELEASE.md) for the five-section discovery platform, private family calendar, four-school comparison, consolidated product tour and scoped administrator workspace. New research targets remain unpublished until checked against official sources.
 

@@ -1,0 +1,31 @@
+{
+  "scope": "Local Chromium, isolated test database, no real catalogue photos; not production or field Core Web Vitals",
+  "budgets": {
+    "fcp_ms": 2500,
+    "lcp_ms": 3000,
+    "cls": 0.1,
+    "decoded_script_bytes": 450000,
+    "document_bytes": 500000
+  },
+  "inp": "Not measured; requires representative interactions and field validation",
+  "observations": [
+    {
+      "width": 390,
+      "first_contentful_paint_ms": 316,
+      "largest_contentful_paint_ms": 316,
+      "cumulative_layout_shift": 0,
+      "decoded_script_bytes": 52027,
+      "document_bytes": 176371,
+      "document_response_ms": 38
+    },
+    {
+      "width": 1440,
+      "first_contentful_paint_ms": 300,
+      "largest_contentful_paint_ms": 300,
+      "cumulative_layout_shift": 0.003625014708719136,
+      "decoded_script_bytes": 52027,
+      "document_bytes": 176371,
+      "document_response_ms": 41.80000001192093
+    }
+  ]
+}
