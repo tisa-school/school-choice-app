@@ -92,6 +92,7 @@ def experience_detail(request,slug):
 
 @login_required
 @require_POST
+@transaction.atomic
 def save_experience(request,pk):
     item=get_object_or_404(ExperienceListing,pk=pk,is_published=True,archived=False)
     if request.POST.get('action')=='remove':SavedExperience.objects.filter(user=request.user,experience=item).delete()

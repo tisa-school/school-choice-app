@@ -15,7 +15,7 @@ document.addEventListener('submit',async event=>{
  const form=event.target.closest('[data-team-upload]');if(!form)return;
  event.preventDefault();if(form.dataset.busy)return;
  const buttons=[...form.querySelectorAll('button')],status=form.querySelector('[data-upload-status]');
- form.dataset.busy='true';buttons.forEach(button=>button.disabled=true);form.setAttribute('aria-busy','true');status.textContent='…';
+ form.dataset.busy='true';buttons.forEach(button=>button.disabled=true);form.setAttribute('aria-busy','true');status.textContent='…';document.dispatchEvent(new CustomEvent('tkzone:saving'));
  try{
   const data=new FormData(form);if(event.submitter?.value==='delete'){data.set('action','delete');data.delete('image');}
   const response=await fetch(form.getAttribute('action'),{method:'POST',body:data,headers:{'X-Requested-With':'XMLHttpRequest'},credentials:'same-origin'});
@@ -33,6 +33,7 @@ document.addEventListener('submit',async event=>{
   image.src=result.url+'?v='+Date.now();image.alt=result.description;
   photo={url:result.url,description:result.description};form.querySelector('[data-delete-portrait]').hidden=false;
   }
+  document.dispatchEvent(new CustomEvent('tkzone:saved',{detail:result.save_receipt}));
   status.textContent=result.message;form.reset();
   const label=form.querySelector('[data-inline-photo-label]');
   if(label?.firstChild)label.firstChild.textContent=document.documentElement.lang==='pt-PT'?(result.deleted?'Adicionar fotografia':'Alterar fotografia'):(result.deleted?'Add photo':'Change photo');
@@ -40,6 +41,6 @@ document.addEventListener('submit',async event=>{
   const preview=form.querySelector('[data-inline-photo-preview]');
   if(preview){preview.hidden=true;preview.removeAttribute('src');}
   document.dispatchEvent(new CustomEvent('team-portrait-updated',{detail:{id:form.dataset.person,photo}}));
- }catch(error){status.textContent=error.name==='TypeError'?(document.documentElement.lang==='pt-PT'?'Não foi possível guardar a fotografia. Verifica a ligação e tenta novamente.':'Photo could not be saved. Check the connection and try again.'):error.message;}
+ }catch(error){document.dispatchEvent(new CustomEvent('tkzone:save-failed'));status.textContent=error.name==='TypeError'?(document.documentElement.lang==='pt-PT'?'Não foi possível guardar a fotografia. Verifica a ligação e tenta novamente.':'Photo could not be saved. Check the connection and try again.'):error.message;}
  finally{delete form.dataset.busy;buttons.forEach(button=>button.disabled=false);form.removeAttribute('aria-busy');}
 });})();

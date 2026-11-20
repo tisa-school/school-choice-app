@@ -91,7 +91,7 @@ class PlatformV2Tests(TestCase):
     def test_manage_unpublish_and_audit_and_csrf(self):
         self.client.force_login(self.admin)
         self.assertEqual(self.client.post(f'/manage/records/activities/{self.event.pk}/action/',{'action':'unpublish'}).status_code,302)
-        self.event.refresh_from_db();self.assertEqual(self.event.status,'draft');self.assertTrue(PlatformAudit.objects.filter(action='content.unpublish').exists())
+        self.event.refresh_from_db();self.assertEqual(self.event.status,'draft');self.assertTrue(PlatformAudit.objects.filter(action='content.unpublish').exists());self.assertEqual(SaveReceipt.objects.get(user=self.admin).action,'Changes saved.')
         self.client.logout();self.assertEqual(self.client.get(f'/events/{self.event.pk}/').status_code,404)
         client=Client(enforce_csrf_checks=True);client.force_login(self.admin)
         self.assertEqual(client.post(f'/manage/records/activities/{self.event.pk}/action/',{'action':'publish'}).status_code,403)

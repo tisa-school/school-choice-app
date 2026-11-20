@@ -138,7 +138,7 @@ Pushes to the connected GitHub `main` branch trigger Vercel deployments. The exi
 
 ## Saved-data status
 
-Signed-in users see their last server-confirmed save and its timestamp in the expandable **Saved to database** banner. Each user's receipt is private and persists in PostgreSQL. The banner describes the last completed application save, not unsaved edits or device-only preferences.
+Signed-in users see their last server-confirmed save and its timestamp in the expandable **Saved to database** banner. Photo uploads, administrator edits and AJAX saves now refresh the same confirmation immediately; failed writes retain the previous confirmed timestamp. See [saved-change memory](docs/SAVED_CHANGE_MEMORY.md). Each user's receipt is private and persists in PostgreSQL. The banner describes the last completed application save, not unsaved edits or device-only preferences.
 
 Write forms show **Unsaved changes** while editing and **Saving to database…** after valid submission. Server validation errors show **Not saved**; unsuccessful writes do not replace the previous receipt. Save receipts participate in the transaction when the underlying write is transactional. Returning to a stale page does not claim an unconfirmed submission succeeded. Authentication, AI searches, and device-only accessibility preferences are excluded from this database-save feedback.
 

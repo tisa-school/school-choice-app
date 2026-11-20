@@ -49,6 +49,7 @@ jobs:
       - run: node --check static/community/organizer-ai.js
       - run: node --check static/community/demo-moderation.js
       - run: node --check static/community/team-upload.js
+      - run: node --check static/community/save-status.js
       - run: node --check static/community/platform-ui.js
       - run: node --check static/community/portrait-crop.js
       - run: node --check static/community/product-tour.js

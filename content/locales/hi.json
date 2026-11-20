@@ -2062,5 +2062,8 @@
   "Ask a super administrator to review your school membership. Selecting Admin in the demo does not grant photo access.": "Ask a super administrator to review your school membership. Selecting Admin in the demo does not grant photo access.",
   "Only authorised Unicorn School administrators can upload or delete team photos.": "Only authorised Unicorn School administrators can upload or delete team photos.",
   "Selecting Admin in the demo does not grant access. Sign in with your verified administrator account.": "Selecting Admin in the demo does not grant access. Sign in with your verified administrator account.",
-  "An authorised administrator must sign in to save a photo.": "An authorised administrator must sign in to save a photo."
+  "An authorised administrator must sign in to save a photo.": "An authorised administrator must sign in to save a photo.",
+  "Saving changes…": "Saving changes…",
+  "Change not saved. Your last confirmed save is shown below.": "Change not saved. Your last confirmed save is shown below.",
+  "Feedback saved.": "Feedback saved."
 }

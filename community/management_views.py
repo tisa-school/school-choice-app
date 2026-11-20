@@ -23,6 +23,7 @@ from .management_forms import ManagedUserForm,ManagedEventForm,ExperienceForm,Sc
 from .forms import ChildProfileForm
 from .community_forms import PortraitCropForm
 from .localization import text
+from .persistence import saved_success
 
 
 def audit(request,action,entity,school=None,fields=()):
@@ -101,7 +102,6 @@ def edit(request,kind,pk=None):
         if kind=='activities' and obj.status=='published':obj.published_by=request.user;obj.published_at=timezone.now()
         if kind=='activities' and obj.status=='draft':obj.published_by=None
         obj.save();audit(request,'content.updated' if pk else 'content.created',obj,school=getattr(obj,'school',None),fields=form.changed_data)
-        from .persistence import saved_success
         saved_success(request,'Changes saved.');return redirect('management_records',kind=kind)
     return render(request,'management/edit.html',{'form':form,'management_title':KINDS[kind],'kind':kind,'record':item,'can_delete':pk and kind in ['schools','activities','experiences'],'school_profile':item if kind=='schools' else None})
 
@@ -115,7 +115,7 @@ def content_action(request,kind,pk):
         expected=str(getattr(item,'name',getattr(item,'title','')))
         if request.POST.get('confirm')!=expected:messages.error(request,text('Type the exact title to confirm deletion.'));return redirect('management_edit',kind=kind,pk=pk)
         if kind=='activities' and (item.status=='published' or item.participations.exists() or item.requests.exists() or item.family_bookings.exists() or item.familyplan_set.exists()):messages.error(request,text('Unpublish or cancel this activity through its existing request workflow; records with requests cannot be deleted here.'));return redirect('management_edit',kind=kind,pk=pk)
-        audit(request,'content.deleted',item,school=getattr(item,'school',None));item.delete();return redirect('management_records',kind=kind)
+        audit(request,'content.deleted',item,school=getattr(item,'school',None));item.delete();saved_success(request,'Changes saved.');return redirect('management_records',kind=kind)
     if action not in ['publish','unpublish','archive']:raise Http404()
     if kind=='activities':
         item.archived=action=='archive'
@@ -126,7 +126,7 @@ def content_action(request,kind,pk):
     try:
         if action=='publish':item.full_clean()
     except ValidationError as error:messages.error(request,' '.join(error.messages));return redirect('management_edit',kind=kind,pk=pk)
-    item.save();audit(request,'content.'+action,item,school=getattr(item,'school',None));messages.success(request,text('Changes saved.'));return redirect('management_records',kind=kind)
+    item.save();audit(request,'content.'+action,item,school=getattr(item,'school',None));saved_success(request,'Changes saved.');return redirect('management_records',kind=kind)
 
 @administrator
 def team_profile(request,person_id):
@@ -144,25 +144,28 @@ def team_profiles(request):
     return render(request,'management/team_profiles.html',{'roster':project['contributors']})
 
 @administrator
+@transaction.atomic
 def site_settings(request):
     if not request.user.is_superuser:return HttpResponseForbidden('Only a super administrator can change platform-wide settings.')
     config=SiteConfiguration.objects.filter(pk=1).first() or SiteConfiguration(pk=1)
     form=SiteConfigurationForm(request.POST or None,instance=config)
-    if request.method=='POST' and form.is_valid():item=form.save();audit(request,'settings.updated',item,fields=form.changed_data);messages.success(request,text('Changes saved.'));return redirect('management_dashboard')
+    if request.method=='POST' and form.is_valid():item=form.save();audit(request,'settings.updated',item,fields=form.changed_data);saved_success(request,'Changes saved.');return redirect('management_dashboard')
     return render(request,'management/edit.html',{'form':form,'management_title':'Site settings'})
 
 @administrator
+@transaction.atomic
 def school_media(request,pk):
     profile=get_object_or_404(scoped_records(request,'schools'),pk=pk)
     form=SchoolMediaForm(request.POST or None,request.FILES or None)
     if request.method=='POST' and form.is_valid():
-        image=form.save(commit=False);image.school_profile=profile;image.uploaded_by=request.user;image.save();audit(request,'school_media.added',image,school=profile.school);messages.success(request,text('Changes saved.'));return redirect('management_school_media',pk=pk)
+        image=form.save(commit=False);image.school_profile=profile;image.uploaded_by=request.user;image.save();audit(request,'school_media.added',image,school=profile.school);saved_success(request,'Changes saved.');return redirect('management_school_media',pk=pk)
     return render(request,'management/school_media.html',{'form':form,'school_profile':profile,'photos':profile.media.all()})
 
 @administrator
 @require_POST
+@transaction.atomic
 def school_media_delete(request,pk):
-    image=get_object_or_404(SchoolMedia,pk=pk);get_object_or_404(scoped_records(request,'schools'),pk=image.school_profile_id);profile=image.school_profile_id;audit(request,'school_media.deleted',image,school=image.school_profile.school);image.delete();return redirect('management_school_media',pk=profile)
+    image=get_object_or_404(SchoolMedia,pk=pk);get_object_or_404(scoped_records(request,'schools'),pk=image.school_profile_id);profile=image.school_profile_id;audit(request,'school_media.deleted',image,school=image.school_profile.school);image.delete();saved_success(request,'Photo deleted.');return redirect('management_school_media',pk=profile)
 
 @login_required
 def private_child_photo(request,pk):
@@ -180,6 +183,7 @@ def public_school_photo(request,pk):
     response=FileResponse(image.image.open('rb'),content_type='image/jpeg');response['Cache-Control']='private, no-store' if image.includes_children else 'public, max-age=300';response['X-Content-Type-Options']='nosniff';return response
 
 @administrator
+@transaction.atomic
 def research_queue(request):
     targets=json.loads((settings.BASE_DIR/'content/research-targets.json').read_text())
     if request.method=='POST':
@@ -189,7 +193,9 @@ def research_queue(request):
         matches=list(SchoolProfile.objects.filter(name__iexact=target['name'])[:2])
         if len(matches)>1:messages.error(request,'Multiple matching profiles exist. Review existing records before continuing.');return redirect('management_research')
         item=matches[0] if matches else SchoolProfile.objects.create(name=target['name'],slug='research-'+target['key'],city='',website=target['url'],source_url=target['url'],source_name='User-provided research target; website not yet checked',is_published=False)
-        if not matches:audit(request,'research.draft_created',item,fields=['name','website','is_published'])
+        if not matches:
+            audit(request,'research.draft_created',item,fields=['name','website','is_published'])
+            saved_success(request,'Changes saved.')
         return redirect('management_edit',kind='schools',pk=item.pk)
     return render(request,'management/research.html',{'targets':targets})
 
@@ -199,16 +205,18 @@ def family_detail(request,pk):
     return render(request,'management/family_detail.html',{'managed_family':family,'managed_children':family.children.all()})
 
 @administrator
+@transaction.atomic
 def family_child_new(request,pk):
     family=get_object_or_404(scoped_records(request,'families'),pk=pk)
     child=ChildProfile(parent=family);form=PrivateChildForm(request.POST or None,request.FILES or None,instance=child)
     if request.method=='POST' and form.is_valid():
         if family.children.filter(nickname__iexact=form.cleaned_data['nickname']).exists():form.add_error('nickname','A matching child profile already exists in this family. Edit it instead of creating a duplicate.')
         else:
-            item=form.save();audit(request,'child.created',item,fields=form.changed_data);messages.success(request,text('Changes saved.'));return redirect('management_family_detail',pk=pk)
+            item=form.save();audit(request,'child.created',item,fields=form.changed_data);saved_success(request,'Changes saved.');return redirect('management_family_detail',pk=pk)
     return render(request,'management/edit.html',{'form':form,'management_title':'Child profile'})
 
 @administrator
+@transaction.atomic
 def review(request,kind,pk):
     from .management_forms import OrganizerReviewForm,ReportReviewForm
     if kind not in ['reports','organisers']:raise Http404()
@@ -222,5 +230,5 @@ def review(request,kind,pk):
             try:item=review_application(request.user,request.member,item.pk,form.cleaned_data['status'],form.cleaned_data['note'])
             except (ValueError,PermissionError) as error:form.add_error(None,str(error))
             else:audit(request,'organizer.reviewed',item,school=item.school,fields=['status','decision_note'])
-        if not form.errors:messages.success(request,text('Review saved.'));return redirect('management_records',kind=kind)
+        if not form.errors:saved_success(request,'Review saved.');return redirect('management_records',kind=kind)
     return render(request,'management/review.html',{'form':form,'review_kind':kind,'review_record':item})

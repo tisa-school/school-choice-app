@@ -13,6 +13,7 @@ from .attendance import book_family,decide_booking
 from .community_forms import ExperienceForm,TeamPhotoForm,PhotoCaptionForm,ReportExperienceForm,UPLOAD_NOTICE
 from .forms import FamilyBookingForm
 from .localization import text
+from .persistence import saved_success, record_saved_change, receipt_payload
 
 
 def moderator(user,school_id=None):
@@ -33,6 +34,7 @@ def experiences_for(user,event):
 
 @login_required
 @discovery_view
+@transaction.atomic
 def family_registration(request,pk):
     event=get_object_or_404(visible_events(request.user),pk=pk)
     if not ParentAccount.objects.filter(user=request.user).exists():return redirect('parent_setup')
@@ -43,7 +45,7 @@ def family_registration(request,pk):
     if request.method=='POST' and form.is_valid():
         try:
             book_family(request.user,event.pk,form.cleaned_data['adults'],form.cleaned_data['children'],session.pk if session else None)
-            messages.success(request,text('Registration sent. Spaces are allocated only after organizer confirmation.'))
+            saved_success(request,text('Registration sent. Spaces are allocated only after organizer confirmation.'))
             return redirect('family')
         except (ValueError,IntegrityError) as error:form.add_error(None,text(str(error) if isinstance(error,ValueError) else 'An active family registration already exists.'))
     return render(request,'community/group_registration.html',{'form':form,'event':event,'session':session,'target':session or event})
@@ -51,17 +53,19 @@ def family_registration(request,pk):
 
 @login_required
 @require_POST
+@transaction.atomic
 def booking_action(request,pk,action):
     item=get_object_or_404(FamilyBooking,pk=pk)
     try:decide_booking(request.user,item.pk,action)
     except PermissionError:raise Http404()
     except ValueError as error:messages.error(request,text(str(error)))
-    else:messages.success(request,text('Family registration updated.'))
+    else:saved_success(request,text('Family registration updated.'))
     return redirect('organizer_event',pk=item.event_id) if can_manage(request.user,membership(request.user),item.event) else redirect('family')
 
 
 @login_required
 @discovery_view
+@transaction.atomic
 def experience_edit(request,event_id,pk=None):
     event=get_object_or_404(visible_events(request.user),pk=event_id)
     if not can_contribute(request.user):return HttpResponseForbidden(text('Parents, guardians and authorized organizers can share experiences.'))
@@ -71,48 +75,52 @@ def experience_edit(request,event_id,pk=None):
         if request.method=='POST' and form.is_valid():
             item=form.save(False);item.status='pending';item.reviewed_by=None;item.save()
             for image in form.cleaned_data['photos']:ExperiencePhoto.objects.create(experience=item,image=image,description=form.cleaned_data['photo_description'])
-            messages.success(request,text('Your contribution was saved and is awaiting moderation.'))
+            saved_success(request,text('Your contribution was saved and is awaiting moderation.'))
             return redirect('detail',pk=event.pk)
     return render(request,'community/experience_form.html',{'form':form,'event':event,'experience':item})
 
 
 @login_required
 @require_POST
+@transaction.atomic
 def experience_delete(request,pk):
     item=get_object_or_404(EventExperience,pk=pk,author=request.user)
-    event_id=item.event_id;item.delete();messages.success(request,text('Contribution deleted.'))
+    event_id=item.event_id;item.delete();saved_success(request,text('Contribution deleted.'))
     return redirect('detail',pk=event_id)
 
 
 @login_required
 @discovery_view
+@transaction.atomic
 def experience_photo_edit(request,pk):
     photo=get_object_or_404(ExperiencePhoto,pk=pk,experience__author=request.user)
     form=PhotoCaptionForm(request.POST or None,instance=photo)
     if request.method=='POST' and form.is_valid():
         with transaction.atomic():
             form.save();EventExperience.objects.filter(pk=photo.experience_id).update(status='pending',reviewed_by=None)
-        messages.success(request,text('Your contribution was saved and is awaiting moderation.'));return redirect('detail',pk=photo.experience.event_id)
+        saved_success(request,text('Your contribution was saved and is awaiting moderation.'));return redirect('detail',pk=photo.experience.event_id)
     return render(request,'community/form.html',{'form':form,'title':text('Edit photo description'),'submit':text('Save photo')})
 
 
 @login_required
 @require_POST
+@transaction.atomic
 def experience_photo_delete(request,pk):
     photo=get_object_or_404(ExperiencePhoto,pk=pk,experience__author=request.user)
-    event_id=photo.experience.event_id;photo.delete();messages.success(request,text('Photo deleted.'))
+    event_id=photo.experience.event_id;photo.delete();saved_success(request,text('Photo deleted.'))
     return redirect('detail',pk=event_id)
 
 
 @login_required
 @discovery_view
+@transaction.atomic
 def report_experience(request,pk,photo_id=None):
     item=get_object_or_404(EventExperience,pk=pk,event__in=visible_events(request.user),status='published')
     photo=get_object_or_404(item.photos,pk=photo_id,hidden=False) if photo_id else None
     form=ReportExperienceForm(request.POST or None)
     if request.method=='POST' and form.is_valid():
         ExperienceReport.objects.get_or_create(experience=item,reported_by=request.user,resolved=False,defaults={'reason':form.cleaned_data['reason'],'photo':photo})
-        messages.success(request,text('Report sent to administrators.'));return redirect('detail',pk=item.event_id)
+        saved_success(request,text('Report sent to administrators.'));return redirect('detail',pk=item.event_id)
     return render(request,'community/form.html',{'form':form,'title':text('Report inappropriate content'),'submit':text('Send report')})
 
 
@@ -129,6 +137,7 @@ def moderation(request):
 
 @login_required
 @require_POST
+@transaction.atomic
 def moderate_experience(request,pk,action):
     with transaction.atomic():
         item=get_object_or_404(EventExperience.objects.select_for_update(),pk=pk)
@@ -136,15 +145,16 @@ def moderate_experience(request,pk,action):
         if action not in ['publish','hide','resolve']:raise Http404()
         if action!='resolve':item.status='published' if action=='publish' else 'hidden';item.reviewed_by=request.user;item.save()
         item.reports.filter(resolved=False).update(resolved=True)
-    messages.success(request,text('Moderation decision saved.'));return redirect('content_moderation')
+    saved_success(request,text('Moderation decision saved.'));return redirect('content_moderation')
 
 
 @login_required
 @require_POST
+@transaction.atomic
 def moderate_photo(request,pk):
     photo=get_object_or_404(ExperiencePhoto,pk=pk)
     if not moderator(request.user,photo.experience.event.school_id):raise Http404()
-    photo.hidden=True;photo.save(update_fields=['hidden']);messages.success(request,text('Photo hidden.'));return redirect('content_moderation')
+    photo.hidden=True;photo.save(update_fields=['hidden']);saved_success(request,text('Photo hidden.'));return redirect('content_moderation')
 
 
 def team_visible(user):
@@ -170,6 +180,7 @@ def team_gallery(request):
 
 @login_required
 @discovery_view
+@transaction.atomic
 def team_photo_edit(request,pk=None):
     if not moderator(request.user):raise Http404()
     photo=get_object_or_404(TeamPhoto,pk=pk) if pk else TeamPhoto(uploaded_by=request.user)
@@ -181,16 +192,17 @@ def team_photo_edit(request,pk=None):
     initial={'name':selected['public_name'],'role':selected['role'],'is_student':selected['group']=='students','visibility':'private'} if selected and not pk else {}
     form=TeamPhotoForm(request.POST or None,request.FILES or None,instance=photo,initial=initial)
     if not request.user.is_superuser:form.fields['school'].queryset=School.objects.filter(pk=request.member.school_id);form.initial['school']=request.member.school_id
-    if request.method=='POST' and form.is_valid():form.save();messages.success(request,text('Team photo saved.'));return redirect('team_gallery')
+    if request.method=='POST' and form.is_valid():form.save();saved_success(request,text('Team photo saved.'));return redirect('team_gallery')
     return render(request,'community/team_photo_form.html',{'form':form,'upload_notice':UPLOAD_NOTICE,'photo':photo,'roster':roster})
 
 
 @login_required
 @require_POST
+@transaction.atomic
 def team_photo_delete(request,pk):
     photo=get_object_or_404(TeamPhoto,pk=pk)
     if not moderator(request.user,photo.school_id):raise Http404()
-    photo.delete();messages.success(request,text('Photo deleted.'));return redirect('team_gallery')
+    photo.delete();saved_success(request,text('Photo deleted.'));return redirect('team_gallery')
 
 
 @discovery_view
@@ -233,6 +245,7 @@ def photo_save_errors(view):
 @login_required
 @require_POST
 @photo_save_errors
+@transaction.atomic
 def team_inline_upload(request,person_id):
     import json
     from django.conf import settings
@@ -254,7 +267,8 @@ def team_inline_upload(request,person_id):
         from .models import PlatformAudit
         PlatformAudit.objects.create(actor=request.user,school=school,action='portrait.deleted',entity_type='TeamProfile',entity_id=person_id,changed_fields=['image'])
         message=text('Photo deleted.')
-        if ajax:return JsonResponse({'message':message,'deleted':True})
+        receipt=record_saved_change(request,message)
+        if ajax:return JsonResponse({'message':message,'deleted':True,'save_receipt':receipt_payload(receipt)})
         messages.success(request,message)
         return redirect('/about/#our-team')
     form=PortraitCropForm(request.POST,request.FILES)
@@ -279,8 +293,9 @@ def team_inline_upload(request,person_id):
     from .management_views import audit
     audit(request,'portrait.updated',photo,school=school,fields=['image','visibility'])
     message=text('Team photo saved.')
+    receipt=record_saved_change(request,message)
     if ajax:
         from django.urls import reverse
-        return JsonResponse({'message':message,'url':reverse('protected_photo',args=['team',photo.pk]),'description':photo.description})
+        return JsonResponse({'message':message,'url':reverse('protected_photo',args=['team',photo.pk]),'description':photo.description,'save_receipt':receipt_payload(receipt)})
     messages.success(request,message)
     return redirect('/about/#our-team')

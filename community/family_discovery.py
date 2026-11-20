@@ -16,7 +16,8 @@ from django.views.decorators.http import require_POST,require_GET
 from .discovery import discovery_view,visible_events,filter_listings,LANGUAGES
 from .directory_forms import ActivityDiscoveryForm,SchoolSearchForm,SchoolProfileForm,AGE_GROUPS,INTERESTS
 from .localization import text
-from .models import Event,ActivitySession,SavedEvent,SchoolProfile,ShortlistedSchool,SaveReceipt,ExperienceListing,SavedExperience
+from .persistence import record_saved_change, receipt_payload
+from .models import Event,ActivitySession,SavedEvent,SchoolProfile,ShortlistedSchool,ExperienceListing,SavedExperience
 
 
 def weekend_dates():
@@ -173,8 +174,8 @@ def save_choice(request,kind,key):
     with transaction.atomic():
         if data['saved']:model.objects.get_or_create(**lookup)
         else:model.objects.filter(**lookup).delete()
-        SaveReceipt.objects.update_or_create(user=request.user,defaults={'action':('Saved ' if data['saved'] else 'Removed saved ')+('school shortlist item.' if kind=='school' else 'activity.')})
-    response=JsonResponse({'saved':data['saved']});response['Cache-Control']='no-store';return response
+        receipt=record_saved_change(request,('Saved ' if data['saved'] else 'Removed saved ')+('school shortlist item.' if kind=='school' else 'experience.' if kind=='experience' else 'activity.'))
+    response=JsonResponse({'saved':data['saved'],'save_receipt':receipt_payload(receipt)});response['Cache-Control']='no-store';return response
 
 
 def saved_context(request):
@@ -203,6 +204,7 @@ def saved_fragment(request):
 
 @login_required
 @discovery_view
+@transaction.atomic
 def manage_school(request):
     # Staff authority is checked here so a membership role cannot be supplied by POST.
     if not request.member or request.member.role!='staff' or not request.member.verified:

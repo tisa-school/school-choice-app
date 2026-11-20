@@ -835,7 +835,7 @@
   "LISBON · SCHOOL & FAMILY LIFE": "LISBOA · ESCOLA E VIDA FAMILIAR",
   "LITTLE PLANS, BIG MEMORIES": "PEQUENOS PLANOS, GRANDES MEMÓRIAS",
   "Larger text": "Texto maior",
-  "Last confirmed save:": "Último salvamento confirmado:",
+  "Last confirmed save:": "Última gravação confirmada:",
   "Lavender": "Lavanda",
   "Lax": "Relaxado",
   "Learning by building": "Aprendendo construindo",
@@ -1141,7 +1141,7 @@
   "Save the event before adding it to a collection.": "Salve o evento antes de adicioná-lo a uma coleção.",
   "Saved activities": "Atividades guardadas",
   "Saved plan · not a confirmed booking": "Plano salvo · reserva não confirmada",
-  "Saved to database": "Salvo no banco de dados",
+  "Saved to database": "Guardado na base de dados",
   "Schedule conflict with an approved plan. Decline or cancel the other plan before approving.": "Agendar conflito com um plano aprovado. Recuse ou cancele o outro plano antes de aprovar.",
   "Schedule in": "Agendar em",
   "Scheduled": "Agendado",
@@ -2062,5 +2062,8 @@
   "Ask a super administrator to review your school membership. Selecting Admin in the demo does not grant photo access.": "Peça a um superadministrador para rever a sua associação à escola. Selecionar Admin na demonstração não concede acesso às fotografias.",
   "Only authorised Unicorn School administrators can upload or delete team photos.": "Apenas administradores autorizados da Unicorn School podem carregar ou eliminar fotografias da equipa.",
   "Selecting Admin in the demo does not grant access. Sign in with your verified administrator account.": "Selecionar Admin na demonstração não concede acesso. Inicie sessão com a sua conta de administrador verificada.",
-  "An authorised administrator must sign in to save a photo.": "Um administrador autorizado tem de iniciar sessão para guardar uma fotografia."
+  "An authorised administrator must sign in to save a photo.": "Um administrador autorizado tem de iniciar sessão para guardar uma fotografia.",
+  "Saving changes…": "A guardar alterações…",
+  "Change not saved. Your last confirmed save is shown below.": "A alteração não foi guardada. A última gravação confirmada é apresentada abaixo.",
+  "Feedback saved.": "Comentário guardado."
 }

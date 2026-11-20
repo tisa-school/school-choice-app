@@ -28,12 +28,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   const kind=button.hasAttribute('data-save-activity')?'activity':button.hasAttribute('data-save-school')?'school':'experience',id=button.dataset[{activity:'saveActivity',school:'saveSchool',experience:'saveExperience'}[kind]];
   if(!valid(id))return;const before=button.getAttribute('aria-pressed')==='true',saved=!before;button.disabled=true;button.setAttribute('aria-busy','true');
   try{
-   if(account){const response=await fetch(`/discovery/saves/${kind}/${encodeURIComponent(id)}/`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRFToken':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify({saved})});if(!response.ok)throw new Error();const data=await response.json();if(data.saved!==saved)throw new Error();}
+   if(account){document.dispatchEvent(new CustomEvent('tkzone:saving'));const response=await fetch(`/discovery/saves/${kind}/${encodeURIComponent(id)}/`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRFToken':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify({saved})});if(!response.ok)throw new Error();const data=await response.json();if(data.saved!==saved)throw new Error();document.dispatchEvent(new CustomEvent('tkzone:saved',{detail:data.save_receipt}));}
    else{const list=read(kind).filter(s=>s!==id);if(saved){if(list.length>=100)throw new Error();list.push(id);}write(kind,list);}
    document.querySelectorAll(`[data-save-${kind}]`).forEach(other=>{const otherId=other.dataset[{activity:'saveActivity',school:'saveSchool',experience:'saveExperience'}[kind]];if(otherId===id)other.setAttribute('aria-pressed',String(saved));});
-   if(account){const summary=document.querySelector('#saved-data-status summary');if(summary)summary.textContent=t('Saved to database','Guardado na base de dados');}
    say(saved?(account?t('Saved to your account.','Guardado na tua conta.'):t('Saved on this device.','Guardado neste dispositivo.')):t('Removed from saved.','Removido dos guardados.'));sync();await refreshSaved();
-  }catch(_){button.setAttribute('aria-pressed',String(before));say(t('Not saved. Storage or the connection is unavailable. Please try again.','Não foi guardado. O armazenamento ou a ligação está indisponível. Tenta novamente.'));}
+  }catch(_){if(account)document.dispatchEvent(new CustomEvent('tkzone:save-failed'));button.setAttribute('aria-pressed',String(before));say(t('Not saved. Storage or the connection is unavailable. Please try again.','Não foi guardado. O armazenamento ou a ligação está indisponível. Tenta novamente.'));}
   finally{button.disabled=false;button.removeAttribute('aria-busy');}
  });
  document.addEventListener('change',event=>{

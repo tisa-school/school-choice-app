@@ -107,3 +107,30 @@ class PlatformManagementTests(TestCase):
         self.assertContains(self.client.get('/about/'),'data-photo-access="student-3"')
         self.assertEqual(self.client.get('/manage/team/student-3/').status_code,403)
         self.assertEqual(self.client.post('/team/portraits/student-3/',{'image':self.image()}).status_code,404)
+
+    @override_settings(STORAGES={'default':{'BACKEND':'community.storage.DatabasePrivateStorage'},'staticfiles':{'BACKEND':'django.contrib.staticfiles.storage.StaticFilesStorage'}})
+    def test_photo_memory_receipt_and_image_are_atomic_and_survive_new_login(self):
+        from unittest.mock import patch
+        from django.db import DatabaseError
+        from .models import SaveReceipt,PrivateUpload
+        self.client.force_login(self.staff)
+        url='/team/portraits/student-3/'
+        response=self.client.post(url,{'image':self.image()},HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code,200)
+        receipt=SaveReceipt.objects.get(user=self.staff)
+        self.assertEqual(response.json()['save_receipt']['saved_at'],receipt.saved_at.isoformat())
+        self.assertEqual(receipt.action,'Team photo saved.')
+        photo=TeamPhoto.objects.get(name='Daniel Vinnikov');image_name=photo.image.name;stamp=receipt.saved_at
+        with patch('community.community_views.record_saved_change',side_effect=DatabaseError('isolated receipt failure')):
+            response=self.client.post(url,{'image':self.image()},HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code,503)
+        photo.refresh_from_db();receipt.refresh_from_db()
+        self.assertEqual(photo.image.name,image_name);self.assertEqual(receipt.saved_at,stamp)
+        self.assertEqual(PrivateUpload.objects.count(),1)
+        self.client.logout();self.assertTrue(self.client.login(username=self.staff.username,password='IsolatedAdminTest!729'))
+        self.assertContains(self.client.get('/about/'),'Team photo saved.')
+        with self.captureOnCommitCallbacks(execute=True):
+            response=self.client.post(url,{'action':'delete'},HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json()['save_receipt']['action'],'Photo deleted.')
+        self.assertFalse(TeamPhoto.objects.exists());self.assertFalse(PrivateUpload.objects.exists())

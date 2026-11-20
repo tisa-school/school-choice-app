@@ -52,3 +52,12 @@ class SavedDataStatusTests(TestCase):
         self.client.logout()
         self.assertNotContains(self.client.get('/'),'Private save marker')
         self.assertNotContains(self.client.get('/'),'id="saved-data-status"')
+
+    def test_account_change_and_receipt_survive_logout_and_sign_in(self):
+        self.client.post('/collections/new/',{'name':'Remember this collection','cover_style':'crystal'})
+        stamp=SaveReceipt.objects.get(user=self.user).saved_at
+        self.client.logout();self.assertTrue(self.client.login(username=self.user.username,password='SaveTesting!824'))
+        response=self.client.get('/saved/')
+        self.assertContains(response,'Remember this collection')
+        self.assertContains(response,'Saved to database')
+        self.assertEqual(SaveReceipt.objects.get(user=self.user).saved_at,stamp)

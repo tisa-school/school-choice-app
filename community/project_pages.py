@@ -15,6 +15,7 @@ from .discovery import discovery_view,visible_events
 from .localization import text,REQUESTED_LOCALES,ACTIVE_LOCALES
 from .forms import FeedbackForm
 from .models import Feedback,Membership
+from .persistence import record_saved_change
 
 @discovery_view
 def about(request):
@@ -26,6 +27,7 @@ def about(request):
     return render(request,'community/about.html',{'project':project,'about':content,'students':[p for p in project['contributors'] if p['group']=='students'],'lead':next(p for p in project['contributors'] if p['group']=='lead'),'coordinators':[p for p in project['contributors'] if p['group']=='coordination'],'leadership':[p for p in project['contributors'] if p['group']=='leadership'],'language_roadmap':[item for item in REQUESTED_LOCALES if item[0] not in ACTIVE_LOCALES]})
 
 @discovery_view
+@transaction.atomic
 def feedback(request):
     listing=None
     raw=request.GET.get('listing','')
@@ -38,6 +40,7 @@ def feedback(request):
         item.submitted_by=request.user if request.user.is_authenticated else None
         item.school=item.listing.school if item.listing else None
         item.save()
+        record_saved_change(request,text('Feedback saved.'))
         return redirect('feedback_received')
     return render(request,'community/feedback.html',{'form':form,'listing':listing})
 
@@ -55,6 +58,7 @@ def feedback_inbox(request):
 @login_required
 @discovery_view
 @require_POST
+@transaction.atomic
 def feedback_review(request,pk):
     member=request.member
     if not member or member.role!='staff' or not member.verified: return HttpResponseForbidden('Verified school staff access is required.')

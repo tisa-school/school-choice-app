@@ -154,6 +154,7 @@ def saved(request):
     return render(request,'community/saved.html',{**saved_context(request),'events':events,'collections':Collection.objects.filter(user=request.user),'collection':collection,'saved_ids':set(events.values_list('id',flat=True))})
 @login_required
 @discovery_view
+@transaction.atomic
 def collection_edit(request,pk=None):
     collection=get_object_or_404(Collection,pk=pk,user=request.user) if pk else Collection(user=request.user)
     form=CollectionForm(request.POST or None,instance=collection)
@@ -162,6 +163,7 @@ def collection_edit(request,pk=None):
 @login_required
 @discovery_view
 @require_POST
+@transaction.atomic
 def collection_action(request,pk):
     collection=get_object_or_404(Collection,pk=pk,user=request.user)
     if request.POST.get('action')=='delete': collection.delete();saved_success(request,'Collection deleted. Your saved events are still here.')
@@ -188,6 +190,7 @@ def read_notification(request,pk):
     return redirect(item.link if item.link.startswith(('/events/','/tickets/','/announcements/','/staff/requests/','/family/')) else 'notifications')
 @login_required
 @discovery_view
+@transaction.atomic
 def profile(request):
     form=ProfileForm(request.POST or None,instance=request.user)
     if request.method=='POST' and form.is_valid(): form.save();saved_success(request,'Profile updated ✦');return redirect('profile')
@@ -271,6 +274,7 @@ def media(request,kind,pk):
 
 @login_required
 @discovery_view
+@transaction.atomic
 def parent_setup(request):
     if ParentAccount.objects.filter(user=request.user).exists(): return redirect('family')
     if request.member and request.member.role=='student': return HttpResponseForbidden('A school student account cannot become a parent account. A guardian should register their own account.')
@@ -309,6 +313,7 @@ def family_weekly_summary(request):
     response=JsonResponse(answer);response['Cache-Control']='no-store';return response
 
 @parent_required
+@transaction.atomic
 def child_edit(request,pk=None):
     child=get_object_or_404(ChildProfile,pk=pk,parent=request.parent) if pk else ChildProfile(parent=request.parent)
     from .management_forms import PrivateChildForm
@@ -318,6 +323,7 @@ def child_edit(request,pk=None):
 
 @parent_required
 @require_POST
+@transaction.atomic
 def child_delete(request,pk):
     get_object_or_404(ChildProfile,pk=pk,parent=request.parent).delete()
     saved_success(request,'Child profile and its participation records deleted.')
@@ -344,6 +350,7 @@ def parent_review(request,pk):
 
 @parent_required
 @require_POST
+@transaction.atomic
 def plan_add(request,pk):
     event=get_object_or_404(public_events(request),pk=pk)
     session=None
@@ -354,6 +361,7 @@ def plan_add(request,pk):
 
 @parent_required
 @require_POST
+@transaction.atomic
 def plan_delete(request,pk):
     get_object_or_404(FamilyPlan,pk=pk,parent=request.parent).delete()
     saved_success(request,'Family plan updated ✦')
