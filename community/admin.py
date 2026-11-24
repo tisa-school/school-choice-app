@@ -80,3 +80,15 @@ class SchoolDirectoryAdmin(admin.ModelAdmin):
         from uuid import uuid4
         if not obj.slug:obj.slug=slugify(obj.name)[:150]+'-'+uuid4().hex[:8]
         super().save_model(request,obj,form,change)
+
+# A review queue, not an assertion that data has been deleted.
+from .models import MobileDeletionRequest
+@admin.register(MobileDeletionRequest)
+class MobileDeletionReviewAdmin(admin.ModelAdmin):
+    list_display=['id','user','status','created_at']
+    readonly_fields=['user','status','created_at']
+    def has_module_permission(self,request):return request.user.is_superuser
+    def has_view_permission(self,request,obj=None):return request.user.is_superuser
+    def has_change_permission(self,request,obj=None):return False
+    def has_add_permission(self,request):return False
+    def has_delete_permission(self,request,obj=None):return False

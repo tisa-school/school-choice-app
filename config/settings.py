@@ -87,3 +87,18 @@ if (_public_origin.scheme != 'https' or not _public_origin.netloc or _public_ori
     raise RuntimeError('PUBLIC_SITE_URL must be an HTTPS origin without a path or credentials')
 
 AUTHENTICATION_BACKENDS = ['community.authentication.ExistingIdentityBackend','django.contrib.auth.backends.ModelBackend']
+
+# Opt-in API for the separately bundled Capacitor app; disabled on existing deployments.
+MOBILE_API_ENABLED = os.getenv('MOBILE_API_ENABLED', '0') == '1'
+MOBILE_ALLOWED_ORIGINS = [v for v in os.getenv('MOBILE_ALLOWED_ORIGINS', 'capacitor://localhost,https://localhost').split(',') if v]
+MOBILE_SESSION_DAYS = 30
+
+# Optional native push delivery. Private key files live on the server, never in Git/mobile.
+MOBILE_APP_ID = 'org.unicornschool.tkzone'
+MOBILE_APNS_KEY_FILE = os.getenv('MOBILE_APNS_KEY_FILE', '')
+MOBILE_APNS_KEY_ID = os.getenv('MOBILE_APNS_KEY_ID', '')
+MOBILE_APNS_TEAM_ID = os.getenv('MOBILE_APNS_TEAM_ID', '')
+MOBILE_APNS_SANDBOX = os.getenv('MOBILE_APNS_SANDBOX', '1') == '1'
+MOBILE_FCM_CREDENTIALS_FILE = os.getenv('MOBILE_FCM_CREDENTIALS_FILE', '')
+MOBILE_APNS_PRIVATE_KEY = os.getenv('MOBILE_APNS_PRIVATE_KEY', '')
+MOBILE_FCM_CREDENTIALS_JSON = os.getenv('MOBILE_FCM_CREDENTIALS_JSON', '')

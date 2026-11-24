@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth import views as auth
-from django.urls import path
+from django.urls import path, include
 from community import views as v
 from community import family_discovery as fd
 from community.demo import presentation
@@ -17,6 +17,7 @@ from community import management_views as management
 from community import platform_views as platform
 from community import diagnostics
 urlpatterns=[
+path('mobile/v1/',include('community.mobile_urls')),
 path('health/',diagnostics.health,name='health'),
 path('manage/diagnostics/',diagnostics.deployment_diagnostics,name='deployment_diagnostics'),
 path('search/',platform.search,name='global_search'),

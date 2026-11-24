@@ -1,0 +1,5 @@
+# Optional server-side push dependencies. Never installed in or bundled with the mobile client.
+httpx[http2]==0.28.1
+PyJWT[crypto]==2.10.1
+google-auth==2.40.3
+requests==2.32.5
