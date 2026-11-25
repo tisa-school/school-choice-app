@@ -13,3 +13,5 @@ community/tests.py
 community/browser_tests.py
 
 community/test_*.py
+
+/mobile/

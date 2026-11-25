@@ -528,3 +528,6 @@ class SchoolMedia(models.Model):
         from django.core.exceptions import ValidationError
         if not self.permission_confirmed:raise ValidationError({'permission_confirmed':'Confirm school approval or a valid image licence.'})
         if self.includes_children and not self.guardian_consent:raise ValidationError({'guardian_consent':'Permission for children shown is required.'})
+
+# Additive mobile-only records; existing web models and permissions are unchanged.
+from .mobile_models import MobileSession, MobilePushDevice, MobileDeletionRequest

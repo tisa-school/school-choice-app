@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">TK-ZONE</string>
+    <string name="title_activity_main">TK-ZONE</string>
+    <string name="package_name">org.unicornschool.tkzone</string>
+    <string name="custom_url_scheme">org.unicornschool.tkzone</string>
+</resources>
