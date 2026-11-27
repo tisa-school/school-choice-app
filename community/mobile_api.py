@@ -99,12 +99,14 @@ def event_data(event,user):
       'ages':f'{event.min_age}–{event.max_age}' if event.min_age is not None else 'Ask the organiser',
       'languages':event.languages,'price':str(event.price_amount)+' EUR' if event.price_amount is not None else event.price_text or 'Price on request',
       'cancelled':event.is_cancelled,'accessibility':event.accessibility,'listing_type':event.listing_type,
+      'public':bool(event.visibility=='public' and event.published_by_id and event.status=='published' and not event.archived),
       'saved':bool(user.is_authenticated and SavedEvent.objects.filter(user=user,event=event).exists()),
       'sessions':[{'id':s.pk,'start_at':s.start_at.isoformat(),'end_at':s.end_at.isoformat(),'venue':s.venue} for s in event.sessions.filter(is_cancelled=False,start_at__gt=timezone.now())[:40]] if event.listing_type=='activity' else [],
       'web_path':f'/events/{event.pk}/'}
 
 def school_data(school,user):
     return {'id':school.pk,'slug':school.slug,'name':school.name,'city':school.city,'summary':school.summary,'curriculum':school.curriculum,
+      'public':True,'address':school.address,'hours':school.hours,'fee_includes':school.fee_includes,'fees':'From '+str(school.annual_fee_from)+' EUR' if school.annual_fee_from is not None and school.fee_year else 'Not supplied','fee_year':school.fee_year,
       'ages':school.age_label or 'Not provided','languages':school.language_labels,'source':school.source_name,
       'last_checked':str(school.last_checked) if school.last_checked else None,'website':school.website,
       'saved':bool(user.is_authenticated and ShortlistedSchool.objects.filter(user=user,profile=school).exists()),'web_path':f'/schools/{school.slug}/'}
@@ -182,6 +184,25 @@ def schools(request):
     form,items=filtered_schools(request.GET)
     if not form.is_valid():raise MobileError('Check the school filters.')
     return JsonResponse({'items':[school_data(s,request.user) for s in items[:80]]})
+
+@endpoint()
+def public_event(request,pk):
+    event=get_object_or_404(Event,pk=pk,visibility='public',published_by__isnull=False,status='published',archived=False)
+    return JsonResponse({'event':event_data(event,AnonymousUser())})
+
+@endpoint()
+def school_detail(request,pk):
+    school=get_object_or_404(SchoolProfile,pk=pk,is_published=True,archived=False)
+    return JsonResponse({'school':school_data(school,AnonymousUser())})
+
+@endpoint()
+def school_compare(request):
+    raw=request.GET.get('ids','').split(',')
+    if not 2<=len(raw)<=3 or any(not x.isdigit() or len(x)>12 for x in raw) or len(set(raw))!=len(raw):raise MobileError('Choose two or three different schools.')
+    ids=[int(x) for x in raw]
+    schools={x.pk:x for x in SchoolProfile.objects.filter(pk__in=ids,is_published=True,archived=False)}
+    if len(schools)!=len(ids):raise Http404()
+    return JsonResponse({'items':[school_data(schools[pk],AnonymousUser()) for pk in ids]})
 
 @endpoint(('POST',),private=True)
 @transaction.atomic

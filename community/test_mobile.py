@@ -96,3 +96,26 @@ class MobileTests(TestCase):
         school=SchoolProfile.objects.create(name='Fictional profile',slug='fictional',is_published=True)
         response=self.client.get('/mobile/v1/schools/')
         self.assertEqual(response.status_code,200,response.content);self.assertEqual(response.json()['items'][0]['name'],school.name)
+
+    def test_offline_endpoint_rejects_private_and_unpublished_events(self):
+        self.assertEqual(self.client.get(f'/mobile/v1/public/events/{self.private.pk}/',**self.auth).status_code,404)
+        payload=self.client.get(f'/mobile/v1/public/events/{self.event.pk}/',**self.auth).json()['event']
+        self.assertTrue(payload['public']);self.assertFalse(payload['saved'])
+        self.assertNotIn('child',payload);self.assertNotIn('student',payload)
+        self.event.status='draft';self.event.save()
+        self.assertEqual(self.client.get(f'/mobile/v1/public/events/{self.event.pk}/').status_code,404)
+
+    def test_school_search_compare_and_public_details(self):
+        one=SchoolProfile.objects.create(name='Fictional Arts School',slug='art-school',city='Lisbon',languages='en',curriculum='Arts',is_published=True)
+        two=SchoolProfile.objects.create(name='Fictional Science School',slug='science-school',city='Lisbon',languages='pt',curriculum='Science',is_published=True)
+        hidden=SchoolProfile.objects.create(name='Hidden School',slug='hidden',is_published=False)
+        response=self.client.get('/mobile/v1/schools/?q=Arts&language=en&curriculum=Arts')
+        self.assertEqual([x['id'] for x in response.json()['items']],[one.pk])
+        response=self.client.get(f'/mobile/v1/schools/compare/?ids={one.pk},{two.pk}')
+        self.assertEqual(response.status_code,200,response.content)
+        self.assertEqual([x['id'] for x in response.json()['items']],[one.pk,two.pk])
+        self.assertEqual(response.json()['items'][0]['fees'],'Not supplied')
+        self.assertEqual(self.client.get(f'/mobile/v1/schools/compare/?ids={one.pk},{hidden.pk}').status_code,404)
+        self.assertEqual(self.client.get(f'/mobile/v1/schools/compare/?ids={one.pk},{one.pk}').status_code,400)
+        self.assertEqual(self.client.get(f'/mobile/v1/schools/{one.pk}/').status_code,200)
+        self.assertEqual(self.client.get(f'/mobile/v1/schools/{hidden.pk}/').status_code,404)

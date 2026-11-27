@@ -19,3 +19,5 @@ npx cap open android  # Android Studio
 
 Do not use `npx eas-cli ...`: EAS is Expo tooling and this project stays on Capacitor.
 No store submission, production deployment or main-branch merge is performed by these commands.
+
+The [store readiness handoff](../docs/MOBILE_STORE_READINESS.md) describes the new offline public library, native school search/comparison, privacy audit and exact publisher steps. Native CI build jobs are configured but must complete successfully before treating native compilation as verified.

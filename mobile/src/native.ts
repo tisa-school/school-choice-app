@@ -28,7 +28,7 @@ export async function initialiseNative(navigate:(path:string)=>void,notice:(mess
  await PushNotifications.addListener('registration',async t=>{try{const r=await api<{delivery_configured:boolean}>('/push/device/','POST',{token:t.value,consent:true});notice(r.delivery_configured?'Device registered for notifications.':'Device registered; server delivery still needs setup.');}catch(e){notice(String(e));}});
  await PushNotifications.addListener('registrationError',()=>notice('Push registration failed. No notification was sent.'));
  await PushNotifications.addListener('pushNotificationActionPerformed',()=>navigate('/notifications'));
- await App.addListener('backButton',()=>{if(location.hash&&location.hash!=='#/')history.back();else App.minimizeApp();});
+ await App.addListener('backButton',()=>{if(location.hash&&location.hash!=='#/'){if(history.length>1)history.back();else navigate('/');}else App.minimizeApp();});
  const handleLink=(url:string)=>{try{const path=deepLink(url);const match=path.match(/^\/events\/(\d+)\/$/);navigate(match?'/event/'+match[1]:'/');}catch{notice('This app link is not supported.');}};
  await App.addListener('appUrlOpen',e=>handleLink(e.url));
  const launch=await App.getLaunchUrl();if(launch?.url)handleLink(launch.url);
