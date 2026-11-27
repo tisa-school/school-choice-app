@@ -205,3 +205,7 @@ Activity cards and details use activity-led, locally hosted illustrations matche
 ### Brand and role consistency
 
 The interface uses the home-screen violet/orange tokens, colourful About Us panels and restrained decorative backgrounds. Sophia Gatenyo's corrected name includes a safe portrait/profile data migration. Signed-in demo roles follow accounts; studio pages and APIs reject child, parent and unverified-organiser access. Guest presentation roles remain explicit fictional simulations. See [brand and role changes](docs/BRAND_ROLE_REFRESH.md).
+
+## Discovery preferences upgrade
+
+The optional first-visit questionnaire, real-data recommendations, Settings editor, authored event translations and catalogue audit are described in [ONBOARDING_AND_I18N.md](docs/ONBOARDING_AND_I18N.md). The feature requires additive migration 0023. New flows support all existing language choices; legacy whole-site translation gaps remain explicitly documented. No production deployment is implied.

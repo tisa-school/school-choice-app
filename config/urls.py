@@ -16,7 +16,10 @@ from community.ask_tk import ask_tk
 from community import management_views as management
 from community import platform_views as platform
 from community import diagnostics
+from community import preferences
 urlpatterns=[
+path('settings/preferences/',preferences.settings_view,name='discovery_preferences'),
+path('onboarding/complete/',preferences.complete,name='onboarding_complete'),
 path('mobile/v1/',include('community.mobile_urls')),
 path('health/',diagnostics.health,name='health'),
 path('manage/diagnostics/',diagnostics.deployment_diagnostics,name='deployment_diagnostics'),

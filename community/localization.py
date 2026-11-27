@@ -73,10 +73,10 @@ class InterfaceLanguageMiddleware:
         from django.utils.cache import patch_vary_headers
         patch_vary_headers(response,['Cookie'])
         response['Content-Language']=locale
-        if request.user.is_authenticated:response['Cache-Control']='private, no-store'
+        if request.user.is_authenticated or request.session.get('tk_discovery_preferences'):response['Cache-Control']='private, no-store'
         if supplied in ACTIVE_LOCALES:
             response.set_cookie('tkzone_language',locale,max_age=31536000,secure=request.is_secure(),httponly=True,samesite='Lax')
-        if request.user.is_authenticated and request.path not in ['/tour/','/manage/tour/'] and (supplied in ACTIVE_LOCALES or not stored):InterfacePreference.objects.update_or_create(user=request.user,defaults={'language':locale})
+        if request.method=='GET' and request.user.is_authenticated and request.path not in ['/tour/','/manage/tour/'] and (supplied in ACTIVE_LOCALES or not stored):InterfacePreference.objects.update_or_create(user=request.user,defaults={'language':locale})
         return response
 
 def interface_context(request):

@@ -61,6 +61,15 @@ class ImageValidationMixin(LocalizedFieldsMixin):
 class EventForm(ImageValidationMixin,forms.ModelForm):
     image_reviewed=forms.BooleanField(required=False,label='I reviewed the subject, ages and venue against this image and have permission to use it.')
 
+    def clean_translations(self):
+        from .localization import ACTIVE_LOCALES
+        value=self.cleaned_data.get('translations') or {}
+        if not isinstance(value,dict) or len(value)>len(ACTIVE_LOCALES):raise forms.ValidationError(text('Check your answers.'))
+        for locale,fields in value.items():
+            if locale not in ACTIVE_LOCALES or not isinstance(fields,dict) or set(fields)-{'title','description'}:raise forms.ValidationError(text('Check your answers.'))
+            if any(not isinstance(v,str) or len(v)>(180 if k=='title' else 10000) for k,v in fields.items()):raise forms.ValidationError(text('Check your answers.'))
+        return value
+
     def save(self,commit=True):
         self.instance._review_event_image=bool(self.cleaned_data.get('image_reviewed'))
         if self.cleaned_data.get('status')=='published':self.instance.archived=False
@@ -68,9 +77,9 @@ class EventForm(ImageValidationMixin,forms.ModelForm):
 
     class Meta:
         model=Event
-        fields=['title','listing_type','visibility','identity_verified','category','image','image_alt','image_source','image_reviewed','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','activity_environment','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','child_capacity','price_text','booking_url','source_url','last_verified','requests_close_at','status']
+        fields=['title','city','event_kind','attendance_mode','translations','listing_type','visibility','identity_verified','category','image','image_alt','image_source','image_reviewed','start_at','end_at','venue','description','organizer','address','contact_name','contact_phone','contact_website','contact_public','min_age','max_age','languages','area','activity_environment','price_amount','supervision','accessibility','cancellation_policy','time_zone','ticket_requests_enabled','capacity','child_capacity','price_text','booking_url','source_url','last_verified','requests_close_at','status']
         widgets={**{k:forms.DateTimeInput(format='%Y-%m-%dT%H:%M',attrs={'type':'datetime-local'}) for k in ['start_at','end_at','requests_close_at']},'image':forms.FileInput(attrs={'accept':'image/jpeg,image/png,image/webp'})}
-        labels={'identity_verified':'Organizer identity checked by staff (not a safety guarantee)','start_at':'Start at / first activity date','capacity':'Maximum total attendees (leave empty for unlimited)','child_capacity':'Maximum children (leave empty for unlimited)','price_text':'Price information (optional)','status':'Publication status'}
+        labels={'city':'City or region','event_kind':'Event types','attendance_mode':'Attendance preference','translations':'Event translations','identity_verified':'Organizer identity checked by staff (not a safety guarantee)','start_at':'Start at / first activity date','capacity':'Maximum total attendees (leave empty for unlimited)','child_capacity':'Maximum children (leave empty for unlimited)','price_text':'Price information (optional)','status':'Publication status'}
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
         self.fields['image_source'].required=False

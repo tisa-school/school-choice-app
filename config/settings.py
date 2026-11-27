@@ -24,7 +24,7 @@ CSRF_TRUSTED_ORIGINS = [x for x in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').
 INSTALLED_APPS = ['django.contrib.admin','django.contrib.auth','django.contrib.contenttypes','django.contrib.sessions','django.contrib.messages','django.contrib.staticfiles','community']
 MIDDLEWARE = ['django.middleware.security.SecurityMiddleware','whitenoise.middleware.WhiteNoiseMiddleware','django.contrib.sessions.middleware.SessionMiddleware','django.middleware.common.CommonMiddleware','django.middleware.csrf.CsrfViewMiddleware','django.contrib.auth.middleware.AuthenticationMiddleware','community.localization.InterfaceLanguageMiddleware','django.contrib.messages.middleware.MessageMiddleware','django.middleware.clickjacking.XFrameOptionsMiddleware','community.middleware.RateLimitMiddleware']
 ROOT_URLCONF = 'config.urls'
-TEMPLATES = [{'BACKEND':'django.template.backends.django.DjangoTemplates','DIRS':[BASE_DIR/'templates'],'APP_DIRS':True,'OPTIONS':{'context_processors':['django.template.context_processors.request','django.contrib.auth.context_processors.auth','django.contrib.messages.context_processors.messages','community.context.shell','community.localization.interface_context']}}]
+TEMPLATES = [{'BACKEND':'django.template.backends.django.DjangoTemplates','DIRS':[BASE_DIR/'templates'],'APP_DIRS':True,'OPTIONS':{'context_processors':['django.template.context_processors.request','django.contrib.auth.context_processors.auth','django.contrib.messages.context_processors.messages','community.context.shell','community.preferences.onboarding_context','community.localization.interface_context']}}]
 WSGI_APPLICATION = 'config.wsgi.application'
 if os.getenv('DATABASE_URL'):
     import dj_database_url
@@ -102,3 +102,5 @@ MOBILE_APNS_SANDBOX = os.getenv('MOBILE_APNS_SANDBOX', '1') == '1'
 MOBILE_FCM_CREDENTIALS_FILE = os.getenv('MOBILE_FCM_CREDENTIALS_FILE', '')
 MOBILE_APNS_PRIVATE_KEY = os.getenv('MOBILE_APNS_PRIVATE_KEY', '')
 MOBILE_FCM_CREDENTIALS_JSON = os.getenv('MOBILE_FCM_CREDENTIALS_JSON', '')
+
+DISCOVERY_ONBOARDING_ENABLED = os.getenv('DISCOVERY_ONBOARDING_ENABLED', '1') == '1'

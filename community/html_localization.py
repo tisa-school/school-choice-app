@@ -11,12 +11,15 @@ class InterfaceHTML(HTMLParser):
         if tag not in ['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']:self.stack.append(blocked)
         raw=self.get_starttag_text()
         if not blocked:
-            for attribute in ['placeholder','aria-label','title']:
+            for attribute in ['placeholder','aria-label','title','alt']:
                 if attributes.get(attribute):
                     original=attributes[attribute];translated=self.translate(original)
                     if translated!=original:raw=re.sub(r'('+attribute+r'\s*=\s*)([\'"])(.*?)\2',lambda m:m[1]+m[2]+escape(translated,quote=True)+m[2],raw,count=1,flags=re.S)
         self.output.append(raw)
-    def handle_startendtag(self,tag,attrs):self.output.append(self.get_starttag_text())
+    def handle_startendtag(self,tag,attrs):
+        depth=len(self.stack)
+        self.handle_starttag(tag,attrs)
+        del self.stack[depth:]
     def handle_endtag(self,tag):
         if self.stack:self.stack.pop()
         self.output.append('</'+tag+'>')

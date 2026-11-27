@@ -70,7 +70,9 @@ def activity_choices(user):
 @require_GET
 def discovery_home(request):
     _,weekend=activity_results(request.user,{'weekend':'on'})
-    return render(request,'discovery/home.html',{'weekend_activities':weekend[:6],**activity_choices(request.user),'school_count':SchoolProfile.objects.filter(is_published=True,archived=False).count(),'saved_ids':set(SavedEvent.objects.filter(user=request.user).values_list('event_id',flat=True)) if request.user.is_authenticated else set()})
+    from .preferences import recommendations_for
+    recommendations=recommendations_for(request)
+    return render(request,'discovery/home.html',{'personalized_recommendations':recommendations,'weekend_activities':weekend[:6],**activity_choices(request.user),'school_count':SchoolProfile.objects.filter(is_published=True,archived=False).count(),'saved_ids':set(SavedEvent.objects.filter(user=request.user).values_list('event_id',flat=True)) if request.user.is_authenticated else set()})
 
 
 @discovery_view

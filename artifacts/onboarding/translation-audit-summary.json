@@ -1,0 +1,84 @@
+{
+  "whole_site_translation_complete": false,
+  "new_onboarding_languages": 11,
+  "catalogue_structural_check": "passed",
+  "locales": [
+    {
+      "locale": "en",
+      "missing_keys": 0,
+      "empty_values": 0,
+      "placeholder_mismatches": 0,
+      "legacy_identical_candidates": 0
+    },
+    {
+      "locale": "zh-CN",
+      "missing_keys": 0,
+      "empty_values": 0,
+      "placeholder_mismatches": 0,
+      "legacy_identical_candidates": 312
+    },
+    {
+      "locale": "hi",
+      "missing_keys": 0,
+      "empty_values": 0,
+      "placeholder_mismatches": 0,
+      "legacy_identical_candidates": 312
+    },
+    {
+      "locale": "es",
+      "missing_keys": 0,
+      "empty_values": 0,
+      "placeholder_mismatches": 0,
+      "legacy_identical_candidates": 314
+    },
+    {
+      "locale": "ar",
+      "missing_keys": 0,
+      "empty_values": 0,
+      "placeholder_mismatches": 0,
+      "legacy_identical_candidates": 312
+    },
+    {
+      "locale": "fr",
+      "missing_keys": 0,
+      "empty_values": 0,
+      "placeholder_mismatches": 0,
+      "legacy_identical_candidates": 315
+    },
+    {
+      "locale": "bn",
+      "missing_keys": 0,
+      "empty_values": 0,
+      "placeholder_mismatches": 0,
+      "legacy_identical_candidates": 312
+    },
+    {
+      "locale": "pt-PT",
+      "missing_keys": 0,
+      "empty_values": 0,
+      "placeholder_mismatches": 0,
+      "legacy_identical_candidates": 5
+    },
+    {
+      "locale": "ru",
+      "missing_keys": 0,
+      "empty_values": 0,
+      "placeholder_mismatches": 0,
+      "legacy_identical_candidates": 312
+    },
+    {
+      "locale": "ur",
+      "missing_keys": 0,
+      "empty_values": 0,
+      "placeholder_mismatches": 0,
+      "legacy_identical_candidates": 313
+    },
+    {
+      "locale": "tr",
+      "missing_keys": 0,
+      "empty_values": 0,
+      "placeholder_mismatches": 0,
+      "legacy_identical_candidates": 313
+    }
+  ]
+}

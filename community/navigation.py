@@ -51,10 +51,11 @@ def navigation(request,member):
     if 'admin' in access['roles']:add('admin','Demo moderation','/demo/admin/','workspace','admin','admin')
     if authenticated:add('notifications','Notifications','/notifications/','community')
     add('account','Profile & settings' if authenticated else 'Account access','/profile/' if authenticated else '/accounts/login/','family')
+    add('preferences','Discovery preferences','/settings/preferences/','family')
     add('about','About Us','/about/','about','about')
     add('photos','Team photos','/team/photos/','photos')
     path=request.path
-    mappings=[('/staff/school-profile/','school-profile'),('/staff/requests/','approvals'),('/staff/announcements/','studio'),('/staff/feedback/','feedback-inbox'),('/staff/organizers/','applications'),('/staff/content/','moderation'),('/staff/','staff'),('/organizer/','organizer'),('/schools/','schools'),('/saved/','saved'),('/collections/','saved'),('/discover/activities/','activities'),('/activities/','activities'),('/events/','activities'),('/family/','family'),('/community/','community'),('/finder/','finder'),('/calendar/','calendar'),('/announcements/','announcements'),('/tickets/','tickets'),('/join/','join'),('/feedback/','feedback'),('/about/','about'),('/team/','photos'),('/notifications/','notifications'),('/profile/','account'),('/accounts/','account')]
+    mappings=[('/settings/preferences/','preferences'),('/staff/school-profile/','school-profile'),('/staff/requests/','approvals'),('/staff/announcements/','studio'),('/staff/feedback/','feedback-inbox'),('/staff/organizers/','applications'),('/staff/content/','moderation'),('/staff/','staff'),('/organizer/','organizer'),('/schools/','schools'),('/saved/','saved'),('/collections/','saved'),('/discover/activities/','activities'),('/activities/','activities'),('/events/','activities'),('/family/','family'),('/community/','community'),('/finder/','finder'),('/calendar/','calendar'),('/announcements/','announcements'),('/tickets/','tickets'),('/join/','join'),('/feedback/','feedback'),('/about/','about'),('/team/','photos'),('/notifications/','notifications'),('/profile/','account'),('/accounts/','account')]
     active=next((key for prefix,key in mappings if path.startswith(prefix)),'home')
     if path.startswith('/demo/'):
         section=path.split('/')[2] if len(path.split('/'))>2 else ''

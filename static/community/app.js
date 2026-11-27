@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('form').forEach(form=>{
     if((form.getAttribute('method')||'get').toLowerCase()!=='post')return;
     const path=new URL(form.getAttribute('action')||location.href,location.href).pathname;
-    if(path.startsWith('/accounts/')||path==='/finder/')return;
+    if(path.startsWith('/accounts/')||path==='/finder/'||form.id==='onboarding-form')return;
     const state=document.createElement('p');state.className='form-save-status';state.setAttribute('role','status');state.setAttribute('aria-live','polite');state.hidden=true;form.append(state);
     if(form.querySelector('.errorlist')){state.hidden=false;state.dataset.state='unsaved';state.textContent='Not saved · check the highlighted errors and submit again.';}
     const dirty=()=>{state.hidden=false;state.dataset.state='unsaved';state.textContent='Unsaved changes · submit this form to save.';};

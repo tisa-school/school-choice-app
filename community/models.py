@@ -18,6 +18,12 @@ class Membership(models.Model):
     role = models.CharField(max_length=12, choices=[('student','Student'),('staff','Staff'),('parent','Parent'),('organizer','Organizer')], default='student')
     verified = models.BooleanField(default=False)
     joined_at = models.DateTimeField(auto_now_add=True)
+class DiscoveryPreference(models.Model):
+    user=models.OneToOneField(User,on_delete=models.CASCADE,related_name='discovery_preferences')
+    answers=models.JSONField(default=dict)
+    completed=models.BooleanField(default=False)
+    updated_at=models.DateTimeField(auto_now=True)
+
 class Event(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -37,6 +43,10 @@ class Event(models.Model):
     published_by = models.ForeignKey(User, null=True, blank=True, related_name='published_listings', on_delete=models.SET_NULL)
     title = models.CharField(max_length=180)
     category = models.CharField(max_length=20, choices=CATEGORIES)
+    city = models.CharField(max_length=100,blank=True)
+    event_kind = models.CharField(max_length=20,blank=True,choices=[('workshop','Workshops'),('open_day','School open days'),('competition','Competitions'),('exhibition','Exhibitions'),('educational','Educational events'),('other','Other')])
+    attendance_mode = models.CharField(max_length=16,blank=True,choices=[('online','Online'),('in_person','In person'),('hybrid','Both')])
+    translations = models.JSONField(default=dict,blank=True,help_text='Authored translations by language code; title and description only.')
     description = models.TextField()
     image = models.ImageField(upload_to='events/', blank=True)
     image_alt = models.CharField(max_length=300, blank=True)
